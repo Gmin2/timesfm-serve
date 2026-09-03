@@ -20,7 +20,6 @@ services:
     environment: &env
       DATABASE_URL: postgresql://tfm:tfm@db:5432/tfm
       REDIS_URL: redis://redis:6379/0
-    volumes: ["models:/models"]
     depends_on:
       db: { condition: service_healthy }
       redis: { condition: service_started }
@@ -28,10 +27,8 @@ services:
     build: .
     command: python -m timesfm_serve.worker
     environment: *env
-    volumes: ["models:/models"]
     depends_on:
       db: { condition: service_healthy }
       redis: { condition: service_started }
 volumes:
   pgdata:
-  models:

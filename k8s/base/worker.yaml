@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: tfm
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: worker }
+  template:
+    metadata:
+      labels: { app: worker }
+    spec:
+      containers:
+        - name: worker
+          image: timesfm-serve
+          command: ["python", "-m", "timesfm_serve.worker"]
+          envFrom: [{ secretRef: { name: tfm-config } }]
+          # the worker touches this file once the model is warm
+          startupProbe:
+            exec: { command: ["test", "-f", "/tmp/worker-ready"] }
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            exec: { command: ["test", "-f", "/tmp/worker-ready"] }
+            periodSeconds: 10
+          resources:
+            requests: { cpu: "1", memory: 3Gi }
+            limits: { memory: 6Gi }

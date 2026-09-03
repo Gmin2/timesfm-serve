@@ -1,0 +1,14 @@
+- op: add
+  path: /spec/template/spec/containers/0/env
+  value:
+    - { name: DEVICE, value: cuda }
+- op: add
+  path: /spec/template/spec/containers/0/resources/limits/nvidia.com~1gpu
+  value: 1
+- op: add
+  path: /spec/template/spec/nodeSelector
+  value: { workload: gpu }
+- op: add
+  path: /spec/template/spec/tolerations
+  value:
+    - { key: nvidia.com/gpu, operator: Exists, effect: NoSchedule }

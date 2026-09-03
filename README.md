@@ -58,7 +58,36 @@ docker compose exec api python scripts/create_key.py demo
 curl -X POST localhost:8000/forecast -H "x-api-key: $KEY" -H 'content-type: application/json' -d @req.json
 ```
 
-the first start downloads the 1.3 gb checkpoint into the `models` volume.
+the checkpoint is baked into the image at build time, so containers start in
+seconds and never talk to the hub at runtime. `--build-arg TORCH=gpu` builds
+the cuda variant for the gpu node, the default cpu image is about 4 gb, 1.4 of which is the checkpoint.
+
+## kubernetes
+
+`k8s/base` is a kustomize base: postgres statefulset, redis, api deployment
+with http probes, worker deployment with a readiness probe that only passes
+once the model is warm, an hpa on api cpu, and a keda scaledobject that scales
+the worker on redis queue depth, down to zero when idle.
+
+```
+kind create cluster --name tfm
+kind load docker-image pravah-api:latest --name tfm
+kubectl apply --server-side -f https://github.com/kedacore/keda/releases/download/v2.17.2/keda-2.17.2.yaml
+kubectl apply -k k8s/overlays/kind
+kubectl -n tfm port-forward svc/api 8080:80
+```
+
+`k8s/overlays/eks` pins the worker to a tainted gpu node group and requests
+`nvidia.com/gpu: 1`. `k8s/eks-cluster.yaml` is the eksctl config with a spot
+g5.xlarge group that scales to zero. `scripts/create_eks.sh` then
+`scripts/deploy_eks.sh` do the whole thing.
+
+## observability
+
+`GET /metrics` exposes prometheus metrics: request counts and latency by
+route and status, model predict latency, series forecast, queue depth and the
+loaded model. every response carries an `x-response-time-ms` header and every
+sync forecast is logged to the `forecast_runs` table with tenant and latency.
 
 ## layout
 
@@ -67,6 +96,8 @@ timesfm_serve/api.py      fastapi app, sync forecast, job submit and poll
 timesfm_serve/jobs.py     rq task that runs predict_batch on a warmed model
 timesfm_serve/worker.py   worker entry point
 timesfm_serve/db.py       postgres: api keys, run log, jobs, job results
+timesfm_serve/metrics.py  prometheus counters and histograms
+k8s/                      kustomize base plus kind and eks overlays
 timesfm_serve/data.py     demand + weather loader used by the eval
 scripts/eval.py           rolling origin benchmark
 scripts/smoke.py          load the model and forecast a toy series

@@ -1,0 +1,17 @@
+resources:
+  - ../../base
+images:
+  - name: timesfm-serve
+    newName: pravah-api
+    newTag: latest
+patches:
+  - target: { kind: Deployment, name: api }
+    patch: |
+      - op: add
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Never
+  - target: { kind: Deployment, name: worker }
+    patch: |
+      - op: add
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Never
