@@ -55,6 +55,7 @@ if __name__ == "__main__":
     ap.add_argument("--step", type=int, default=7)
     ap.add_argument("--context", type=int, default=512)
     ap.add_argument("--horizon", type=int, default=14)
+    ap.add_argument("--out", default=None, help="write per state results csv here")
     args = ap.parse_args()
 
     origins = pd.date_range(args.start, args.end, freq=f"{args.step}D")
@@ -67,6 +68,8 @@ if __name__ == "__main__":
         print(f"{s}: {time.time() - t0:.1f}s", flush=True)
 
     res = pd.DataFrame(rows)
+    if args.out:
+        res.round(3).to_csv(args.out, index=False)
     print(f"\n{args.horizon} day ahead peak demand, weekly origins {args.start} to {args.end}, context {args.context} days")
     print(res.pivot(index="state", columns="model", values="mape").round(2).to_string())
     print("\ncrps (lower is better)")

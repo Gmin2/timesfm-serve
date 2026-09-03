@@ -1,12 +1,15 @@
 from redis import Redis
-from rq import Worker
+from rq import SimpleWorker
 
 from timesfm_serve import jobs
 
 
 def main():
-    jobs.model()  # warm the model once per worker process
-    Worker([jobs.QUEUE], connection=Redis.from_url(jobs.REDIS_URL)).work()
+    # SimpleWorker runs jobs in process instead of forking a work horse per job.
+    # forking after torch has spun up its thread pool deadlocks on linux, and
+    # we want the warmed model reused across jobs anyway.
+    jobs.model()
+    SimpleWorker([jobs.QUEUE], connection=Redis.from_url(jobs.REDIS_URL)).work()
 
 
 if __name__ == "__main__":
