@@ -39,7 +39,7 @@ def run_batch(job_id: str, items: list[dict], horizon: int):
             past_future_covariates=fut if any(f is not None for f in fut) else None,
             return_quantiles=True,
         )
-        rows = [(it["id"], o.forecast.tolist(), o.quantiles.tolist()) for it, o in zip(items, outs)]
+        rows = [(it["id"], o.forecast.tolist(), o.quantiles.tolist()) for it, o in zip(items, outs, strict=True)]
         db.save_results(job_id, rows)
         db.set_job_status(job_id, "done")
     except Exception as e:

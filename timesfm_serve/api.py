@@ -2,8 +2,8 @@ import logging
 import os
 import time
 import uuid
-from datetime import date, timedelta
 from contextlib import asynccontextmanager
+from datetime import date, timedelta
 
 import numpy as np
 import timesfm
@@ -159,13 +159,13 @@ def forecast_with_weather(req: WeatherForecastRequest, tenant: str = Depends(req
     try:
         prov = weather.get_provider(req.provider)
     except KeyError:
-        raise HTTPException(400, f"unknown weather provider {req.provider}")
+        raise HTTPException(400, f"unknown weather provider {req.provider}") from None
     start = req.last_date - timedelta(days=len(req.series) - 1)
     end = req.last_date + timedelta(days=req.horizon)
     try:
         cov = prov.covariates(req.lat, req.lon, start, end, freq="D")
     except NotImplementedError as e:
-        raise HTTPException(501, str(e))
+        raise HTTPException(501, str(e)) from None
     expected = len(req.series) + req.horizon
     if cov.shape[1] != expected:
         raise HTTPException(502, f"provider returned {cov.shape[1]} steps, expected {expected}")
