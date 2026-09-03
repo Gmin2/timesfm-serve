@@ -1,6 +1,8 @@
 import logging
+import os
 import time
 import uuid
+from datetime import date, timedelta
 from contextlib import asynccontextmanager
 
 import numpy as np
@@ -8,7 +10,7 @@ import timesfm
 from fastapi import Depends, FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from timesfm_serve import db, jobs, metrics
+from timesfm_serve import db, jobs, metrics, weather
 from timesfm_serve.auth import require_key
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -138,3 +140,39 @@ def get_job(job_id: uuid.UUID, tenant: str = Depends(require_key)):
         "finished_at": finished,
         "results": [{"id": sid, "forecast": f, "quantiles": q} for sid, f, q in results],
     }
+
+
+class WeatherForecastRequest(BaseModel):
+    """demand history for one location. the service fetches weather itself."""
+
+    series: list[float] = Field(min_length=8)
+    last_date: date
+    lat: float
+    lon: float
+    horizon: int = Field(default=14, ge=1, le=90)
+    provider: str = Field(default_factory=lambda: os.environ.get("WEATHER_PROVIDER", "open-meteo"))
+
+
+@app.post("/forecast/weather", response_model=ForecastResponse)
+def forecast_with_weather(req: WeatherForecastRequest, tenant: str = Depends(require_key)):
+    """daily demand plus a lat lon. weather covariates come from the configured provider."""
+    try:
+        prov = weather.get_provider(req.provider)
+    except KeyError:
+        raise HTTPException(400, f"unknown weather provider {req.provider}")
+    start = req.last_date - timedelta(days=len(req.series) - 1)
+    end = req.last_date + timedelta(days=req.horizon)
+    try:
+        cov = prov.covariates(req.lat, req.lon, start, end, freq="D")
+    except NotImplementedError as e:
+        raise HTTPException(501, str(e))
+    expected = len(req.series) + req.horizon
+    if cov.shape[1] != expected:
+        raise HTTPException(502, f"provider returned {cov.shape[1]} steps, expected {expected}")
+    t0 = time.perf_counter()
+    out = state["model"].predict(np.asarray(req.series, dtype=np.float32), horizon=req.horizon, past_future_covariates=cov, return_quantiles=True)
+    ms = (time.perf_counter() - t0) * 1000
+    metrics.FORECAST_SECONDS.labels("weather").observe(ms / 1000)
+    metrics.FORECAST_SERIES.labels("weather").inc()
+    db.record_run(tenant, MODEL_ID, req.horizon, len(req.series), 0, len(cov), ms)
+    return ForecastResponse(forecast=out.forecast.tolist(), quantiles=out.quantiles.tolist(), quantile_levels=[round(q, 1) for q in np.arange(0.1, 1.0, 0.1)], model=MODEL_ID)
