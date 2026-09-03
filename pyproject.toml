@@ -3,7 +3,10 @@ name = "timesfm-serve"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
+    "fastapi>=0.141.1",
     "pandas>=3.0.5",
+    "pydantic>=2.13.5",
     "requests>=2.34.2",
     "timesfm[torch]>=3.0.1",
+    "uvicorn[standard]>=0.52.4",
 ]
