@@ -9,7 +9,7 @@ def main():
     # forking after torch has spun up its thread pool deadlocks on linux, and
     # we want the warmed model reused across jobs anyway.
     jobs.model()
-    SimpleWorker([jobs.QUEUE], connection=Redis.from_url(jobs.REDIS_URL)).work()
+    SimpleWorker([jobs.QUEUE], connection=Redis.from_url(jobs.REDIS_URL), log_job_description=False).work()
 
 
 if __name__ == "__main__":

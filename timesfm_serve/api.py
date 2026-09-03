@@ -107,6 +107,8 @@ def get_job(job_id: str, tenant: str = Depends(require_key)):
     if found is None:
         raise HTTPException(404, "job not found")
     (status, n_series, horizon, error, created, started, finished), results = found
+    if jobs.reconcile(job_id, status) != status:
+        (status, n_series, horizon, error, created, started, finished), results = db.get_job(job_id, tenant)
     return {
         "job_id": job_id,
         "status": status,
