@@ -1,13 +1,14 @@
 import logging
 import time
+import uuid
 from contextlib import asynccontextmanager
 
 import numpy as np
 import timesfm
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from timesfm_serve import db
+from timesfm_serve import db, jobs
 from timesfm_serve.auth import require_key
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -78,3 +79,42 @@ def forecast(req: ForecastRequest, tenant: str = Depends(require_key)):
         quantile_levels=[round(q, 1) for q in np.arange(0.1, 1.0, 0.1)],
         model=MODEL_ID,
     )
+
+
+class SeriesItem(BaseModel):
+    id: str
+    series: list[float] = Field(min_length=8)
+    past_covariates: list[list[float]] | None = None
+    future_covariates: list[list[float]] | None = None
+
+
+class JobRequest(BaseModel):
+    items: list[SeriesItem] = Field(min_length=1, max_length=5000)
+    horizon: int = Field(default=14, ge=1, le=1000)
+
+
+@app.post("/jobs", status_code=202)
+def submit_job(req: JobRequest, tenant: str = Depends(require_key)):
+    job_id = str(uuid.uuid4())
+    db.create_job(job_id, tenant, len(req.items), req.horizon)
+    jobs.queue().enqueue(jobs.run_batch, job_id, [it.model_dump() for it in req.items], req.horizon, job_id=job_id, job_timeout=3600)
+    return {"job_id": job_id, "status": "queued"}
+
+
+@app.get("/jobs/{job_id}")
+def get_job(job_id: str, tenant: str = Depends(require_key)):
+    found = db.get_job(job_id, tenant)
+    if found is None:
+        raise HTTPException(404, "job not found")
+    (status, n_series, horizon, error, created, started, finished), results = found
+    return {
+        "job_id": job_id,
+        "status": status,
+        "n_series": n_series,
+        "horizon": horizon,
+        "error": error,
+        "created_at": created,
+        "started_at": started,
+        "finished_at": finished,
+        "results": [{"id": sid, "forecast": f, "quantiles": q} for sid, f, q in results],
+    }
