@@ -8,7 +8,7 @@ import timesfm
 from fastapi import Depends, FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from timesfm_serve import db, jobs
+from timesfm_serve import db, jobs, metrics
 from timesfm_serve.auth import require_key
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -22,6 +22,7 @@ state = {}
 async def lifespan(app):
     db.init()
     state["model"] = timesfm.TimesFM3Forecaster.from_pretrained(MODEL_ID, device="cpu")
+    metrics.MODEL_INFO.labels(model=MODEL_ID, device="cpu").set(1)
     yield
     state.clear()
 
@@ -32,11 +33,20 @@ app = FastAPI(title="timesfm-serve", lifespan=lifespan)
 @app.middleware("http")
 async def timing(request: Request, call_next):
     t0 = time.perf_counter()
-    resp = await call_next(request)
-    ms = (time.perf_counter() - t0) * 1000
-    resp.headers["x-response-time-ms"] = f"{ms:.1f}"
-    log.info("%s %s %s %.1fms", request.method, request.url.path, resp.status_code, ms)
-    return resp
+    status = 500
+    try:
+        resp = await call_next(request)
+        status = resp.status_code
+        return resp
+    finally:
+        ms = (time.perf_counter() - t0) * 1000
+        route = request.scope.get("route")
+        path = route.path if route else request.url.path
+        metrics.REQUESTS.labels(request.method, path, status).inc()
+        metrics.LATENCY.labels(request.method, path).observe(ms / 1000)
+        log.info("%s %s %s %.1fms", request.method, request.url.path, status, ms)
+        if status != 500:
+            resp.headers["x-response-time-ms"] = f"{ms:.1f}"
 
 
 class ForecastRequest(BaseModel):
@@ -51,6 +61,11 @@ class ForecastResponse(BaseModel):
     quantiles: list[list[float]]
     quantile_levels: list[float]
     model: str
+
+
+@app.get("/metrics")
+def prom_metrics():
+    return metrics.render(lambda: len(jobs.queue()))
 
 
 @app.get("/health")
@@ -72,6 +87,8 @@ def forecast(req: ForecastRequest, tenant: str = Depends(require_key)):
         return_quantiles=True,
     )
     ms = (time.perf_counter() - t0) * 1000
+    metrics.FORECAST_SECONDS.labels("sync").observe(ms / 1000)
+    metrics.FORECAST_SERIES.labels("sync").inc()
     db.record_run(tenant, MODEL_ID, req.horizon, len(ctx), 0 if past is None else len(past), 0 if fut is None else len(fut), ms)
     return ForecastResponse(
         forecast=out.forecast.tolist(),
@@ -102,7 +119,8 @@ def submit_job(req: JobRequest, tenant: str = Depends(require_key)):
 
 
 @app.get("/jobs/{job_id}")
-def get_job(job_id: str, tenant: str = Depends(require_key)):
+def get_job(job_id: uuid.UUID, tenant: str = Depends(require_key)):
+    job_id = str(job_id)
     found = db.get_job(job_id, tenant)
     if found is None:
         raise HTTPException(404, "job not found")
