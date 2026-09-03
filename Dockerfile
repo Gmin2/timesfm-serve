@@ -1,10 +1,13 @@
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
+# cpu for local and ci, gpu for the cuda node
+ARG TORCH=cpu
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy HF_HOME=/models
 WORKDIR /app
 
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-install-project --no-dev
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-install-project --no-dev --extra $TORCH
 
 COPY timesfm_serve ./timesfm_serve
 COPY scripts ./scripts

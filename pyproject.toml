@@ -3,13 +3,36 @@ name = "timesfm-serve"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi>=0.141.1",
-    "pandas>=3.0.5",
-    "psycopg[binary]>=3.3.5",
-    "pydantic>=2.13.5",
-    "redis>=8.1.0",
-    "requests>=2.34.2",
-    "rq>=2.12.0",
     "timesfm[torch]>=3.0.1",
-    "uvicorn[standard]>=0.52.4",
+    "pandas>=2.3",
+    "requests>=2.32",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.7",
+    "psycopg[binary]>=3.2",
+    "redis>=5",
+    "rq>=2",
 ]
+
+[project.optional-dependencies]
+cpu = ["torch>=2.14"]
+gpu = ["torch>=2.14"]
+
+[tool.uv]
+conflicts = [[{ extra = "cpu" }, { extra = "gpu" }]]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-gpu", extra = "gpu" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-gpu"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
