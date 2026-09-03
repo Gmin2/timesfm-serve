@@ -18,6 +18,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 COPY timesfm_serve ./timesfm_serve
 COPY scripts ./scripts
+COPY data ./data
 
 ENV PATH="/app/.venv/bin:$PATH" PYTHONPATH=/app
 EXPOSE 8000

@@ -10,7 +10,7 @@ import timesfm
 from fastapi import Depends, FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from timesfm_serve import db, jobs, metrics, weather
+from timesfm_serve import db, demo, jobs, metrics, weather
 from timesfm_serve.auth import require_key
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -30,6 +30,7 @@ async def lifespan(app):
 
 
 app = FastAPI(title="timesfm-serve", lifespan=lifespan)
+app.include_router(demo.router)
 
 
 @app.middleware("http")
