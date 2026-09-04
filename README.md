@@ -39,6 +39,57 @@ the model only runs in pytorch, so it lives in its own container behind one
 endpoint and nothing else. everything a person would actually change is
 typescript.
 
+`infra/` is the aws deployment, cdk in typescript.
+
+## why the model is not on lambda
+
+it was, first. the gateway and the model both ran as container lambdas. the
+gateway is a good fit and stayed. the model was not, and the numbers are worth
+writing down because they are the whole argument:
+
+| | on lambda |
+|---|---|
+| import torch and load weights | 95 s, on every cold start |
+| the forecast itself, once loaded | 3.9 s |
+| memory used | 2986 MB of a 3008 MB ceiling |
+
+lambda throws the loaded model away between invocations, so it pays that 95
+seconds again and again, and it did it at 99% of the memory the account allows.
+that is not a tuning problem, it is the execution model: a model server wants to
+load once and stay resident.
+
+so the split is the one production usually lands on. the api layer is
+serverless, because it is stateless and boots in about a second. the model is
+one always warm container on app runner, 1 vcpu and 3 gb, loaded once. about 20
+usd a month, which is the honest price of not making every visitor wait.
+
+two consequences worth knowing:
+
+- app runner has no architecture setting and only accepts amd64, so the
+  inference image is built for x86_64 while the gateway stays arm64.
+- app runner's public url has no iam auth, so the gateway proves itself to the
+  model with a shared secret from parameter store rather than sigv4.
+
+## deploying
+
+```bash
+aws ssm put-parameter --name /timesfm-serve/BETTER_AUTH_SECRET --type SecureString --value "$(openssl rand -base64 32)"
+aws ssm put-parameter --name /timesfm-serve/INFERENCE_API_KEY  --type SecureString --value "$(openssl rand -base64 32)"
+cd infra && pnpm install && pnpm exec cdk bootstrap && pnpm deploy
+```
+
+the stack is a postgres instance, an app runner service for the model, and a
+lambda behind a function url for the gateway. there is deliberately no nat
+gateway: the lambda stays outside the vpc so it keeps internet access for the
+weather api and github oauth, which a nat would otherwise cost about 32 usd a
+month to restore. the trade is that the database is reachable from the internet,
+so tls is forced, the password is generated into secrets manager, and the
+gateway verifies the rds certificate against a bundled ca.
+
+github sign in is optional. add `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`
+to the same parameter store prefix and it turns itself on; missing parameters
+are logged and skipped.
+
 ## api
 
 ```
