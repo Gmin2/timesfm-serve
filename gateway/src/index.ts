@@ -1,7 +1,9 @@
 import { app } from "./app.js";
+import { config } from "./config.js";
+import { migrate } from "./db.js";
 
-const port = Number(process.env.PORT ?? 3000);
+await migrate();
 
-app.listen(port, () => {
-  console.log(JSON.stringify({ level: "info", msg: "listening", port }));
+app.listen(config.port, () => {
+  console.log(JSON.stringify({ level: "info", msg: "listening", port: config.port }));
 });
