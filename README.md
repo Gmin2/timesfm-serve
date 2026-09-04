@@ -37,8 +37,12 @@ timesfm_serve/api.py      the api, loads timesfm at startup
 timesfm_serve/weather.py  weather providers, open-meteo and an indus slot
 timesfm_serve/jobs.py     batch forecasting, run on a redis queue
 timesfm_serve/worker.py   the queue worker
-timesfm_serve/db.py       postgres: api keys, run log, jobs, results
+timesfm_serve/auth.py     hashed api keys and per key rate limiting
+timesfm_serve/oauth.py    github sign in
+timesfm_serve/dashboard.py  account page: credits, create and revoke keys
+timesfm_serve/db.py       postgres: accounts, keys, credits, jobs, sessions
 timesfm_serve/demo.py     the demo page and its data
+migrations/               plain sql, applied in order behind an advisory lock
 scripts/eval.py           the benchmark that produced the table above
 ```
 
@@ -47,14 +51,17 @@ running it is `docker compose up`: the api, a queue worker, postgres and redis.
 ## api
 
 ```
-POST /forecast          series + optional covariates -> quantile forecast
-POST /forecast/weather  series + lat/lon -> the service fetches the weather
-POST /jobs              batch, up to 5000 series, returns a job id
-GET  /jobs/{id}         status and results
-GET  /metrics           prometheus
+POST /forecast           series + optional covariates -> quantile forecast
+POST /forecast/weather   series + lat/lon -> the service fetches the weather
+POST /jobs               batch, up to 5000 series, returns a job id
+GET  /jobs/{id}          status and results
+GET  /usage              credits granted, used, remaining
+GET  /weather/providers  which providers are wired up
+GET  /metrics            prometheus
 ```
 
-all take `x-api-key`. every response carries `x-response-time-ms`.
+all take `x-api-key`. every response carries `x-request-id`,
+`x-response-time-ms`, `x-ratelimit-*` and `x-credits-remaining`.
 
 ```bash
 curl -X POST localhost:8000/forecast/weather \
@@ -62,6 +69,43 @@ curl -X POST localhost:8000/forecast/weather \
   -d '{"series": [/* daily demand */], "last_date": "2024-03-01",
        "lat": 12.97, "lon": 77.59, "horizon": 14}'
 ```
+
+## accounts, keys and credits
+
+sign in with github at `/dashboard` and you get an account with 50,000 free
+credits and somewhere to mint and revoke api keys. keys are stored as sha256
+with a short prefix kept for identification, so a database leak does not leak
+anyone's credentials, and the key itself is shown exactly once.
+
+**one credit is one forecast step**, so a 14 day forecast costs 14 and a batch
+of 500 series costs `500 x horizon`. requests are not the unit because one
+request can be a thousand times more work than another.
+
+credits are a balance on the account rather than a monthly window, and they are
+reserved in a single atomic statement **before** the model runs, then refunded
+if it fails:
+
+```sql
+update accounts set credits_used = credits_used + %s
+where id = %s and suspended_at is null
+  and credits_used + %s <= credits_granted
+returning credits_granted - credits_used
+```
+
+no row back means out of credits, which is a `402`. that ordering is the part
+worth getting right: count usage afterwards and ten concurrent requests all
+pass the check and blow through the cap. there is a test that fires twenty
+concurrent reservations at a hundred credit grant and asserts exactly ten
+succeed.
+
+rate limits are a separate thing and live on the key, not the account, because
+they protect the service rather than the bill. a user rotating keys should not
+have their balance reset. the limiter runs before the reservation, so a
+throttled call is never charged.
+
+`forecast_runs` is an append only ledger. every credit spent has a row with the
+account, points, latency and request id, so a balance that looks wrong can be
+recomputed and traced back to the calls behind it.
 
 ## weather providers
 
@@ -100,6 +144,11 @@ the checkpoint.
 uv run pytest
 ```
 
+24 tests against a real postgres rather than a mock, because the parts worth
+testing are the sql: that concurrent reservations cannot oversell a grant, that
+a failed forecast refunds, that a revoked key stops working. ci runs them
+against a postgres service container.
+
 ## history worth knowing
 
 this ran three other ways before settling here, and the reasons are more useful
@@ -109,11 +158,11 @@ than the code:
   verified in kind. replaced because the operational weight was not earning
   anything at this size.
 - **a typescript gateway in front of a python inference service**, deployed on
-  aws as a lambda plus an app runner container, with accounts, a credit balance
-  charged before inference and refunded on failure, hashed api keys, per key
-  rate limits and github sign in. that is on the `typescript-gateway` branch.
-  it worked, but it was two services and two languages for a product that fits
-  in one.
+  aws as a lambda plus an app runner container. it worked, but it was two
+  services and two languages for a product that fits in one, so it was folded
+  back into this app and everything it had — accounts, credits, hashed keys,
+  rate limits, github sign in — was ported to python. the branch is
+  `typescript-gateway` if you want to see it.
 - **the model on aws lambda**, which is the one worth remembering. measured
   there it spent **95 seconds** importing torch and loading weights on every
   cold start, ran the forecast itself in 3.9 seconds, and used **2986 mb of a

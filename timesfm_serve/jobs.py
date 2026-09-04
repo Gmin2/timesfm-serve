@@ -44,6 +44,10 @@ def run_batch(job_id: str, items: list[dict], horizon: int):
         db.set_job_status(job_id, "done")
     except Exception as e:
         db.set_job_status(job_id, "failed", error=str(e)[:2000])
+        # the batch was charged when it was queued, so give it back
+        found = db.job_account_and_points(job_id)
+        if found:
+            db.refund_credits(found[0], found[1])
         raise
 
 

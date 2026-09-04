@@ -3,12 +3,27 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: tfm
+          POSTGRES_PASSWORD: tfm
+          POSTGRES_DB: tfm_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U tfm"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 15
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - run: uv sync --frozen --extra cpu
       - run: uv run ruff check .
       - run: uv run pytest -q
+        env:
+          DATABASE_URL: postgresql://tfm:tfm@localhost:5432/tfm_test
 
   image:
     runs-on: ubuntu-latest

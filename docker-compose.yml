@@ -20,6 +20,10 @@ services:
     environment: &env
       DATABASE_URL: postgresql://tfm:tfm@db:5432/tfm
       REDIS_URL: redis://redis:6379/0
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8000}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      SIGNUP_CREDITS: ${SIGNUP_CREDITS:-50000}
     depends_on:
       db: { condition: service_healthy }
       redis: { condition: service_started }

@@ -87,5 +87,12 @@ class Indus:
         raise NotImplementedError("indus api is not public. plug the client in here and return (3, n_steps).")
 
 
+PROVIDERS = {"open-meteo": OpenMeteo, "indus": Indus}
+
+
 def get_provider(name: str) -> WeatherProvider:
-    return {"open-meteo": OpenMeteo, "indus": Indus}[name]()
+    return PROVIDERS[name]()
+
+
+def provider_names() -> list[str]:
+    return list(PROVIDERS)
