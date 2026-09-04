@@ -16,6 +16,7 @@ COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --no-dev --extra $TORCH
 
+COPY inference ./inference
 COPY timesfm_serve ./timesfm_serve
 COPY scripts ./scripts
 COPY data ./data
