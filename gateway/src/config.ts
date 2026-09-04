@@ -1,4 +1,11 @@
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const here = dirname(fileURLToPath(import.meta.url));
+
 export const config = {
+  publicDir: process.env.PUBLIC_DIR ?? join(here, "..", "public"),
+  demandCsvPath: process.env.DEMAND_CSV ?? join(here, "..", "data", "demand_daily.csv"),
   port: Number(process.env.PORT ?? 3000),
   inferenceUrl: process.env.INFERENCE_URL ?? "http://localhost:8100",
   databaseUrl: process.env.DATABASE_URL ?? "postgresql://tfm:tfm@localhost:5432/tfm_gw",

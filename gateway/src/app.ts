@@ -5,6 +5,7 @@ import express, { type NextFunction, type Request, type Response } from "express
 import { getUsage } from "./accounts.js";
 import { requireKey } from "./auth.js";
 import { config } from "./config.js";
+import { demo } from "./demo.js";
 import { chargedForecast } from "./forecast.js";
 import { InferenceError, InferenceUnavailableError } from "./inference.js";
 import { log } from "./logger.js";
@@ -38,6 +39,8 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json({ limit: config.maxBodyBytes }));
+app.use(express.static(config.publicDir));
+app.use(demo);
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
