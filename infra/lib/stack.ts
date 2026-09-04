@@ -88,7 +88,7 @@ export class TimesfmStack extends Stack {
       }),
       // the model needs the memory, and lambda scales cpu with memory so this
       // is also what keeps a forecast under a second once warm
-      memorySize: 4096,
+      memorySize: 3008,
       timeout: Duration.minutes(2),
       logGroup: new logs.LogGroup(this, "InferenceLogs", {
         retention: logs.RetentionDays.ONE_WEEK,
