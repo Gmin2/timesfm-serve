@@ -13,12 +13,13 @@ export function hashKey(key: string) {
   return createHash("sha256").update(key).digest("hex");
 }
 
-export async function createApiKey(tenant: string) {
+export async function createApiKey(accountId: number, label?: string) {
   const key = PREFIX + randomBytes(24).toString("base64url");
-  await query("insert into api_keys (hash, prefix, tenant) values ($1, $2, $3)", [
+  await query("insert into api_keys (hash, prefix, account_id, label) values ($1, $2, $3, $4)", [
     hashKey(key),
     key.slice(0, PREFIX.length + 6),
-    tenant,
+    accountId,
+    label ?? null,
   ]);
   return key;
 }
@@ -29,17 +30,22 @@ export async function requireKey(req: Request, res: Response, next: NextFunction
     res.status(401).json({ error: "missing api key" });
     return;
   }
+  const keyHash = hashKey(key);
   try {
-    const { rows } = await query<{ tenant: string }>(
-      "select tenant from api_keys where hash = $1 and revoked_at is null",
-      [hashKey(key)],
+    const { rows } = await query<{ id: number; name: string; rate_limit_per_min: number }>(
+      `select a.id, a.name, a.rate_limit_per_min
+       from api_keys k
+       join accounts a on a.id = k.account_id
+       where k.hash = $1 and k.revoked_at is null and a.suspended_at is null`,
+      [keyHash],
     );
     const row = rows[0];
     if (!row) {
       res.status(401).json({ error: "invalid api key" });
       return;
     }
-    req.tenant = row.tenant;
+    req.account = { id: row.id, name: row.name, rateLimitPerMin: row.rate_limit_per_min };
+    req.keyHash = keyHash;
     next();
   } catch (err) {
     next(err);

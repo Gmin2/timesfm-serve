@@ -6,6 +6,11 @@ import pg from "pg";
 
 import { config } from "./config.js";
 
+// postgres bigints arrive as strings by default so nothing is silently lost.
+// account ids and credit balances are far below Number.MAX_SAFE_INTEGER, so
+// parsing them as numbers here is safe and saves casting at every call site.
+pg.types.setTypeParser(20, Number);
+
 export const pool = new pg.Pool({
   connectionString: config.databaseUrl,
   max: config.dbPoolMax,
@@ -50,27 +55,33 @@ export async function migrate() {
   }
 }
 
+// append only ledger. every credit spent has a row here, so a balance that
+// looks wrong can always be recomputed and traced back to the calls behind it.
 export async function recordRun(run: {
-  tenant: string;
+  accountId: number;
   model: string;
   horizon: number;
   contextLen: number;
   nPastCov: number;
   nFutureCov: number;
+  points: number;
   latencyMs: number;
+  requestId?: string;
 }) {
   await query(
     `insert into forecast_runs
-       (tenant, model, horizon, context_len, n_past_cov, n_future_cov, latency_ms)
-     values ($1, $2, $3, $4, $5, $6, $7)`,
+       (account_id, model, horizon, context_len, n_past_cov, n_future_cov, points, latency_ms, request_id)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
     [
-      run.tenant,
+      run.accountId,
       run.model,
       run.horizon,
       run.contextLen,
       run.nPastCov,
       run.nFutureCov,
+      run.points,
       run.latencyMs,
+      run.requestId ?? null,
     ],
   );
 }

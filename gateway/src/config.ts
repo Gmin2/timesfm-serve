@@ -7,4 +7,5 @@ export const config = {
   maxSeriesLength: Number(process.env.MAX_SERIES_LENGTH ?? 16_000),
   maxCovariates: Number(process.env.MAX_COVARIATES ?? 32),
   maxBodyBytes: process.env.MAX_BODY_BYTES ?? "10mb",
+  rateLimitWindowMs: Number(process.env.RATE_LIMIT_WINDOW_MS ?? 60_000),
 } as const;
