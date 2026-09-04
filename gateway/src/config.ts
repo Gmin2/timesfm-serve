@@ -8,6 +8,7 @@ export const config = {
   demandCsvPath: process.env.DEMAND_CSV ?? join(here, "..", "data", "demand_daily.csv"),
   port: Number(process.env.PORT ?? 3000),
   inferenceUrl: process.env.INFERENCE_URL ?? "http://localhost:8100",
+  inferenceAuth: process.env.INFERENCE_AUTH ?? "none",
   databaseUrl: process.env.DATABASE_URL ?? "postgresql://tfm:tfm@localhost:5432/tfm_gw",
   dbPoolMax: Number(process.env.DB_POOL_MAX ?? 10),
   inferenceTimeoutMs: Number(process.env.INFERENCE_TIMEOUT_MS ?? 30_000),

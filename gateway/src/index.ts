@@ -1,6 +1,12 @@
-import { app } from "./app.js";
-import { config } from "./config.js";
-import { migrate } from "./db.js";
+import { loadSecrets } from "./secrets.js";
+
+// secrets have to land in process.env before config.ts is evaluated, so the
+// app and config are imported dynamically after this resolves
+await loadSecrets();
+
+const { app } = await import("./app.js");
+const { config } = await import("./config.js");
+const { migrate } = await import("./db.js");
 
 await migrate();
 

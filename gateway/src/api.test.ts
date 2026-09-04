@@ -35,6 +35,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   await query("delete from forecast_runs");
   await query("delete from rate_limit_counters");
@@ -165,6 +166,9 @@ describe("forecast route", () => {
   });
 
   it("rate limits per key and does not charge the rejected calls", async () => {
+    // the limiter uses a wall clock fixed window, so without pinning the clock
+    // this test resets its own window whenever it straddles a minute boundary
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-01-01T00:00:10Z") });
     vi.spyOn(inference, "predict").mockResolvedValue(fakePrediction(1));
     await query("update accounts set rate_limit_per_min = 2 where id = $1", [accountId]);
 
@@ -183,6 +187,7 @@ describe("forecast route", () => {
       [accountId],
     );
     expect(rows[0]?.credits_used).toBe(2);
+    vi.useRealTimers();
   });
 });
 
