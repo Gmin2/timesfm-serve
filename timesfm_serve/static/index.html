@@ -1,0 +1,79 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>timesfm-serve</title>
+<style>
+  body { font: 14px/1.4 system-ui, sans-serif; margin: 2rem auto; max-width: 960px; color: #222; }
+  h1 { font-size: 1.3rem; font-weight: 600; }
+  .row { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+  input, select, button { font: inherit; padding: .35rem .5rem; }
+  input[type=password] { width: 22rem; }
+  svg { width: 100%; height: 360px; background: #fafafa; border: 1px solid #e5e5e5; }
+  .muted { color: #777; font-size: .85rem; }
+  table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  td, th { padding: .2rem .6rem; text-align: right; border-bottom: 1px solid #eee; }
+  td:first-child, th:first-child { text-align: left; }
+</style>
+<h1>daily peak demand, 14 days ahead</h1>
+<p class="muted">history is grid india daily peak met. weather covariates are fetched by the server from the configured provider (open meteo by default, indus when wired in). the band is p10 to p90 from timesfm 3.</p>
+<div class="row">
+  <select id="state"></select>
+  <label>horizon <input id="horizon" type="number" value="14" min="1" max="60" style="width:4rem"></label>
+  <input id="key" type="password" placeholder="api key">
+  <button id="go">forecast</button>
+  <span id="status" class="muted"></span>
+</div>
+<svg id="chart" viewBox="0 0 960 360" preserveAspectRatio="none"></svg>
+<p class="muted" id="legend"></p>
+<table id="table"></table>
+<script>
+const $ = s => document.querySelector(s);
+const key = localStorage.getItem("tfm_key"); if (key) $("#key").value = key;
+let hist = null;
+
+fetch("/demo/states").then(r => r.json()).then(list => {
+  for (const s of list) { const o = document.createElement("option"); o.value = s.state; o.textContent = s.state; $("#state").append(o); }
+  load();
+});
+$("#state").onchange = load;
+$("#go").onclick = run;
+
+async function load() {
+  hist = await (await fetch(`/demo/history?state=${encodeURIComponent($("#state").value)}&days=120`)).json();
+  draw(hist, null);
+}
+
+async function run() {
+  const k = $("#key").value.trim(); localStorage.setItem("tfm_key", k);
+  const horizon = +$("#horizon").value;
+  $("#status").textContent = "fetching weather and forecasting...";
+  const full = await (await fetch(`/demo/history?state=${encodeURIComponent($("#state").value)}&days=365`)).json();
+  const t0 = performance.now();
+  const r = await fetch("/forecast/weather", { method: "POST", headers: { "content-type": "application/json", "x-api-key": k },
+    body: JSON.stringify({ series: full.demand, last_date: full.dates.at(-1), lat: full.lat, lon: full.lon, horizon }) });
+  if (!r.ok) { $("#status").textContent = `error ${r.status}: ${(await r.json()).detail}`; return; }
+  const fc = await r.json();
+  $("#status").textContent = `${fc.model}, ${Math.round(performance.now() - t0)} ms round trip`;
+  draw(hist, fc);
+}
+
+function draw(h, fc) {
+  const W = 960, H = 360, P = 40;
+  const hist = h.demand, n = hist.length, m = fc ? fc.forecast.length : 0;
+  const all = hist.concat(fc ? fc.quantiles.flat() : []);
+  const lo = Math.min(...all) * 0.97, hi = Math.max(...all) * 1.03;
+  const x = i => P + (i / (n + m - 1)) * (W - 2 * P), y = v => H - P - ((v - lo) / (hi - lo)) * (H - 2 * P);
+  let s = "";
+  for (let i = 0; i < 5; i++) { const v = lo + (hi - lo) * i / 4; s += `<line x1="${P}" x2="${W - P}" y1="${y(v)}" y2="${y(v)}" stroke="#eee"/><text x="4" y="${y(v) + 4}" font-size="11" fill="#999">${Math.round(v)}</text>`; }
+  s += `<polyline fill="none" stroke="#333" stroke-width="1.5" points="${hist.map((v, i) => `${x(i)},${y(v)}`).join(" ")}"/>`;
+  if (fc) {
+    const q = fc.quantiles, idx = k => Array.from({ length: m }, (_, i) => `${x(n - 1 + i + 1)},${y(q[i][k])}`);
+    s += `<polygon fill="#2a7de1" fill-opacity=".15" stroke="none" points="${idx(0).concat(idx(8).reverse()).join(" ")}"/>`;
+    s += `<polygon fill="#2a7de1" fill-opacity=".2" stroke="none" points="${idx(2).concat(idx(6).reverse()).join(" ")}"/>`;
+    s += `<polyline fill="none" stroke="#2a7de1" stroke-width="2" points="${[`${x(n - 1)},${y(hist[n - 1])}`].concat(fc.forecast.map((v, i) => `${x(n + i)},${y(v)}`)).join(" ")}"/>`;
+    s += `<line x1="${x(n - 1)}" x2="${x(n - 1)}" y1="${P}" y2="${H - P}" stroke="#bbb" stroke-dasharray="4 3"/>`;
+    $("#legend").textContent = `black: last ${n} days. blue: p50 with p30 to p70 and p10 to p90 bands.`;
+    $("#table").innerHTML = "<tr><th>day</th><th>p10</th><th>p50</th><th>p90</th></tr>" + fc.forecast.map((v, i) => `<tr><td>+${i + 1}</td><td>${Math.round(fc.quantiles[i][0])}</td><td>${Math.round(v)}</td><td>${Math.round(fc.quantiles[i][8])}</td></tr>`).join("");
+  } else { $("#legend").textContent = `last ${n} days of ${h.state}. enter a key and press forecast.`; $("#table").innerHTML = ""; }
+  $("#chart").innerHTML = s;
+}
+</script>

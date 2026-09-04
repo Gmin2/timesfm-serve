@@ -9,6 +9,10 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
     "pydantic>=2.7",
+    "psycopg[binary]>=3.2",
+    "redis>=5",
+    "rq>=2",
+    "prometheus-client>=0.26.0",
 ]
 
 [project.optional-dependencies]
@@ -41,4 +45,4 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["bench"]
+testpaths = ["tests"]
