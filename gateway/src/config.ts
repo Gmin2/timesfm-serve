@@ -17,7 +17,8 @@ export const config = {
   rateLimitWindowMs: Number(process.env.RATE_LIMIT_WINDOW_MS ?? 60_000),
   weatherTimeoutMs: Number(process.env.WEATHER_TIMEOUT_MS ?? 15_000),
   weatherProvider: process.env.WEATHER_PROVIDER ?? "open-meteo",
-  baseUrl: process.env.BASE_URL ?? "http://localhost:3000",
+  // not BASE_URL: vite and vitest define that themselves and set it to "/"
+  baseUrl: process.env.APP_BASE_URL ?? "http://localhost:3000",
   authSecret: process.env.BETTER_AUTH_SECRET ?? "dev-secret-not-for-production",
   githubClientId: process.env.GITHUB_CLIENT_ID ?? "",
   githubClientSecret: process.env.GITHUB_CLIENT_SECRET ?? "",
