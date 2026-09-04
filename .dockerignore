@@ -1,6 +1,12 @@
+# the inference image only needs the python service, the benchmark and the lock
+.git/
 .venv/
 tmp/
-.git/
+results/
+infra/
+gateway/
 __pycache__/
 *.pyc
 .env
+.pytest_cache/
+.ruff_cache/

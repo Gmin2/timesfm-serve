@@ -1,4 +1,5 @@
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
   CfnOutput,
@@ -7,12 +8,13 @@ import {
   type StackProps,
   aws_iam as iam,
   aws_lambda as lambda,
+  RemovalPolicy,
   aws_logs as logs,
   aws_ssm as ssm,
 } from "aws-cdk-lib";
 import type { Construct } from "constructs";
 
-const root = join(import.meta.dirname, "..", "..");
+const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 export type TimesfmStackProps = StackProps & {
   /** ssm path holding DATABASE_URL, BETTER_AUTH_SECRET and the github oauth pair */
@@ -37,9 +39,11 @@ export class TimesfmStack extends Stack {
       // the model needs the memory, and lambda scales cpu with memory so this
       // is also what keeps a forecast under a second once warm
       memorySize: 4096,
-      ephemeralStorageSize: undefined,
       timeout: Duration.minutes(2),
-      logRetention: logs.RetentionDays.ONE_WEEK,
+      logGroup: new logs.LogGroup(this, "InferenceLogs", {
+        retention: logs.RetentionDays.ONE_WEEK,
+        removalPolicy: RemovalPolicy.DESTROY,
+      }),
     });
 
     // iam auth, so the model endpoint is not an open compute faucet
@@ -54,7 +58,10 @@ export class TimesfmStack extends Stack {
       }),
       memorySize: 1024,
       timeout: Duration.seconds(60),
-      logRetention: logs.RetentionDays.ONE_WEEK,
+      logGroup: new logs.LogGroup(this, "GatewayLogs", {
+        retention: logs.RetentionDays.ONE_WEEK,
+        removalPolicy: RemovalPolicy.DESTROY,
+      }),
       environment: {
         INFERENCE_URL: inferenceUrl.url,
         INFERENCE_AUTH: "iam",

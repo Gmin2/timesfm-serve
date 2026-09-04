@@ -2,6 +2,7 @@
   "name": "timesfm-infra",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "bin": {
     "infra": "bin/app.js"
   },
