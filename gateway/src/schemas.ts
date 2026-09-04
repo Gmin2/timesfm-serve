@@ -38,3 +38,16 @@ export const forecastRequest = z
   });
 
 export type ForecastRequest = z.infer<typeof forecastRequest>;
+
+export const weatherForecastRequest = z
+  .object({
+    series: z.array(finite).min(8).max(config.maxSeriesLength),
+    last_date: z.iso.date(),
+    lat: z.number().min(-90).max(90),
+    lon: z.number().min(-180).max(180),
+    horizon: z.number().int().min(1).max(90).default(14),
+    provider: z.string().max(40).default(config.weatherProvider),
+  })
+  .strict();
+
+export type WeatherForecastRequest = z.infer<typeof weatherForecastRequest>;

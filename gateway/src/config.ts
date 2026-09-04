@@ -8,4 +8,6 @@ export const config = {
   maxCovariates: Number(process.env.MAX_COVARIATES ?? 32),
   maxBodyBytes: process.env.MAX_BODY_BYTES ?? "10mb",
   rateLimitWindowMs: Number(process.env.RATE_LIMIT_WINDOW_MS ?? 60_000),
+  weatherTimeoutMs: Number(process.env.WEATHER_TIMEOUT_MS ?? 15_000),
+  weatherProvider: process.env.WEATHER_PROVIDER ?? "open-meteo",
 } as const;
