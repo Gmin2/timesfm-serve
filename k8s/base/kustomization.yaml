@@ -1,9 +1,0 @@
-resources:
-  - namespace.yaml
-  - secret.yaml
-  - db.yaml
-  - redis.yaml
-  - api.yaml
-  - worker.yaml
-  - hpa.yaml
-  - keda.yaml

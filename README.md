@@ -1,110 +1,141 @@
 # timesfm-serve
 
-a forecast serving layer for indian grid demand, built around google's timesfm 3.
-you send demand history plus weather covariates, you get back a quantile forecast
-over http. sync for single series, async batch jobs for many.
+a forecasting api for indian grid demand. you send demand history and a
+location, it fetches the weather itself, and returns a quantile forecast.
 
-the model is a stand in. the weather covariate slot is designed for a real
-weather forecast provider, and the serving layer is what an indus style model
-would need to be exposed as an api.
+the model is google's timesfm 3, used as a stand in. the point of the project
+is the serving layer around it: the thing a weather or grid model needs before
+anyone outside your company can call it.
 
-## does weather help
+## does weather actually help
 
 14 day ahead daily peak demand, weekly forecast origins from april 2023 to
-april 2024 (53 origins), 512 days of context, five states. data is grid india
-daily peak met (via zenodo 14983362) and era5 daily weather for the same states.
+april 2024 (53 origins), 512 days of context, five states. demand is grid india
+daily peak met via zenodo 14983362, weather is era5 for the same states.
 
-| model | mean mape |
+| method | mean mape |
 |---|---|
-| seasonal naive (same weekday last week) | 8.26 % |
+| seasonal naive, same weekday last week | 8.26 % |
 | timesfm 3, demand only | 6.24 % |
-| timesfm 3 + weather covariates | 4.55 % |
+| timesfm 3 with weather covariates | 4.55 % |
 
 per state numbers and crps are in `results/eval_14d_weekly_2023.csv`.
-reproduce with `python scripts/eval.py`.
+reproduce with `uv run python bench/eval.py`.
 
-caveat: the covariates are actual era5 weather for the forecast days, not a
-weather forecast. so this is the upper bound a perfect weather model would give.
-the gap between the two timesfm rows is the value of a good weather forecast.
+one caveat stated plainly: the covariates are actual era5 weather for the
+forecast days, not a weather forecast. so 4.55 % is the ceiling a perfect
+weather model would buy you. the gap between the last two rows is what a good
+weather forecast is worth, which is the whole argument for a model like indus.
+
+## shape
+
+```
+gateway/     typescript. the api, accounts, credits, keys, dashboard, demo page
+inference/   python. ~90 lines. loads timesfm and answers /predict
+bench/       python. the benchmark that produced the table above
+```
+
+the model only runs in pytorch, so it lives in its own container behind one
+endpoint and nothing else. everything a person would actually change is
+typescript.
 
 ## api
 
 ```
-GET  /health
-POST /forecast        sync, one series           x-api-key required
-POST /jobs            async batch, up to 5000    x-api-key required
-GET  /jobs/{id}       status + results           x-api-key required
+POST /v1/forecast          series + optional covariates -> quantile forecast
+POST /v1/forecast/weather  series + lat/lon -> the service fetches the weather
+GET  /v1/usage             credits granted, used, remaining
+GET  /v1/weather/providers which weather providers are wired up
 ```
 
-forecast request:
+all four take `x-api-key`. every response carries `x-request-id`,
+`x-ratelimit-*` and `x-credits-remaining`.
 
-```json
-{
-  "series": [14728.0, 15242.0, "..."],
-  "horizon": 14,
-  "future_covariates": [[...temp_mean...], [...temp_max...], [...ghi...], [...wind...]]
-}
+```bash
+curl -X POST localhost:3000/v1/forecast/weather \
+  -H "x-api-key: $KEY" -H 'content-type: application/json' \
+  -d '{"series": [/* daily demand */], "last_date": "2024-03-01",
+       "lat": 12.97, "lon": 77.59, "horizon": 14}'
 ```
 
-future covariates are shaped `[n_features][len(series) + horizon]`. past only
-covariates are `[n_features][len(series)]`. response carries the point forecast,
-nine quantiles (p10 to p90) per step and the model id.
+covariate lengths are checked before they reach the model: past covariates must
+match the series length, future covariates must cover series plus horizon. the
+model would silently pad or truncate instead, which hides a caller mistake and
+quietly ruins the forecast.
 
-## run it
+## credits
 
-```
+one credit is one forecast step, so a 14 day forecast costs 14. requests are
+not the unit because one request can be a thousand times more work than
+another.
+
+credits are a balance on the account, not a monthly window, and they are
+reserved in a single atomic statement **before** the model runs, then refunded
+if inference fails. that ordering matters: count usage afterwards and ten
+concurrent requests all pass the check and blow through the cap. running out
+returns `402`.
+
+rate limits are separate and per key, because they protect the service rather
+than the bill. a user rotates keys without their balance resetting.
+
+## weather providers
+
+`gateway/src/weather/` holds the provider interface, an open-meteo
+implementation that stitches the archive and forecast apis, and `indus.ts`,
+which is pravah's model. that one throws `501` with the shape it needs to
+return. wiring a real weather model in is implementing one method.
+
+## auth
+
+github sign in via better auth. first sign in creates an account with 50,000
+free credits. the dashboard at `/dashboard.html` shows the balance and lets you
+create and revoke keys.
+
+keys are stored as sha256 with a short prefix kept for identification, so a
+database leak does not leak anyone's credentials. the key itself is shown once,
+at creation.
+
+## running it
+
+```bash
 docker compose up -d
-docker compose exec api python scripts/create_key.py demo
-curl -X POST localhost:8000/forecast -H "x-api-key: $KEY" -H 'content-type: application/json' -d @req.json
+open http://localhost:3000
 ```
 
-the checkpoint is baked into the image at build time, so containers start in
-seconds and never talk to the hub at runtime. `--build-arg TORCH=gpu` builds
-the cuda variant for the gpu node, the default cpu image is about 4 gb, 1.4 of which is the checkpoint.
+for github sign in, copy `gateway/.env.example` to `gateway/.env`, create a
+github oauth app with callback `http://localhost:3000/api/auth/callback/github`
+and fill in the id and secret. without it everything except sign in works, and
+you can mint a key directly:
 
-## kubernetes
-
-`k8s/base` is a kustomize base: postgres statefulset, redis, api deployment
-with http probes, worker deployment with a readiness probe that only passes
-once the model is warm, an hpa on api cpu, and a keda scaledobject that scales
-the worker on redis queue depth, down to zero when idle.
-
-```
-kind create cluster --name tfm
-kind load docker-image pravah-api:latest --name tfm
-kubectl apply --server-side -f https://github.com/kedacore/keda/releases/download/v2.17.2/keda-2.17.2.yaml
-kubectl apply -k k8s/overlays/kind
-kubectl -n tfm port-forward svc/api 8080:80
+```bash
+cd gateway && pnpm key my-account "laptop"
 ```
 
-`k8s/overlays/eks` pins the worker to a tainted gpu node group and requests
-`nvidia.com/gpu: 1`. `k8s/eks-cluster.yaml` is the eksctl config with a spot
-g5.xlarge group that scales to zero. `scripts/create_eks.sh` then
-`scripts/deploy_eks.sh` do the whole thing.
+development, with the services on the host:
 
-## observability
-
-`GET /metrics` exposes prometheus metrics: request counts and latency by
-route and status, model predict latency, series forecast, queue depth and the
-loaded model. every response carries an `x-response-time-ms` header and every
-sync forecast is logged to the `forecast_runs` table with tenant and latency.
-
-## layout
-
+```bash
+cd gateway && pnpm install && pnpm dev        # :3000
+uv run uvicorn inference.main:app --port 8100 # :8100
 ```
-timesfm_serve/api.py      fastapi app, sync forecast, job submit and poll
-timesfm_serve/jobs.py     rq task that runs predict_batch on a warmed model
-timesfm_serve/worker.py   worker entry point
-timesfm_serve/db.py       postgres: api keys, run log, jobs, job results
-timesfm_serve/metrics.py  prometheus counters and histograms
-k8s/                      kustomize base plus kind and eks overlays
-timesfm_serve/data.py     demand + weather loader used by the eval
-scripts/eval.py           rolling origin benchmark
-scripts/smoke.py          load the model and forecast a toy series
+
+## tests
+
+```bash
+cd gateway && pnpm test   # 26 tests, needs postgres
+uv run pytest             # the benchmark metrics
 ```
+
+the gateway tests run against a real postgres rather than a mock, because the
+parts worth testing are the sql: that concurrent reservations never oversell a
+grant, that a failed forecast refunds, that a revoked key stops working. ci
+runs them against a postgres service container.
 
 ## license note
 
-timesfm 3 weights are under google's non commercial license. this repo is a
-demo of the serving layer, not a product. swap the model for anything with the
-same predict interface.
+timesfm 3 weights are under google's non commercial license, so this is a
+demonstration of the serving layer, not a product. swapping the model out is
+changing one container that exposes `/predict`.
+
+an earlier version of this ran on kubernetes with keda scaling a batch worker
+from zero. that is in the git history; the current target is serverless with
+scale to zero.

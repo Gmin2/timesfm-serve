@@ -17,10 +17,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --no-dev --extra $TORCH
 
 COPY inference ./inference
-COPY timesfm_serve ./timesfm_serve
-COPY scripts ./scripts
-COPY data ./data
+COPY bench ./bench
 
 ENV PATH="/app/.venv/bin:$PATH" PYTHONPATH=/app
 EXPOSE 8000
-CMD ["uvicorn", "timesfm_serve.api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "inference.main:app", "--host", "0.0.0.0", "--port", "8000"]

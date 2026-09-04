@@ -1,6 +1,6 @@
 import numpy as np
 
-from scripts.eval import crps_from_quantiles, mape
+from bench.eval import crps_from_quantiles, mape
 
 
 def test_mape_zero_when_perfect():

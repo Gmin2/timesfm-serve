@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import timesfm
 
-from timesfm_serve.data import WEATHER_COLS, load_state
+from bench.data import WEATHER_COLS, load_state
 
 QUANTILES = np.arange(0.1, 1.0, 0.1)
 

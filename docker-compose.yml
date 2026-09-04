@@ -4,31 +4,37 @@ services:
     environment:
       POSTGRES_USER: tfm
       POSTGRES_PASSWORD: tfm
-      POSTGRES_DB: tfm
+      POSTGRES_DB: tfm_gw
     ports: ["5432:5432"]
     volumes: ["pgdata:/var/lib/postgresql/data"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tfm"]
       interval: 2s
       retries: 30
-  redis:
-    image: redis:7-alpine
-    ports: ["6379:6379"]
-  api:
+
+  inference:
     build: .
-    ports: ["8000:8000"]
-    environment: &env
-      DATABASE_URL: postgresql://tfm:tfm@db:5432/tfm
-      REDIS_URL: redis://redis:6379/0
+    ports: ["8100:8000"]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)\""]
+      interval: 5s
+      timeout: 3s
+      retries: 60
+      start_period: 30s
+
+  gateway:
+    build: ./gateway
+    ports: ["3000:3000"]
+    environment:
+      DATABASE_URL: postgresql://tfm:tfm@db:5432/tfm_gw
+      INFERENCE_URL: http://inference:8000
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-secret-change-me-in-production-please}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
     depends_on:
       db: { condition: service_healthy }
-      redis: { condition: service_started }
-  worker:
-    build: .
-    command: python -m timesfm_serve.worker
-    environment: *env
-    depends_on:
-      db: { condition: service_healthy }
-      redis: { condition: service_started }
+      inference: { condition: service_healthy }
+
 volumes:
   pgdata:
