@@ -7,6 +7,7 @@ const NAMES = [
   "GITHUB_CLIENT_ID",
   "GITHUB_CLIENT_SECRET",
   "APP_BASE_URL",
+  "INFERENCE_API_KEY",
 ] as const;
 
 /**

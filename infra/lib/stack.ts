@@ -6,12 +6,15 @@ import {
   Duration,
   Stack,
   type StackProps,
+  aws_apprunner as apprunner,
   aws_ec2 as ec2,
+  aws_ecr_assets as ecr_assets,
   aws_iam as iam,
   aws_lambda as lambda,
   RemovalPolicy,
   aws_logs as logs,
   aws_rds as rds,
+  aws_ssm as ssm,
 
 } from "aws-cdk-lib";
 import type { Construct } from "constructs";
@@ -79,26 +82,68 @@ export class TimesfmStack extends Stack {
     // and graviton lambda is about 20% cheaper per gb second.
     const architecture = lambda.Architecture.ARM_64;
 
-    const inference = new lambda.DockerImageFunction(this, "Inference", {
-      architecture,
-      code: lambda.DockerImageCode.fromImageAsset(root, {
-        file: "Dockerfile",
-        buildArgs: { TORCH: "cpu" },
-        platform: { platform: "linux/arm64" },
-      }),
-      // the model needs the memory, and lambda scales cpu with memory so this
-      // is also what keeps a forecast under a second once warm
-      memorySize: 3008,
-      timeout: Duration.minutes(2),
-      logGroup: new logs.LogGroup(this, "InferenceLogs", {
-        retention: logs.RetentionDays.ONE_WEEK,
-        removalPolicy: RemovalPolicy.DESTROY,
-      }),
+    /**
+     * the model does not belong on lambda. measured there it spent 95 seconds
+     * importing torch and loading weights on every cold start, then used 2986
+     * of its 3008 mb ceiling. a model server wants to load once and stay warm,
+     * so it runs as one always-on app runner container instead. x86_64 because
+     * app runner has no architecture setting and only takes amd64 images.
+     */
+    const inferenceImage = new ecr_assets.DockerImageAsset(this, "InferenceImage", {
+      directory: root,
+      file: "Dockerfile",
+      buildArgs: { TORCH: "cpu" },
+      platform: ecr_assets.Platform.LINUX_AMD64,
     });
 
-    // iam auth, so the model endpoint is not an open compute faucet
-    const inferenceUrl = inference.addFunctionUrl({
-      authType: lambda.FunctionUrlAuthType.AWS_IAM,
+    const inferenceKeyParam = ssm.StringParameter.fromSecureStringParameterAttributes(
+      this,
+      "InferenceKeyParam",
+      { parameterName: `${props.ssmPrefix}/INFERENCE_API_KEY` },
+    );
+
+    const appRunnerAccessRole = new iam.Role(this, "AppRunnerEcrRole", {
+      assumedBy: new iam.ServicePrincipal("build.apprunner.amazonaws.com"),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSAppRunnerServicePolicyForECRAccess"),
+      ],
+    });
+
+    const inferenceInstanceRole = new iam.Role(this, "AppRunnerInstanceRole", {
+      assumedBy: new iam.ServicePrincipal("tasks.apprunner.amazonaws.com"),
+    });
+    inferenceKeyParam.grantRead(inferenceInstanceRole);
+
+    const inference = new apprunner.CfnService(this, "Inference", {
+      serviceName: "timesfm-inference",
+      sourceConfiguration: {
+        autoDeploymentsEnabled: false,
+        authenticationConfiguration: { accessRoleArn: appRunnerAccessRole.roleArn },
+        imageRepository: {
+          imageIdentifier: inferenceImage.imageUri,
+          imageRepositoryType: "ECR",
+          imageConfiguration: {
+            port: "8000",
+            runtimeEnvironmentSecrets: [
+              { name: "INFERENCE_API_KEY", value: inferenceKeyParam.parameterArn },
+            ],
+          },
+        },
+      },
+      instanceConfiguration: {
+        cpu: "1 vCPU",
+        memory: "3 GB",
+        instanceRoleArn: inferenceInstanceRole.roleArn,
+      },
+      healthCheckConfiguration: {
+        protocol: "HTTP",
+        path: "/health",
+        // loading the model takes a while on the first boot after a deploy
+        interval: 10,
+        timeout: 5,
+        healthyThreshold: 1,
+        unhealthyThreshold: 5,
+      },
     });
 
     const gateway = new lambda.DockerImageFunction(this, "Gateway", {
@@ -107,14 +152,14 @@ export class TimesfmStack extends Stack {
         platform: { platform: "linux/arm64" },
       }),
       memorySize: 1024,
-      timeout: Duration.seconds(60),
+      timeout: Duration.seconds(70),
       logGroup: new logs.LogGroup(this, "GatewayLogs", {
         retention: logs.RetentionDays.ONE_WEEK,
         removalPolicy: RemovalPolicy.DESTROY,
       }),
       environment: {
-        INFERENCE_URL: inferenceUrl.url,
-        INFERENCE_AUTH: "iam",
+        INFERENCE_URL: `https://${inference.attrServiceUrl}`,
+        INFERENCE_TIMEOUT_MS: "60000",
         SSM_PREFIX: props.ssmPrefix,
         DB_SECRET_ARN: database.secret!.secretArn,
         DB_NAME: "tfm",
@@ -127,9 +172,6 @@ export class TimesfmStack extends Stack {
     const gatewayUrl = gateway.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
     });
-
-    // the gateway signs its calls to the model endpoint
-    inferenceUrl.grantInvokeUrl(gateway);
 
     // secrets stay in parameter store and are read at cold start, so nothing
     // sensitive sits in the function config where the console shows it
@@ -151,7 +193,7 @@ export class TimesfmStack extends Stack {
     // skipped at boot, which is how github sign in stays optional.
 
     new CfnOutput(this, "GatewayUrl", { value: gatewayUrl.url });
-    new CfnOutput(this, "InferenceUrl", { value: inferenceUrl.url });
+    new CfnOutput(this, "InferenceUrl", { value: `https://${inference.attrServiceUrl}` });
     new CfnOutput(this, "SsmPrefix", { value: props.ssmPrefix });
     new CfnOutput(this, "DbEndpoint", { value: database.dbInstanceEndpointAddress });
     new CfnOutput(this, "DbSecretArn", { value: database.secret!.secretArn });

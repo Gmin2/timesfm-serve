@@ -1,22 +1,10 @@
-import { AwsClient } from "aws4fetch";
-
 import { config } from "./config.js";
 
-// the inference function url uses iam auth, so calls to it are sigv4 signed
-// with the lambda's own role. locally INFERENCE_AUTH is unset and this is a
-// plain fetch.
-let signer: AwsClient | undefined;
-
-function signedFetch(): typeof fetch {
-  if (config.inferenceAuth !== "iam") return fetch;
-  signer ??= new AwsClient({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "",
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? "",
-    ...(process.env.AWS_SESSION_TOKEN ? { sessionToken: process.env.AWS_SESSION_TOKEN } : {}),
-    service: "lambda",
-    region: process.env.AWS_REGION ?? "us-east-1",
-  });
-  return signer.fetch.bind(signer) as typeof fetch;
+// app runner exposes a public https url and has no iam auth on it, so the
+// gateway proves itself with a shared secret instead. empty locally, where the
+// inference service is on localhost and checks nothing.
+function authHeaders(): Record<string, string> {
+  return config.inferenceApiKey ? { "x-inference-key": config.inferenceApiKey } : {};
 }
 
 export type Prediction = { forecast: number[]; quantiles: number[][] };
@@ -56,9 +44,9 @@ export class InferenceUnavailableError extends Error {
 export async function predict(body: PredictBody): Promise<PredictResponse> {
   let res: Response;
   try {
-    res = await signedFetch()(`${config.inferenceUrl.replace(/\/$/, "")}/predict`, {
+    res = await fetch(`${config.inferenceUrl.replace(/\/$/, "")}/predict`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...authHeaders() },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(config.inferenceTimeoutMs),
     });

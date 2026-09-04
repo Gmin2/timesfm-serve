@@ -26,6 +26,12 @@ ENV AWS_LWA_PORT=8000 \
     AWS_LWA_READINESS_CHECK_PATH=/health \
     AWS_LWA_ASYNC_INIT=true
 
+# the checkpoint is baked in, so never phone the hub at startup. without this
+# it spends several seconds revalidating files it already has, and gains a
+# hard network dependency on huggingface for a cold start.
+ENV HF_HUB_OFFLINE=1 \
+    TRANSFORMERS_OFFLINE=1
+
 ENV PATH="/app/.venv/bin:$PATH" PYTHONPATH=/app
 EXPOSE 8000
 CMD ["uvicorn", "inference.main:app", "--host", "0.0.0.0", "--port", "8000"]

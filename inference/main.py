@@ -2,14 +2,18 @@ import logging
 import os
 import time
 from contextlib import asynccontextmanager
+from hmac import compare_digest
 
 import numpy as np
 import timesfm
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
 MODEL_ID = os.environ.get("MODEL_ID", "google/timesfm-3.0-pytorch")
 DEVICE = os.environ.get("DEVICE", "cpu")
+# app runner has no iam auth on its public url, so the gateway proves itself
+# with a shared secret. unset means open, which is what local dev wants.
+API_KEY = os.environ.get("INFERENCE_API_KEY", "")
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 log = logging.getLogger("inference")
@@ -54,12 +58,17 @@ def as_arrays(covariates, n):
     return [None if c is None else np.asarray(c, dtype=np.float32) for c in covariates]
 
 
+def require_key(x_inference_key: str | None = Header(default=None)):
+    if API_KEY and not compare_digest(x_inference_key or "", API_KEY):
+        raise HTTPException(401, "invalid inference key")
+
+
 @app.get("/health")
 def health():
     return {"ok": True, "model_loaded": "model" in state, "model": MODEL_ID, "device": DEVICE}
 
 
-@app.post("/predict", response_model=PredictResponse)
+@app.post("/predict", response_model=PredictResponse, dependencies=[Depends(require_key)])
 def predict(req: PredictRequest):
     contexts = [np.asarray(s, dtype=np.float32) for s in req.series]
     for i, c in enumerate(contexts):
