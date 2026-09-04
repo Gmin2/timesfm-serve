@@ -20,8 +20,10 @@ COPY migrations ./migrations
 COPY public ./public
 COPY data ./data
 
-# amazon rds certificate authorities, so tls to the database is verified
-ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /app/rds-ca.pem
+# amazon rds certificate authorities, so tls to the database is verified.
+# ADD from a url writes 0600 root-owned, and lambda runs as a non-root user,
+# so it has to be made readable explicitly.
+ADD --chmod=644 https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /app/rds-ca.pem
 
 # lambda web adapter. inert outside lambda, so the same image runs under
 # docker compose and as a container lambda with no code path of its own.
