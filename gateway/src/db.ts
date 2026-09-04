@@ -22,36 +22,49 @@ export function query<T extends pg.QueryResultRow>(text: string, params?: unknow
 
 const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), "..", "migrations");
 
+// arbitrary but fixed, so every instance takes the same lock
+const MIGRATION_LOCK = 8_274_119;
+
 export async function migrate() {
-  await query(
-    `create table if not exists schema_migrations (
-       name text primary key,
-       applied_at timestamptz not null default now()
-     )`,
-  );
-  const { rows } = await query<{ name: string }>("select name from schema_migrations");
-  const applied = new Set(rows.map((r) => r.name));
+  // several instances can boot at once, on lambda that is the normal case.
+  // the lock makes the loser wait and then find nothing left to apply. even
+  // "create table if not exists" has to be inside it, because concurrent ddl
+  // on the same name races in postgres and throws a duplicate key error.
+  const lock = await pool.connect();
+  try {
+    await lock.query("select pg_advisory_lock($1)", [MIGRATION_LOCK]);
 
-  const files = readdirSync(migrationsDir)
-    .filter((f) => f.endsWith(".sql"))
-    .sort();
+    await lock.query(
+      `create table if not exists schema_migrations (
+         name text primary key,
+         applied_at timestamptz not null default now()
+       )`,
+    );
 
-  for (const name of files) {
-    if (applied.has(name)) continue;
-    const sql = readFileSync(join(migrationsDir, name), "utf8");
-    const client = await pool.connect();
-    try {
-      await client.query("begin");
-      await client.query(sql);
-      await client.query("insert into schema_migrations (name) values ($1)", [name]);
-      await client.query("commit");
-      console.log(JSON.stringify({ level: "info", msg: "migration applied", name }));
-    } catch (err) {
-      await client.query("rollback");
-      throw err;
-    } finally {
-      client.release();
+    const { rows } = await lock.query<{ name: string }>("select name from schema_migrations");
+    const applied = new Set(rows.map((r) => r.name));
+
+    const files = readdirSync(migrationsDir)
+      .filter((f) => f.endsWith(".sql"))
+      .sort();
+
+    for (const name of files) {
+      if (applied.has(name)) continue;
+      const sql = readFileSync(join(migrationsDir, name), "utf8");
+      try {
+        await lock.query("begin");
+        await lock.query(sql);
+        await lock.query("insert into schema_migrations (name) values ($1)", [name]);
+        await lock.query("commit");
+        console.log(JSON.stringify({ level: "info", msg: "migration applied", name }));
+      } catch (err) {
+        await lock.query("rollback");
+        throw err;
+      }
     }
+  } finally {
+    await lock.query("select pg_advisory_unlock($1)", [MIGRATION_LOCK]).catch(() => {});
+    lock.release();
   }
 }
 

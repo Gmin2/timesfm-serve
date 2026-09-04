@@ -20,5 +20,12 @@ COPY migrations ./migrations
 COPY public ./public
 COPY data ./data
 
+# lambda web adapter. inert outside lambda, so the same image runs under
+# docker compose and as a container lambda with no code path of its own.
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 /lambda-adapter /opt/extensions/lambda-adapter
+ENV AWS_LWA_PORT=3000 \
+    AWS_LWA_READINESS_CHECK_PATH=/health \
+    AWS_LWA_ASYNC_INIT=true
+
 EXPOSE 3000
 CMD ["node", "dist/index.js"]
