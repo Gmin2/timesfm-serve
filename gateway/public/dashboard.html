@@ -1,0 +1,144 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>timesfm-serve · account</title>
+<style>
+  body {
+    font: 14px/1.5 system-ui, sans-serif;
+    margin: 2rem auto;
+    max-width: 720px;
+    padding: 0 1rem;
+    color: #222;
+  }
+  h1 { font-size: 1.3rem; font-weight: 600; }
+  h2 { font-size: 1rem; font-weight: 600; margin-top: 2rem; }
+  button, input { font: inherit; padding: .4rem .7rem; }
+  button { cursor: pointer; }
+  .muted { color: #777; font-size: .85rem; }
+  .err { color: #b00; }
+  .bar { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; margin: .4rem 0; }
+  .bar > div { height: 100%; background: #2a7de1; }
+  table { border-collapse: collapse; width: 100%; margin-top: .5rem; }
+  td, th { padding: .35rem .5rem; text-align: left; border-bottom: 1px solid #eee; font-size: .9rem; }
+  code { background: #f5f5f5; padding: .15rem .35rem; border-radius: 3px; }
+  .newkey { background: #f0f7ff; border: 1px solid #cfe3ff; padding: .75rem; border-radius: 5px; margin-top: .75rem; word-break: break-all; }
+  .revoked { color: #999; text-decoration: line-through; }
+</style>
+
+<h1>your account</h1>
+<div id="app"><p class="muted">loading...</p></div>
+
+<script>
+  const $ = (s) => document.querySelector(s);
+  const app = $("#app");
+
+  async function main() {
+    const cfg = await (await fetch("/dash/config")).json();
+    const res = await fetch("/dash/me");
+
+    if (res.status === 401) return renderSignedOut(cfg);
+    if (!res.ok) return renderError(`${res.status}: could not load your account`);
+
+    const me = await res.json();
+    renderAccount(me, cfg);
+  }
+
+  function renderError(msg) {
+    app.innerHTML = `<p class="err">${msg}</p>`;
+  }
+
+  function renderSignedOut(cfg) {
+    if (!cfg.github_configured) {
+      app.innerHTML = `
+        <p class="err">github sign in is not configured on this server.</p>
+        <p class="muted">set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET and restart.</p>`;
+      return;
+    }
+    app.innerHTML = `
+      <p>sign in to get an api key and ${cfg.signup_credits.toLocaleString()} free credits.</p>
+      <button id="signin">sign in with github</button>`;
+    $("#signin").onclick = async () => {
+      const r = await fetch("/api/auth/sign-in/social", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ provider: "github", callbackURL: "/dashboard.html" }),
+      });
+      const body = await r.json();
+      if (body.url) location.href = body.url;
+      else renderError("could not start github sign in");
+    };
+  }
+
+  function renderAccount(me, cfg) {
+    const pct = me.credits_granted ? (me.credits_used / me.credits_granted) * 100 : 0;
+    app.innerHTML = `
+      <p class="muted">signed in as ${me.email ?? "unknown"} · <a href="#" id="out">sign out</a></p>
+
+      <h2>credits</h2>
+      <div class="bar"><div style="width:${Math.min(100, pct)}%"></div></div>
+      <p class="muted">
+        ${me.credits_used.toLocaleString()} used of ${me.credits_granted.toLocaleString()},
+        ${me.credits_remaining.toLocaleString()} left ·
+        one credit is one forecast step · rate limit ${me.rate_limit_per_min}/min
+      </p>
+
+      <h2>api keys</h2>
+      <div class="row">
+        <input id="label" placeholder="label, e.g. laptop" />
+        <button id="create">create key</button>
+      </div>
+      <div id="newkey"></div>
+      <table id="keys"><tr><th>key</th><th>label</th><th>created</th><th></th></tr></table>
+
+      <h2>using it</h2>
+      <p class="muted">try the forecast on the <a href="/">demo page</a>, or call it directly:</p>
+      <pre class="muted">curl -X POST ${location.origin}/v1/forecast \\
+  -H "x-api-key: YOUR_KEY" -H "content-type: application/json" \\
+  -d '{"series": [/* at least 8 numbers */], "horizon": 14}'</pre>`;
+
+    $("#out").onclick = async (e) => {
+      e.preventDefault();
+      await fetch("/api/auth/sign-out", { method: "POST" });
+      main();
+    };
+    $("#create").onclick = createKey;
+    loadKeys();
+  }
+
+  async function loadKeys() {
+    const { keys } = await (await fetch("/dash/keys")).json();
+    const rows = keys
+      .map(
+        (k) => `<tr class="${k.revoked_at ? "revoked" : ""}">
+          <td><code>${k.prefix}...</code></td>
+          <td>${k.label ?? ""}</td>
+          <td>${new Date(k.created_at).toLocaleDateString()}</td>
+          <td>${k.revoked_at ? "revoked" : `<button data-id="${k.id}">revoke</button>`}</td>
+        </tr>`,
+      )
+      .join("");
+    $("#keys").innerHTML = `<tr><th>key</th><th>label</th><th>created</th><th></th></tr>${rows}`;
+    for (const b of document.querySelectorAll("#keys button")) {
+      b.onclick = async () => {
+        await fetch(`/dash/keys/${b.dataset.id}`, { method: "DELETE" });
+        loadKeys();
+      };
+    }
+  }
+
+  async function createKey() {
+    const label = $("#label").value.trim();
+    const res = await fetch("/dash/keys", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(label ? { label } : {}),
+    });
+    const body = await res.json();
+    if (!res.ok) return renderError(body.error ?? "could not create key");
+    $("#newkey").innerHTML = `<div class="newkey"><code>${body.key}</code><br>
+      <span class="muted">${body.note}</span></div>`;
+    $("#label").value = "";
+    loadKeys();
+  }
+
+  main();
+</script>

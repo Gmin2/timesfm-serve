@@ -4,13 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "node --env-file-if-exists=.env --import tsx --watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node --env-file-if-exists=.env dist/index.js",
+    "key": "node --env-file-if-exists=.env --import tsx src/cli/create-key.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
+    "better-auth": "^1.7.2",
     "express": "^5.2.1",
     "pg": "^8.23.0",
     "zod": "^4.5.4"

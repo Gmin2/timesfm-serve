@@ -4,7 +4,11 @@ import express, { type NextFunction, type Request, type Response } from "express
 
 import { getUsage } from "./accounts.js";
 import { requireKey } from "./auth.js";
+import { toNodeHandler } from "better-auth/node";
+
+import { auth } from "./better-auth.js";
 import { config } from "./config.js";
+import { dashboard } from "./dashboard.js";
 import { demo } from "./demo.js";
 import { chargedForecast } from "./forecast.js";
 import { InferenceError, InferenceUnavailableError } from "./inference.js";
@@ -38,9 +42,14 @@ app.use((req, res, next) => {
   next();
 });
 
+// better auth reads the raw body itself, so it must be mounted before
+// express.json or the oauth callbacks arrive already consumed
+app.all("/api/auth/*splat", toNodeHandler(auth));
+
 app.use(express.json({ limit: config.maxBodyBytes }));
 app.use(express.static(config.publicDir));
 app.use(demo);
+app.use(dashboard);
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
