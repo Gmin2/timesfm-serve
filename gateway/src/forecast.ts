@@ -53,7 +53,10 @@ export async function chargedForecast(input: ForecastInput): Promise<ForecastRes
     const first = out.predictions[0];
     if (!first) throw new Error("inference returned no predictions");
 
-    recordRun({
+    // awaited on purpose. lambda freezes the execution environment as soon as
+    // the response goes out, so a floating insert can be suspended and never
+    // land. the catch keeps a failed ledger write from breaking a good forecast.
+    await recordRun({
       accountId: account.id,
       model: out.model,
       horizon,

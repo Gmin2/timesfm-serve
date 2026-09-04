@@ -30,18 +30,24 @@ export async function migrate() {
   // the lock makes the loser wait and then find nothing left to apply. even
   // "create table if not exists" has to be inside it, because concurrent ddl
   // on the same name races in postgres and throws a duplicate key error.
-  const lock = await pool.connect();
+  //
+  // the whole run is one transaction taking a transaction scoped lock, rather
+  // than a session lock, because a pgbouncer style pooler in transaction mode
+  // (neon's pooled endpoint, for one) does not keep session state between
+  // statements and a session lock there would quietly not lock at all.
+  const client = await pool.connect();
   try {
-    await lock.query("select pg_advisory_lock($1)", [MIGRATION_LOCK]);
+    await client.query("begin");
+    await client.query("select pg_advisory_xact_lock($1)", [MIGRATION_LOCK]);
 
-    await lock.query(
+    await client.query(
       `create table if not exists schema_migrations (
          name text primary key,
          applied_at timestamptz not null default now()
        )`,
     );
 
-    const { rows } = await lock.query<{ name: string }>("select name from schema_migrations");
+    const { rows } = await client.query<{ name: string }>("select name from schema_migrations");
     const applied = new Set(rows.map((r) => r.name));
 
     const files = readdirSync(migrationsDir)
@@ -51,20 +57,19 @@ export async function migrate() {
     for (const name of files) {
       if (applied.has(name)) continue;
       const sql = readFileSync(join(migrationsDir, name), "utf8");
-      try {
-        await lock.query("begin");
-        await lock.query(sql);
-        await lock.query("insert into schema_migrations (name) values ($1)", [name]);
-        await lock.query("commit");
-        console.log(JSON.stringify({ level: "info", msg: "migration applied", name }));
-      } catch (err) {
-        await lock.query("rollback");
-        throw err;
-      }
+      await client.query(sql);
+      await client.query("insert into schema_migrations (name) values ($1)", [name]);
+      console.log(JSON.stringify({ level: "info", msg: "migration applied", name }));
     }
+
+    // postgres ddl is transactional, so the lock and every migration commit
+    // together or not at all
+    await client.query("commit");
+  } catch (err) {
+    await client.query("rollback").catch(() => {});
+    throw err;
   } finally {
-    await lock.query("select pg_advisory_unlock($1)", [MIGRATION_LOCK]).catch(() => {});
-    lock.release();
+    client.release();
   }
 }
 
