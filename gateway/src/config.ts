@@ -11,6 +11,7 @@ export const config = {
   inferenceAuth: process.env.INFERENCE_AUTH ?? "none",
   databaseUrl: process.env.DATABASE_URL ?? "postgresql://tfm:tfm@localhost:5432/tfm_gw",
   dbPoolMax: Number(process.env.DB_POOL_MAX ?? 10),
+  dbCaPath: process.env.DB_CA_PATH ?? join(here, "..", "rds-ca.pem"),
   inferenceTimeoutMs: Number(process.env.INFERENCE_TIMEOUT_MS ?? 30_000),
   maxSeriesLength: Number(process.env.MAX_SERIES_LENGTH ?? 16_000),
   maxCovariates: Number(process.env.MAX_COVARIATES ?? 32),

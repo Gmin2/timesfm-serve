@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -11,9 +11,15 @@ import { config } from "./config.js";
 // parsing them as numbers here is safe and saves casting at every call site.
 pg.types.setTypeParser(20, Number);
 
+// rds certificates chain to an amazon root that node does not ship, so verify
+// against the bundled rds ca rather than turning verification off. no ca file
+// means local postgres, where tls is not in play at all.
+const ca = config.dbCaPath && existsSync(config.dbCaPath) ? readFileSync(config.dbCaPath) : undefined;
+
 export const pool = new pg.Pool({
   connectionString: config.databaseUrl,
   max: config.dbPoolMax,
+  ...(ca ? { ssl: { ca, rejectUnauthorized: true } } : {}),
 });
 
 export function query<T extends pg.QueryResultRow>(text: string, params?: unknown[]) {

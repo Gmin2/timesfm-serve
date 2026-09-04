@@ -20,6 +20,9 @@ COPY migrations ./migrations
 COPY public ./public
 COPY data ./data
 
+# amazon rds certificate authorities, so tls to the database is verified
+ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /app/rds-ca.pem
+
 # lambda web adapter. inert outside lambda, so the same image runs under
 # docker compose and as a container lambda with no code path of its own.
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 /lambda-adapter /opt/extensions/lambda-adapter

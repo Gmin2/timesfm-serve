@@ -1,3 +1,4 @@
+import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { GetParametersCommand, SSMClient } from "@aws-sdk/client-ssm";
 
 const NAMES = [
@@ -17,7 +18,34 @@ const NAMES = [
  * must run before config.ts is imported, so index.ts imports the app
  * dynamically after awaiting this.
  */
+/**
+ * rds puts its generated credentials in secrets manager as json. build the
+ * connection string from it rather than storing the password anywhere else.
+ */
+async function loadDatabaseUrlFromRds() {
+  const arn = process.env.DB_SECRET_ARN;
+  if (!arn) return;
+
+  const client = new SecretsManagerClient({});
+  const res = await client.send(new GetSecretValueCommand({ SecretId: arn }));
+  if (!res.SecretString) return;
+
+  const s = JSON.parse(res.SecretString) as {
+    username: string;
+    password: string;
+    host: string;
+    port: number;
+    dbname?: string;
+  };
+  const db = process.env.DB_NAME ?? s.dbname ?? "postgres";
+  process.env.DATABASE_URL =
+    `postgresql://${encodeURIComponent(s.username)}:${encodeURIComponent(s.password)}` +
+    `@${s.host}:${s.port}/${db}?sslmode=require`;
+}
+
 export async function loadSecrets() {
+  await loadDatabaseUrlFromRds();
+
   const prefix = process.env.SSM_PREFIX;
   if (!prefix) return;
 
