@@ -16,8 +16,22 @@ pg.types.setTypeParser(20, Number);
 // means local postgres, where tls is not in play at all.
 const ca = config.dbCaPath && existsSync(config.dbCaPath) ? readFileSync(config.dbCaPath) : undefined;
 
+// pg parses sslmode out of the connection string and builds its own ssl config
+// from it, which then ignores the ca passed alongside and verifies against the
+// system trust store instead. so when we supply a ca, sslmode has to go.
+function connectionString() {
+  if (!ca) return config.databaseUrl;
+  try {
+    const url = new URL(config.databaseUrl);
+    url.searchParams.delete("sslmode");
+    return url.toString();
+  } catch {
+    return config.databaseUrl;
+  }
+}
+
 export const pool = new pg.Pool({
-  connectionString: config.databaseUrl,
+  connectionString: connectionString(),
   max: config.dbPoolMax,
   ...(ca ? { ssl: { ca, rejectUnauthorized: true } } : {}),
 });
