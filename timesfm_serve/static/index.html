@@ -13,11 +13,11 @@
   td, th { padding: .2rem .6rem; text-align: right; border-bottom: 1px solid #eee; }
   td:first-child, th:first-child { text-align: left; }
 </style>
-<h1>daily peak demand, 14 days ahead</h1>
+<h1>daily peak demand, <span id="hz">7</span> days ahead</h1>
 <p class="muted">history is grid india daily peak met. weather covariates are fetched by the server from the configured provider (open meteo by default, indus when wired in). the band is p10 to p90 from timesfm 3.</p>
 <div class="row">
   <select id="state"></select>
-  <label>horizon <input id="horizon" type="number" value="14" min="1" max="60" style="width:4rem"></label>
+  <label>horizon <input id="horizon" type="number" value="7" min="1" max="60" style="width:4rem"></label>
   <input id="key" type="password" placeholder="api key">
   <button id="go">forecast</button>
   <span id="status" class="muted"></span>
@@ -35,22 +35,25 @@ fetch("/demo/states").then(r => r.json()).then(list => {
   load();
 });
 $("#state").onchange = load;
+$("#horizon").onchange = load;
 $("#go").onclick = run;
 
 async function load() {
-  hist = await (await fetch(`/demo/history?state=${encodeURIComponent($("#state").value)}&days=120`)).json();
+  const shown = Math.min(180, Math.max(35, Number($("#horizon").value) * 9));
+  hist = await (await fetch(`/demo/history?state=${encodeURIComponent($("#state").value)}&days=${shown}`)).json();
   draw(hist, null);
 }
 
 async function run() {
   const k = $("#key").value.trim(); localStorage.setItem("tfm_key", k);
   const horizon = +$("#horizon").value;
+  $("#hz").textContent = $("#horizon").value;
   $("#status").textContent = "fetching weather and forecasting...";
   const full = await (await fetch(`/demo/history?state=${encodeURIComponent($("#state").value)}&days=365`)).json();
   const t0 = performance.now();
   const r = await fetch("/forecast/weather", { method: "POST", headers: { "content-type": "application/json", "x-api-key": k },
     body: JSON.stringify({ series: full.demand, last_date: full.dates.at(-1), lat: full.lat, lon: full.lon, horizon }) });
-  if (!r.ok) { $("#status").textContent = `error ${r.status}: ${(await r.json()).detail}`; return; }
+  if (!r.ok) { $("#status").textContent = `error ${r.status}: ${(await r.json()).error}`; return; }
   const fc = await r.json();
   $("#status").textContent = `${fc.model}, ${Math.round(performance.now() - t0)} ms round trip`;
   draw(hist, fc);

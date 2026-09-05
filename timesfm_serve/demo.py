@@ -15,6 +15,7 @@ COORDS = {
     "Delhi": (28.61, 77.21),
     "Maharashtra": (19.08, 72.88),
     "Tamil Nadu": (13.08, 80.27),
+    "Assam": (26.14, 91.74),
 }
 
 router = APIRouter()
