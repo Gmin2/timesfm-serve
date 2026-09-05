@@ -1,0 +1,36 @@
+{
+  "stage": "eligibility_audit_only",
+  "protocol_sha256": "016f96f94b2b0a5e997e1caa67573e32144d5a1b3d21cfbaa93a9a0b2f01ea0e",
+  "observation_source": {
+    "url": "https://www.ncei.noaa.gov/data/global-hourly/access/2025/42410099999.csv",
+    "retrieved_at": "2026-09-05T11:33:48.140492+00:00",
+    "sha256": "5cea6d723baa7a489120db65b69b1240062a063a46cceeabc97c030d5864e897",
+    "bytes": 5905075
+  },
+  "station": {
+    "id": "42410099999",
+    "name": "GUWAHATI INTERNATIONAL LOKPRIYA GOPINATH BORDOLOI INTERNATIONAL, IN",
+    "latitude": 26.106092,
+    "longitude": 91.585939,
+    "elevation_m": 49.37
+  },
+  "observation_audit": {
+    "raw_rows": 12499,
+    "rejected_temperature_rows": 17,
+    "off_hour_rows": 5343,
+    "excluded_report_type_rows": 1863,
+    "report_type": "FM-15",
+    "accepted_quality_codes": [
+      "1",
+      "5"
+    ],
+    "accepted_exact_hour_rows": 5291,
+    "duplicate_exact_hour_rows": 0,
+    "conflicting_hours": 0,
+    "first_report": "2025-01-01T00:00:00+00:00",
+    "last_report": "2025-08-24T21:30:00+00:00"
+  },
+  "planned_origins": 39,
+  "eligible_origins": 8,
+  "forecast_or_model_scores_inspected": false
+}

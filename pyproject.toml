@@ -10,12 +10,9 @@ dependencies = [
     "uvicorn[standard]>=0.30",
     "pydantic>=2.7",
     "psycopg[binary]>=3.2",
-    "redis>=5",
-    "rq>=2",
     "prometheus-client>=0.26.0",
     "psycopg-pool>=3.2",
-    "authlib>=1.8.0",
-    "itsdangerous>=2.2.0",
+    "scikit-learn>=1.9.0",
 ]
 
 [project.optional-dependencies]
@@ -42,11 +39,29 @@ url = "https://download.pytorch.org/whl/cu130"
 explicit = true
 
 [dependency-groups]
+weather-bootstrap = [
+    { include-group = "weather-api" },
+    "boto3>=1.40",
+]
+weather-ingest = [
+    { include-group = "weather-api" },
+    "pandas>=2.3",
+    "requests>=2.32",
+    "scikit-learn>=1.9.0",
+]
+weather-api = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.7",
+    "psycopg[binary]>=3.2",
+    "psycopg-pool>=3.2",
+    "prometheus-client>=0.26.0",
+]
 dev = [
     "pytest>=9.1.1",
     "ruff>=0.16.5",
-    "scikit-learn>=1.9.0",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]

@@ -1,0 +1,43 @@
+split,station,origin,run,status,reason,detail,imputed_history_hours,target_observed_hours,scored_hours
+development,42410099999,2025-04-01 06:00:00+00:00,2025-04-01 00:00:00+00:00,data_rejected,history_policy,Missing history exceeds 10% of the context,,39,0
+development,43128599999,2025-04-01 06:00:00+00:00,2025-04-01 00:00:00+00:00,data_rejected,history_policy,Missing history exceeds 10% of the context,,44,0
+development,43279099999,2025-04-01 06:00:00+00:00,2025-04-01 00:00:00+00:00,data_rejected,history_policy,History has a leading gap or a gap longer than 6 hours,,48,0
+development,42410099999,2025-04-03 06:00:00+00:00,2025-04-03 00:00:00+00:00,data_rejected,history_policy,Missing history exceeds 10% of the context,,8,0
+development,43128599999,2025-04-03 06:00:00+00:00,2025-04-03 00:00:00+00:00,data_rejected,history_policy,Missing history exceeds 10% of the context,,46,0
+development,43279099999,2025-04-03 06:00:00+00:00,2025-04-03 00:00:00+00:00,data_rejected,history_policy,History has a leading gap or a gap longer than 6 hours,,48,0
+development,42410099999,2025-04-05 06:00:00+00:00,2025-04-05 00:00:00+00:00,data_rejected,history_policy;no_verification_observations,Missing history exceeds 10% of the context,,0,0
+development,43128599999,2025-04-05 06:00:00+00:00,2025-04-05 00:00:00+00:00,scored,,,10.0,45,45
+development,43279099999,2025-04-05 06:00:00+00:00,2025-04-05 00:00:00+00:00,scored,,,1.0,48,48
+development,42410099999,2025-04-07 06:00:00+00:00,2025-04-07 00:00:00+00:00,data_rejected,history_policy,Missing history exceeds 10% of the context,,29,0
+development,43128599999,2025-04-07 06:00:00+00:00,2025-04-07 00:00:00+00:00,scored,,,11.0,46,46
+development,43279099999,2025-04-07 06:00:00+00:00,2025-04-07 00:00:00+00:00,scored,,,1.0,48,48
+development,42410099999,2025-04-09 06:00:00+00:00,2025-04-09 00:00:00+00:00,data_rejected,history_policy,Missing history exceeds 10% of the context,,44,0
+development,43128599999,2025-04-09 06:00:00+00:00,2025-04-09 00:00:00+00:00,scored,,,8.0,45,45
+development,43279099999,2025-04-09 06:00:00+00:00,2025-04-09 00:00:00+00:00,scored,,,0.0,48,48
+development,42410099999,2025-04-11 06:00:00+00:00,2025-04-11 00:00:00+00:00,data_rejected,history_policy,Missing history exceeds 10% of the context,,32,0
+development,43128599999,2025-04-11 06:00:00+00:00,2025-04-11 00:00:00+00:00,scored,,,9.0,46,46
+development,43279099999,2025-04-11 06:00:00+00:00,2025-04-11 00:00:00+00:00,scored,,,0.0,48,48
+development,42410099999,2025-04-13 06:00:00+00:00,2025-04-13 00:00:00+00:00,data_rejected,history_policy,Missing history exceeds 10% of the context,,47,0
+development,43128599999,2025-04-13 06:00:00+00:00,2025-04-13 00:00:00+00:00,scored,,,8.0,46,46
+development,43279099999,2025-04-13 06:00:00+00:00,2025-04-13 00:00:00+00:00,scored,,,0.0,48,48
+development,42410099999,2025-04-15 06:00:00+00:00,2025-04-15 00:00:00+00:00,data_rejected,history_policy,Missing history exceeds 10% of the context,,48,0
+development,43128599999,2025-04-15 06:00:00+00:00,2025-04-15 00:00:00+00:00,scored,,,8.0,48,48
+development,43279099999,2025-04-15 06:00:00+00:00,2025-04-15 00:00:00+00:00,scored,,,0.0,48,48
+development,42410099999,2025-04-17 06:00:00+00:00,2025-04-17 00:00:00+00:00,data_rejected,history_policy,Missing history exceeds 10% of the context,,48,0
+development,43128599999,2025-04-17 06:00:00+00:00,2025-04-17 00:00:00+00:00,data_rejected,history_policy,History has a leading gap or a gap longer than 6 hours,,47,0
+development,43279099999,2025-04-17 06:00:00+00:00,2025-04-17 00:00:00+00:00,scored,,,0.0,48,48
+development,42410099999,2025-04-19 06:00:00+00:00,2025-04-19 00:00:00+00:00,scored,,,1.0,43,43
+development,43128599999,2025-04-19 06:00:00+00:00,2025-04-19 00:00:00+00:00,scored,,,5.0,46,46
+development,43279099999,2025-04-19 06:00:00+00:00,2025-04-19 00:00:00+00:00,scored,,,0.0,48,48
+development,42410099999,2025-04-21 06:00:00+00:00,2025-04-21 00:00:00+00:00,scored,,,5.0,43,43
+development,43128599999,2025-04-21 06:00:00+00:00,2025-04-21 00:00:00+00:00,scored,,,3.0,46,46
+development,43279099999,2025-04-21 06:00:00+00:00,2025-04-21 00:00:00+00:00,scored,,,0.0,48,48
+development,42410099999,2025-04-23 06:00:00+00:00,2025-04-23 00:00:00+00:00,scored,,,10.0,45,45
+development,43128599999,2025-04-23 06:00:00+00:00,2025-04-23 00:00:00+00:00,scored,,,5.0,45,45
+development,43279099999,2025-04-23 06:00:00+00:00,2025-04-23 00:00:00+00:00,scored,,,0.0,48,48
+development,42410099999,2025-04-25 06:00:00+00:00,2025-04-25 00:00:00+00:00,scored,,,13.0,34,34
+development,43128599999,2025-04-25 06:00:00+00:00,2025-04-25 00:00:00+00:00,scored,,,8.0,45,45
+development,43279099999,2025-04-25 06:00:00+00:00,2025-04-25 00:00:00+00:00,scored,,,0.0,48,48
+development,42410099999,2025-04-27 06:00:00+00:00,2025-04-27 00:00:00+00:00,data_rejected,history_policy,Missing history exceeds 10% of the context,,47,0
+development,43128599999,2025-04-27 06:00:00+00:00,2025-04-27 00:00:00+00:00,scored,,,8.0,45,45
+development,43279099999,2025-04-27 06:00:00+00:00,2025-04-27 00:00:00+00:00,scored,,,0.0,47,47

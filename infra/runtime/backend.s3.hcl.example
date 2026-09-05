@@ -1,0 +1,7 @@
+# Existing, dedicated, encrypted, private and versioned state bucket.
+# Create/configure it only after cloud cost approval. Do not use the artifact bucket.
+bucket       = "REPLACE-existing-state-bucket"
+key          = "weather/pilot.tfstate"
+region       = "us-east-1"
+encrypt      = true
+use_lockfile = true

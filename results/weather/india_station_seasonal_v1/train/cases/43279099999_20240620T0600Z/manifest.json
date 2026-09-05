@@ -1,0 +1,46 @@
+{
+  "protocol_sha256": "fd8704bd6d225f8b38303b348e80aab56f678cf3c5af5df9cb9c2c0324b251e9",
+  "source_snapshot_sha256": "f3b1958d5abc5bc6d89e4205de108afd0a4614312b9c063aa2fffd9af4359720",
+  "pipeline_sha256": {
+    "weather_case.py": "a6493a04504587cb7c990e631b80ba12d03797129cae0b1c7a69a98fa4b39584",
+    "weather_model.py": "5bd029d5030520d051b1e199f999972c0d77422d357aee98f61b4036c16bc447",
+    "weather_correction.py": "b4277d4393401b49e94ec0a17737598352d2e14c04add660aab67ff3b9bdf295",
+    "weather_conditioned.py": "86e487d750e8d1cb513057f827b655811d3481f8aac646244efdc81ac330aa1b",
+    "weather_correction_backtest.py": "4ae947fb1698236d16bdb890730438a3d4237f28f05e32ad6cbd7fe6cf761ddd",
+    "weather_seasonal.py": "b6f34ef54a4bf62be9aa05cc829e28aa3a4475a9e96a8d498da4ffb6e4b6dabd",
+    "weather_seasonal_data.py": "ff64d6b09b57ba08d51d443bacda2670720aa6bc1df7f621a415ea4071dafc10"
+  },
+  "runtime_versions": {
+    "numpy": "2.5.2",
+    "pandas": "3.0.5",
+    "scikit-learn": "1.9.0",
+    "torch": "2.14.0",
+    "timesfm": "3.0.1"
+  },
+  "station": "43279099999",
+  "origin": "2024-06-20T06:00:00+00:00",
+  "run": "2024-06-20T00:00:00+00:00",
+  "status": "ready",
+  "forecast_source": {
+    "url": "https://single-runs-api.open-meteo.com/v1/forecast?elevation=15.8&forecast_hours=55&hourly=temperature_2m&latitude=12.9944&longitude=80.1805&models=ecmwf_ifs&run=2024-06-20T00%3A00&temperature_unit=celsius&timezone=UTC",
+    "retrieved_at": "2026-09-05T12:46:43.915369+00:00",
+    "sha256": "2edf3d3eabf35768d2d70edeb53bad64b5409cbd808e588b7b41d144e3e0927d",
+    "bytes": 1586
+  },
+  "forecast_grid": {
+    "latitude": 12.970123,
+    "longitude": 80.181816,
+    "elevation": 15.8
+  },
+  "history_policy": {
+    "name": "causal_forward_fill_v1",
+    "context_hours": 168,
+    "max_gap_hours": 6,
+    "max_imputed_fraction": 0.1,
+    "mask_usage": "audit_only_not_a_model_covariate"
+  },
+  "artifact_sha256": {
+    "model_input.csv": "3efae415bea9bd5281cd7432f7d90795937ef72716f9cc02cd18e4483ac25747",
+    "predictions.csv": "a23715c449c5e4b60f2f5d1f31cd6f93433bd9a4a368b65e0f71272d6f66b7ff"
+  }
+}

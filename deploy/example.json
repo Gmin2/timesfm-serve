@@ -1,0 +1,33 @@
+{
+  "example": true,
+  "infrastructure": {
+    "region": "us-east-1",
+    "cluster_name": "pravah-weather-pilot",
+    "artifact_bucket": "pravah-weather-pilot-123456789012",
+    "database_host": "example.us-east-1.rds.amazonaws.com",
+    "database_name": "weather",
+    "admin_secret_arn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:example-admin-ABCDEF",
+    "runtime_secrets": {
+      "api": "arn:aws:secretsmanager:us-east-1:123456789012:secret:example-api-ABCDEF",
+      "worker": "arn:aws:secretsmanager:us-east-1:123456789012:secret:example-worker-ABCDEF",
+      "ingest": "arn:aws:secretsmanager:us-east-1:123456789012:secret:example-ingest-ABCDEF"
+    },
+    "repositories": {
+      "api": "123456789012.dkr.ecr.us-east-1.amazonaws.com/pravah-weather-pilot/api",
+      "worker": "123456789012.dkr.ecr.us-east-1.amazonaws.com/pravah-weather-pilot/worker",
+      "ingest": "123456789012.dkr.ecr.us-east-1.amazonaws.com/pravah-weather-pilot/ingest",
+      "bootstrap": "123456789012.dkr.ecr.us-east-1.amazonaws.com/pravah-weather-pilot/bootstrap"
+    },
+    "gpu_nodes": 0
+  },
+  "images": {
+    "api": "123456789012.dkr.ecr.us-east-1.amazonaws.com/pravah-weather-pilot/api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "worker": "123456789012.dkr.ecr.us-east-1.amazonaws.com/pravah-weather-pilot/worker@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "ingest": "123456789012.dkr.ecr.us-east-1.amazonaws.com/pravah-weather-pilot/ingest@sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "bootstrap": "123456789012.dkr.ecr.us-east-1.amazonaws.com/pravah-weather-pilot/bootstrap@sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+  },
+  "artifacts": {
+    "replays": {"key": "replays/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.tar.gz", "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"},
+    "models": {"key": "models/ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff.tar.gz", "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}
+  }
+}

@@ -1,0 +1,12 @@
+# Copy to an ignored pilot.tfvars only after filling in real prerequisites.
+# Keeping this false makes any plan fail before provisioning.
+deployment_approved = false
+account_id          = "123456789012"
+region              = "us-east-1"
+name                = "pravah-weather-pilot"
+operator_role_arn   = "arn:aws:iam::123456789012:role/REPLACE-operator"
+operator_cidrs      = ["203.0.113.1/32"]
+budget_email        = null # Optional; no email notifications until supplied.
+monthly_budget_usd  = 300
+gpu_nodes           = 0
+protect_data        = true

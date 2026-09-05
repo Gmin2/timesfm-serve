@@ -1,0 +1,26 @@
+split,origin,run,status,reason,detail,history_observed_hours,history_missing_hours,previous_day_missing_hours,target_observed_hours,max_source_age_hours,scored_hours
+holdout,2025-07-05 06:00:00+00:00,2025-07-05 00:00:00+00:00,data_rejected,incomplete_previous_day,,638,34,4,48,6.0,0
+holdout,2025-07-07 06:00:00+00:00,2025-07-07 00:00:00+00:00,scored,,,644,28,0,48,6.0,48
+holdout,2025-07-09 06:00:00+00:00,2025-07-09 00:00:00+00:00,scored,,,649,23,0,47,6.0,47
+holdout,2025-07-11 06:00:00+00:00,2025-07-11 00:00:00+00:00,data_rejected,incomplete_previous_day,,655,17,1,48,4.0,0
+holdout,2025-07-13 06:00:00+00:00,2025-07-13 00:00:00+00:00,scored,,,657,15,0,46,4.0,46
+holdout,2025-07-15 06:00:00+00:00,2025-07-15 00:00:00+00:00,data_rejected,incomplete_previous_day,,657,15,1,46,4.0,0
+holdout,2025-07-17 06:00:00+00:00,2025-07-17 00:00:00+00:00,data_rejected,incomplete_previous_day,,659,13,1,48,3.0,0
+holdout,2025-07-19 06:00:00+00:00,2025-07-19 00:00:00+00:00,scored,,,659,13,0,40,3.0,40
+holdout,2025-07-21 06:00:00+00:00,2025-07-21 00:00:00+00:00,data_rejected,history_policy;incomplete_previous_day,History has a leading gap or a gap longer than 6 hours,653,19,7,47,,0
+holdout,2025-07-23 06:00:00+00:00,2025-07-23 00:00:00+00:00,data_rejected,history_policy;incomplete_previous_day,History has a leading gap or a gap longer than 6 hours,652,20,1,47,,0
+holdout,2025-07-25 06:00:00+00:00,2025-07-25 00:00:00+00:00,data_rejected,history_policy;incomplete_previous_day,History has a leading gap or a gap longer than 6 hours,652,20,1,48,,0
+holdout,2025-07-27 06:00:00+00:00,2025-07-27 00:00:00+00:00,data_rejected,history_policy,History has a leading gap or a gap longer than 6 hours,652,20,0,43,,0
+holdout,2025-07-29 06:00:00+00:00,2025-07-29 00:00:00+00:00,data_rejected,history_policy;incomplete_previous_day,History has a leading gap or a gap longer than 6 hours,648,24,5,48,,0
+holdout,2025-07-31 06:00:00+00:00,2025-07-31 00:00:00+00:00,data_rejected,history_policy,History has a leading gap or a gap longer than 6 hours,648,24,0,48,,0
+holdout,2025-08-02 06:00:00+00:00,2025-08-02 00:00:00+00:00,data_rejected,history_policy,History has a leading gap or a gap longer than 6 hours,652,20,0,48,,0
+holdout,2025-08-04 06:00:00+00:00,2025-08-04 00:00:00+00:00,data_rejected,history_policy,History has a leading gap or a gap longer than 6 hours,652,20,0,47,,0
+holdout,2025-08-06 06:00:00+00:00,2025-08-06 00:00:00+00:00,data_rejected,history_policy;incomplete_previous_day,History has a leading gap or a gap longer than 6 hours,651,21,1,47,,0
+holdout,2025-08-08 06:00:00+00:00,2025-08-08 00:00:00+00:00,data_rejected,history_policy;incomplete_previous_day,History has a leading gap or a gap longer than 6 hours,651,21,1,47,,0
+holdout,2025-08-10 06:00:00+00:00,2025-08-10 00:00:00+00:00,data_rejected,history_policy,History has a leading gap or a gap longer than 6 hours,650,22,0,48,,0
+holdout,2025-08-12 06:00:00+00:00,2025-08-12 00:00:00+00:00,data_rejected,history_policy,History has a leading gap or a gap longer than 6 hours,652,20,0,48,,0
+holdout,2025-08-14 06:00:00+00:00,2025-08-14 00:00:00+00:00,data_rejected,history_policy,History has a leading gap or a gap longer than 6 hours,654,18,0,48,,0
+holdout,2025-08-16 06:00:00+00:00,2025-08-16 00:00:00+00:00,data_rejected,history_policy,History has a leading gap or a gap longer than 6 hours,654,18,0,48,,0
+holdout,2025-08-18 06:00:00+00:00,2025-08-18 00:00:00+00:00,scored,,,662,10,0,46,3.0,46
+holdout,2025-08-20 06:00:00+00:00,2025-08-20 00:00:00+00:00,data_rejected,incomplete_previous_day,,661,11,2,47,3.0,0
+holdout,2025-08-22 06:00:00+00:00,2025-08-22 00:00:00+00:00,data_rejected,incomplete_previous_day,,661,11,1,45,3.0,0

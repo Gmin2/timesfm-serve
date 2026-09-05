@@ -1,0 +1,43 @@
+{
+  "protocol_sha256": "ed8f97fa2c0e58057e7fbeb6a4bbb66199204def9bf06635289fe2d9e6e34228",
+  "pipeline_sha256": {
+    "weather_case.py": "a6493a04504587cb7c990e631b80ba12d03797129cae0b1c7a69a98fa4b39584",
+    "weather_model.py": "5bd029d5030520d051b1e199f999972c0d77422d357aee98f61b4036c16bc447",
+    "weather_correction.py": "b4277d4393401b49e94ec0a17737598352d2e14c04add660aab67ff3b9bdf295",
+    "weather_conditioned.py": "86e487d750e8d1cb513057f827b655811d3481f8aac646244efdc81ac330aa1b",
+    "weather_correction_backtest.py": "4ae947fb1698236d16bdb890730438a3d4237f28f05e32ad6cbd7fe6cf761ddd"
+  },
+  "runtime_versions": {
+    "numpy": "2.5.2",
+    "pandas": "3.0.5",
+    "scikit-learn": "1.9.0",
+    "torch": "2.14.0",
+    "timesfm": "3.0.1"
+  },
+  "station": "42410099999",
+  "origin": "2025-03-14T06:00:00+00:00",
+  "run": "2025-03-14T00:00:00+00:00",
+  "status": "ready",
+  "forecast_source": {
+    "url": "https://single-runs-api.open-meteo.com/v1/forecast?elevation=49.37&forecast_hours=55&hourly=temperature_2m&latitude=26.106092&longitude=91.585939&models=ecmwf_ifs&run=2025-03-14T00%3A00&temperature_unit=celsius&timezone=UTC",
+    "retrieved_at": "2026-09-05T12:27:59.500268+00:00",
+    "sha256": "b23bebc6a3d3d779325791fbc3ce5da657219fa2710d945aad29a23e7eacc84d",
+    "bytes": 1584
+  },
+  "forecast_grid": {
+    "latitude": 26.115992,
+    "longitude": 91.57722,
+    "elevation": 49.37
+  },
+  "history_policy": {
+    "name": "causal_forward_fill_v1",
+    "context_hours": 168,
+    "max_gap_hours": 6,
+    "max_imputed_fraction": 0.1,
+    "mask_usage": "audit_only_not_a_model_covariate"
+  },
+  "artifact_sha256": {
+    "model_input.csv": "10592c37c3a6e8cff70ecb34f74f8574ae41506d9a3103f8e78e0205bb55e51a",
+    "predictions.csv": "eebb52d6a025e59058438e8f74e17d17cde53db81d8271959e8351f40a00fc53"
+  }
+}

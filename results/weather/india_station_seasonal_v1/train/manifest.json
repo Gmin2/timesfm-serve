@@ -1,0 +1,993 @@
+{
+  "protocol_sha256": "fd8704bd6d225f8b38303b348e80aab56f678cf3c5af5df9cb9c2c0324b251e9",
+  "source_snapshot_sha256": "f3b1958d5abc5bc6d89e4205de108afd0a4614312b9c063aa2fffd9af4359720",
+  "pipeline_sha256": {
+    "weather_case.py": "a6493a04504587cb7c990e631b80ba12d03797129cae0b1c7a69a98fa4b39584",
+    "weather_model.py": "5bd029d5030520d051b1e199f999972c0d77422d357aee98f61b4036c16bc447",
+    "weather_correction.py": "b4277d4393401b49e94ec0a17737598352d2e14c04add660aab67ff3b9bdf295",
+    "weather_conditioned.py": "86e487d750e8d1cb513057f827b655811d3481f8aac646244efdc81ac330aa1b",
+    "weather_correction_backtest.py": "4ae947fb1698236d16bdb890730438a3d4237f28f05e32ad6cbd7fe6cf761ddd",
+    "weather_seasonal.py": "b6f34ef54a4bf62be9aa05cc829e28aa3a4475a9e96a8d498da4ffb6e4b6dabd",
+    "weather_seasonal_data.py": "ff64d6b09b57ba08d51d443bacda2670720aa6bc1df7f621a415ea4071dafc10"
+  },
+  "runtime_versions": {
+    "numpy": "2.5.2",
+    "pandas": "3.0.5",
+    "scikit-learn": "1.9.0",
+    "torch": "2.14.0",
+    "timesfm": "3.0.1"
+  },
+  "stage": "train",
+  "run_status": "complete",
+  "started_at": "2026-09-05T12:49:25.671138+00:00",
+  "limits": [
+    "Three fixed airports and sampled origins, not an India-wide, full-grid or complete operational benchmark; no direct Indus predictions are available.",
+    "The new GHCNh provider harmonizes SYNOP and METAR temperature and has different metadata/QC from the old ISD pilot. All current methods share this source; old May scores are not directly comparable.",
+    "Source 223 quality 1 means good. For new NOAA sources 412/413, an empty quality flag is accepted but is not proof that all QC passed. Source IDs, report types and flags remain auditable.",
+    "Older IFS data are Cycle 49R1 hindcasts. Runs from May 12, 2026 06 UTC use Cycle 50R1. Forecast publication and observation receipt times remain unverified; the six-hour run age and inputs through origin are assumptions.",
+    "GHCNh is a retrospective harmonized/QC product, not a snapshot of exactly the observations available at historical issuance time.",
+    "Checkpoint pretraining exclusion is unverified. The fresh holdout is unseen by this project's model selection, not proven absent from foundation-model training.",
+    "All model choices and the protocol were informed by previous development work, but April-August 2025 evaluation targets are excluded and no settings are tuned on May.",
+    "No refitting or station/lead/model switching after development selection. Every rejected or failed scheduled case is counted.",
+    "A pass supports only the declared retrospective sampled station comparison, not operational, India-wide, or Pravah superiority."
+  ],
+  "observations": {
+    "42410099999": {
+      "station": {
+        "id": "42410099999",
+        "ghcnh_id": "INU042410-1",
+        "name": "Guwahati",
+        "latitude": 26.1,
+        "longitude": 91.58,
+        "elevation_m": 54.0
+      },
+      "sources": [
+        {
+          "station": "42410099999",
+          "year": 2024,
+          "source": {
+            "url": "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2024/psv/GHCNh_INU042410-1_2024.psv",
+            "retrieved_at": "2026-09-05T12:40:54.697106+00:00",
+            "sha256": "8594eef9f1d5b261a5c31e49223209649ff142e2e70b5ed1981a4181afc0acec",
+            "bytes": 13382634
+          },
+          "audit": {
+            "raw_rows": 16553,
+            "accepted_exact_hour_rows": 8346,
+            "accepted_unique_hours": 8346,
+            "off_hour_rows": 8200,
+            "invalid_temperature_rows": 2,
+            "rejected_source_quality_report_rows": 14,
+            "rejected_identity_rows": 2,
+            "rejected_measurement_rows": 0,
+            "duplicate_rows": 0,
+            "conflicting_hours": 0,
+            "first_report": "2024-01-01T00:00:00+00:00",
+            "last_report": "2024-12-31T23:30:00+00:00",
+            "source_quality_report_counts": [
+              {
+                "temperature_Source_Code": "",
+                "temperature_Quality_Code": "",
+                "temperature_Report_Type": "",
+                "rows": 2
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "1",
+                "temperature_Report_Type": "FM12",
+                "rows": 2720
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "1",
+                "temperature_Report_Type": "FM15",
+                "rows": 13819
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "1",
+                "temperature_Report_Type": "FM16",
+                "rows": 1
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "2",
+                "temperature_Report_Type": "FM12",
+                "rows": 2
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "2",
+                "temperature_Report_Type": "FM15",
+                "rows": 1
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "4",
+                "temperature_Report_Type": "FM15",
+                "rows": 8
+              }
+            ]
+          },
+          "metadata": {
+            "id": "42410099999",
+            "ghcnh_id": "INU042410-1",
+            "name": "Guwahati",
+            "latitude": 26.1,
+            "longitude": 91.58,
+            "elevation_m": 54.0
+          }
+        },
+        {
+          "station": "42410099999",
+          "year": 2025,
+          "source": {
+            "url": "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2025/psv/GHCNh_INU042410-1_2025.psv",
+            "retrieved_at": "2026-09-05T12:41:32.540657+00:00",
+            "sha256": "52f085c2288803e714dd8b586b0d36a6f3b0002d305c96701e7e87e141a84ccd",
+            "bytes": 13530389
+          },
+          "audit": {
+            "raw_rows": 16780,
+            "accepted_exact_hour_rows": 8401,
+            "accepted_unique_hours": 8401,
+            "off_hour_rows": 8369,
+            "invalid_temperature_rows": 6,
+            "rejected_source_quality_report_rows": 20,
+            "rejected_identity_rows": 6,
+            "rejected_measurement_rows": 0,
+            "duplicate_rows": 0,
+            "conflicting_hours": 0,
+            "first_report": "2025-01-01T00:00:00+00:00",
+            "last_report": "2025-12-31T23:30:00+00:00",
+            "source_quality_report_counts": [
+              {
+                "temperature_Source_Code": "",
+                "temperature_Quality_Code": "",
+                "temperature_Report_Type": "",
+                "rows": 6
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "1",
+                "temperature_Report_Type": "FM12",
+                "rows": 2857
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "1",
+                "temperature_Report_Type": "FM15",
+                "rows": 13903
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "1",
+                "temperature_Report_Type": "FM16",
+                "rows": 3
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "2",
+                "temperature_Report_Type": "FM15",
+                "rows": 4
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "4",
+                "temperature_Report_Type": "FM15",
+                "rows": 7
+              }
+            ]
+          },
+          "metadata": {
+            "id": "42410099999",
+            "ghcnh_id": "INU042410-1",
+            "name": "Guwahati",
+            "latitude": 26.1,
+            "longitude": 91.58,
+            "elevation_m": 54.0
+          }
+        },
+        {
+          "station": "42410099999",
+          "year": 2026,
+          "source": {
+            "url": "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2026/psv/GHCNh_INU042410-1_2026.psv",
+            "retrieved_at": "2026-09-05T12:40:32.022304+00:00",
+            "sha256": "e9692153582189a97b0b7a2f5f1928e9ac404a7ef4e5d1b7f1380466ee1259de",
+            "bytes": 9167495
+          },
+          "audit": {
+            "raw_rows": 11646,
+            "accepted_exact_hour_rows": 5817,
+            "accepted_unique_hours": 5817,
+            "off_hour_rows": 5826,
+            "invalid_temperature_rows": 3,
+            "rejected_source_quality_report_rows": 3815,
+            "rejected_identity_rows": 3,
+            "rejected_measurement_rows": 0,
+            "duplicate_rows": 0,
+            "conflicting_hours": 0,
+            "first_report": "2026-01-01T00:00:00+00:00",
+            "last_report": "2026-09-01T15:30:00+00:00",
+            "source_quality_report_counts": [
+              {
+                "temperature_Source_Code": "",
+                "temperature_Quality_Code": "",
+                "temperature_Report_Type": "",
+                "rows": 3
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "1",
+                "temperature_Report_Type": "FM12",
+                "rows": 626
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "1",
+                "temperature_Report_Type": "FM15",
+                "rows": 3405
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "4",
+                "temperature_Report_Type": "FM15",
+                "rows": 6
+              },
+              {
+                "temperature_Source_Code": "412",
+                "temperature_Quality_Code": "",
+                "temperature_Report_Type": "FM94_1",
+                "rows": 3
+              },
+              {
+                "temperature_Source_Code": "413",
+                "temperature_Quality_Code": "",
+                "temperature_Report_Type": "FM15",
+                "rows": 3797
+              },
+              {
+                "temperature_Source_Code": "413",
+                "temperature_Quality_Code": "",
+                "temperature_Report_Type": "FM16",
+                "rows": 3806
+              }
+            ]
+          },
+          "metadata": {
+            "id": "42410099999",
+            "ghcnh_id": "INU042410-1",
+            "name": "Guwahati",
+            "latitude": 26.1,
+            "longitude": 91.58,
+            "elevation_m": 54.0
+          }
+        }
+      ]
+    },
+    "43128599999": {
+      "station": {
+        "id": "43128599999",
+        "ghcnh_id": "INI0000VOHS",
+        "name": "Hyderabad",
+        "latitude": 17.2333,
+        "longitude": 78.4167,
+        "elevation_m": 617.0
+      },
+      "sources": [
+        {
+          "station": "43128599999",
+          "year": 2024,
+          "source": {
+            "url": "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2024/psv/GHCNh_INI0000VOHS_2024.psv",
+            "retrieved_at": "2026-09-05T12:41:05.553909+00:00",
+            "sha256": "dd069db527511b74a49abb455eb7a22fc1388aacba8c7174eda0859a92ff1cf9",
+            "bytes": 13060847
+          },
+          "audit": {
+            "raw_rows": 16265,
+            "accepted_exact_hour_rows": 8046,
+            "accepted_unique_hours": 8046,
+            "off_hour_rows": 8178,
+            "invalid_temperature_rows": 1,
+            "rejected_source_quality_report_rows": 82,
+            "rejected_identity_rows": 1,
+            "rejected_measurement_rows": 0,
+            "duplicate_rows": 0,
+            "conflicting_hours": 0,
+            "first_report": "2024-01-01T00:00:00+00:00",
+            "last_report": "2024-12-31T23:30:00+00:00",
+            "source_quality_report_counts": [
+              {
+                "temperature_Source_Code": "",
+                "temperature_Quality_Code": "",
+                "temperature_Report_Type": "",
+                "rows": 1
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "1",
+                "temperature_Report_Type": "FM15",
+                "rows": 16183
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "2",
+                "temperature_Report_Type": "FM15",
+                "rows": 2
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "4",
+                "temperature_Report_Type": "FM15",
+                "rows": 79
+              }
+            ]
+          },
+          "metadata": {
+            "id": "43128599999",
+            "ghcnh_id": "INI0000VOHS",
+            "name": "Hyderabad",
+            "latitude": 17.2333,
+            "longitude": 78.4167,
+            "elevation_m": 617.0
+          }
+        },
+        {
+          "station": "43128599999",
+          "year": 2025,
+          "source": {
+            "url": "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2025/psv/GHCNh_INI0000VOHS_2025.psv",
+            "retrieved_at": "2026-09-05T12:41:44.164251+00:00",
+            "sha256": "0875574d9e85d5b0ef50a2f74162158fb0397c3ff764209398451d1da558c882",
+            "bytes": 12820178
+          },
+          "audit": {
+            "raw_rows": 16264,
+            "accepted_exact_hour_rows": 8091,
+            "accepted_unique_hours": 8091,
+            "off_hour_rows": 8157,
+            "invalid_temperature_rows": 10,
+            "rejected_source_quality_report_rows": 39,
+            "rejected_identity_rows": 10,
+            "rejected_measurement_rows": 0,
+            "duplicate_rows": 0,
+            "conflicting_hours": 0,
+            "first_report": "2025-01-01T00:00:00+00:00",
+            "last_report": "2025-12-31T23:30:00+00:00",
+            "source_quality_report_counts": [
+              {
+                "temperature_Source_Code": "",
+                "temperature_Quality_Code": "",
+                "temperature_Report_Type": "",
+                "rows": 10
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "1",
+                "temperature_Report_Type": "FM15",
+                "rows": 16225
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "2",
+                "temperature_Report_Type": "FM15",
+                "rows": 3
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "4",
+                "temperature_Report_Type": "FM15",
+                "rows": 26
+              }
+            ]
+          },
+          "metadata": {
+            "id": "43128599999",
+            "ghcnh_id": "INI0000VOHS",
+            "name": "Hyderabad",
+            "latitude": 17.2333,
+            "longitude": 78.4167,
+            "elevation_m": 617.0
+          }
+        },
+        {
+          "station": "43128599999",
+          "year": 2026,
+          "source": {
+            "url": "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2026/psv/GHCNh_INI0000VOHS_2026.psv",
+            "retrieved_at": "2026-09-05T12:38:47.395317+00:00",
+            "sha256": "1e952e3a38d70494211c1c71d8fdb0d0b7c7d4f9e623f176314d6fc818998f16",
+            "bytes": 8571998
+          },
+          "audit": {
+            "raw_rows": 11630,
+            "accepted_exact_hour_rows": 5744,
+            "accepted_unique_hours": 5744,
+            "off_hour_rows": 5886,
+            "invalid_temperature_rows": 0,
+            "rejected_source_quality_report_rows": 3844,
+            "rejected_identity_rows": 0,
+            "rejected_measurement_rows": 0,
+            "duplicate_rows": 0,
+            "conflicting_hours": 0,
+            "first_report": "2026-01-01T00:00:00+00:00",
+            "last_report": "2026-09-01T15:00:00+00:00",
+            "source_quality_report_counts": [
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "1",
+                "temperature_Report_Type": "FM15",
+                "rows": 4008
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "4",
+                "temperature_Report_Type": "FM15",
+                "rows": 1
+              },
+              {
+                "temperature_Source_Code": "413",
+                "temperature_Quality_Code": "",
+                "temperature_Report_Type": "FM15",
+                "rows": 3778
+              },
+              {
+                "temperature_Source_Code": "413",
+                "temperature_Quality_Code": "",
+                "temperature_Report_Type": "FM16",
+                "rows": 3843
+              }
+            ]
+          },
+          "metadata": {
+            "id": "43128599999",
+            "ghcnh_id": "INI0000VOHS",
+            "name": "Hyderabad",
+            "latitude": 17.2333,
+            "longitude": 78.4167,
+            "elevation_m": 617.0
+          }
+        }
+      ]
+    },
+    "43279099999": {
+      "station": {
+        "id": "43279099999",
+        "ghcnh_id": "INI0000VOMM",
+        "name": "Chennai",
+        "latitude": 12.9944,
+        "longitude": 80.1805,
+        "elevation_m": 15.8
+      },
+      "sources": [
+        {
+          "station": "43279099999",
+          "year": 2024,
+          "source": {
+            "url": "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2024/psv/GHCNh_INI0000VOMM_2024.psv",
+            "retrieved_at": "2026-09-05T12:41:23.693860+00:00",
+            "sha256": "05443a3a5b671eac8d1445e161262388300700e5dc3f31d8658597f5ac46384d",
+            "bytes": 14197176
+          },
+          "audit": {
+            "raw_rows": 17397,
+            "accepted_exact_hour_rows": 8689,
+            "accepted_unique_hours": 8689,
+            "off_hour_rows": 8694,
+            "invalid_temperature_rows": 1,
+            "rejected_source_quality_report_rows": 35,
+            "rejected_identity_rows": 1,
+            "rejected_measurement_rows": 0,
+            "duplicate_rows": 0,
+            "conflicting_hours": 0,
+            "first_report": "2024-01-01T00:00:00+00:00",
+            "last_report": "2024-12-31T23:30:00+00:00",
+            "source_quality_report_counts": [
+              {
+                "temperature_Source_Code": "",
+                "temperature_Quality_Code": "",
+                "temperature_Report_Type": "",
+                "rows": 1
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "1",
+                "temperature_Report_Type": "FM12",
+                "rows": 2753
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "1",
+                "temperature_Report_Type": "FM15",
+                "rows": 14609
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "2",
+                "temperature_Report_Type": "FM15",
+                "rows": 1
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "4",
+                "temperature_Report_Type": "FM15",
+                "rows": 33
+              }
+            ]
+          },
+          "metadata": {
+            "id": "43279099999",
+            "ghcnh_id": "INI0000VOMM",
+            "name": "Chennai",
+            "latitude": 12.9944,
+            "longitude": 80.1805,
+            "elevation_m": 15.8
+          }
+        },
+        {
+          "station": "43279099999",
+          "year": 2025,
+          "source": {
+            "url": "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2025/psv/GHCNh_INI0000VOMM_2025.psv",
+            "retrieved_at": "2026-09-05T12:42:02.687722+00:00",
+            "sha256": "bcf26f9d5d96e9117973f97d175daea4a1f1bbfca654d051c08109259716b942",
+            "bytes": 13954221
+          },
+          "audit": {
+            "raw_rows": 17178,
+            "accepted_exact_hour_rows": 8601,
+            "accepted_unique_hours": 8601,
+            "off_hour_rows": 8574,
+            "invalid_temperature_rows": 2,
+            "rejected_source_quality_report_rows": 7,
+            "rejected_identity_rows": 2,
+            "rejected_measurement_rows": 0,
+            "duplicate_rows": 0,
+            "conflicting_hours": 0,
+            "first_report": "2025-01-01T00:00:00+00:00",
+            "last_report": "2025-12-31T23:30:00+00:00",
+            "source_quality_report_counts": [
+              {
+                "temperature_Source_Code": "",
+                "temperature_Quality_Code": "",
+                "temperature_Report_Type": "",
+                "rows": 2
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "1",
+                "temperature_Report_Type": "FM12",
+                "rows": 2822
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "1",
+                "temperature_Report_Type": "FM15",
+                "rows": 14349
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "2",
+                "temperature_Report_Type": "FM12",
+                "rows": 1
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "2",
+                "temperature_Report_Type": "FM15",
+                "rows": 2
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "4",
+                "temperature_Report_Type": "FM15",
+                "rows": 2
+              }
+            ]
+          },
+          "metadata": {
+            "id": "43279099999",
+            "ghcnh_id": "INI0000VOMM",
+            "name": "Chennai",
+            "latitude": 12.9944,
+            "longitude": 80.1805,
+            "elevation_m": 15.8
+          }
+        },
+        {
+          "station": "43279099999",
+          "year": 2026,
+          "source": {
+            "url": "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2026/psv/GHCNh_INI0000VOMM_2026.psv",
+            "retrieved_at": "2026-09-05T12:40:41.404833+00:00",
+            "sha256": "9a4af9915f9e13c9891f86ba3a2d9e39fabc1721591ffa29c6fe20e54e52f5b0",
+            "bytes": 8708336
+          },
+          "audit": {
+            "raw_rows": 11647,
+            "accepted_exact_hour_rows": 5820,
+            "accepted_unique_hours": 5820,
+            "off_hour_rows": 5827,
+            "invalid_temperature_rows": 0,
+            "rejected_source_quality_report_rows": 3814,
+            "rejected_identity_rows": 0,
+            "rejected_measurement_rows": 0,
+            "duplicate_rows": 0,
+            "conflicting_hours": 0,
+            "first_report": "2026-01-01T00:00:00+00:00",
+            "last_report": "2026-09-01T15:30:00+00:00",
+            "source_quality_report_counts": [
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "1",
+                "temperature_Report_Type": "FM12",
+                "rows": 658
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "1",
+                "temperature_Report_Type": "FM15",
+                "rows": 3368
+              },
+              {
+                "temperature_Source_Code": "223",
+                "temperature_Quality_Code": "4",
+                "temperature_Report_Type": "FM15",
+                "rows": 1
+              },
+              {
+                "temperature_Source_Code": "412",
+                "temperature_Quality_Code": "",
+                "temperature_Report_Type": "FM12",
+                "rows": 1
+              },
+              {
+                "temperature_Source_Code": "413",
+                "temperature_Quality_Code": "",
+                "temperature_Report_Type": "FM15",
+                "rows": 3806
+              },
+              {
+                "temperature_Source_Code": "413",
+                "temperature_Quality_Code": "",
+                "temperature_Report_Type": "FM16",
+                "rows": 3813
+              }
+            ]
+          },
+          "metadata": {
+            "id": "43279099999",
+            "ghcnh_id": "INI0000VOMM",
+            "name": "Chennai",
+            "latitude": 12.9944,
+            "longitude": 80.1805,
+            "elevation_m": 15.8
+          }
+        }
+      ]
+    }
+  },
+  "finished_at": "2026-09-05T12:49:27.104647+00:00",
+  "artifact_sha256": {
+    "cases/42410099999_20240401T0600Z/manifest.json": "22b483ea2fcd510841609a93fbff744ef7a22d500a446c33340b83d9976d342f",
+    "cases/42410099999_20240401T0600Z/model_input.csv": "7ce95d54e182ee6da5dcddca1d7e4c36028d05d161e03528100abd47da441ffb",
+    "cases/42410099999_20240401T0600Z/predictions.csv": "ce93f5b38c76d173c50d930709f2a626f1ce4447d5ec3ba6d2319117ce8c3233",
+    "cases/42410099999_20240409T0600Z/manifest.json": "597a2d3d57291123d320ed9d259d3f5bc4e687909b224ca70e9992b05381ad3b",
+    "cases/42410099999_20240409T0600Z/model_input.csv": "f957114391725e21d0a5ba28abfbcf50a778d48dd68a675b5be8217891664d8a",
+    "cases/42410099999_20240409T0600Z/predictions.csv": "ec3c26600fdcb5db9e322d116981ac68fe52887125a5c5be9e737fab69f8ffda",
+    "cases/42410099999_20240417T0600Z/manifest.json": "e67f37b1625b55fa6d492be71122e34a165ef12bac47a5efb262252d22137c53",
+    "cases/42410099999_20240417T0600Z/model_input.csv": "f7b85f7cc3c990d370bab63d2cf6c34c8d84074c6a6b9bd3196d42508dd327aa",
+    "cases/42410099999_20240417T0600Z/predictions.csv": "a6631228b4bbf965afcd9e82744658efd037495ca9c109fe7856fb856c0148cb",
+    "cases/42410099999_20240425T0600Z/manifest.json": "e975da8ac7f8933680d1730d8074510b93567163719dd51e410cd9f6bcc7c149",
+    "cases/42410099999_20240425T0600Z/model_input.csv": "1e31b2880fd8184f7315089d5bbcf0aee415aa40553def13077f5b6ad2f63c64",
+    "cases/42410099999_20240425T0600Z/predictions.csv": "be1873bb4bcf47b0b057f0c5b104ff8e5549630d723dfb6c5bb2e08a14631cfd",
+    "cases/42410099999_20240503T0600Z/manifest.json": "5e06786ca49bcc55d675a2435ead9a74450f6a3c3e6ccafc628dbfecfa0b44b1",
+    "cases/42410099999_20240503T0600Z/model_input.csv": "a7d9c8fc803b1bf9f14cd8509f3e8e69daa167f5bad8439a11da66ca1b5782cc",
+    "cases/42410099999_20240503T0600Z/predictions.csv": "0805181b94891e86df7ea5177e537de803f9673d9af64f387568fa30f47ea5f9",
+    "cases/42410099999_20240519T0600Z/manifest.json": "1326d6a487b880a0eb5bf99769e9711843a0bc12796fee612dcf6ea0da642f2a",
+    "cases/42410099999_20240519T0600Z/model_input.csv": "09ef10f3f8fbfef1b233d774c36658f3ed9747a2d6ef9847591e2f26d1c6c27a",
+    "cases/42410099999_20240519T0600Z/predictions.csv": "1f8e103f5a182fbbac9b874321fd7fc4f7f0adc10d5b59da2ca3dc98769af388",
+    "cases/42410099999_20240527T0600Z/manifest.json": "31121f3fb906706a19af3c4a430e4281fb590913b4c00e84c3a6108cfd536034",
+    "cases/42410099999_20240527T0600Z/model_input.csv": "3d2c65a7e7912644d7af123dd59e40edc6c71795cb66541d6398689209740bb3",
+    "cases/42410099999_20240527T0600Z/predictions.csv": "b1659746bc6a35ec3463a189cee20796e71b00479588102fc5c280e523739d17",
+    "cases/42410099999_20240604T0600Z/manifest.json": "aa94a531dba089923ecfb01f747de97399bb9e6857769bb80ce9b3fa9c791400",
+    "cases/42410099999_20240604T0600Z/model_input.csv": "514eb89b1de48645f1810960f667c7590364f884e4c588524a154a6b670cdf88",
+    "cases/42410099999_20240604T0600Z/predictions.csv": "5868cd8f5873618c019ae782a9fa3223e8fabddc12d343a8291115a0da609fbb",
+    "cases/42410099999_20240612T0600Z/manifest.json": "1f1c5df4719ffede859a5d97f51b2847d11e53f521bbe3ddfda218f153f9df26",
+    "cases/42410099999_20240612T0600Z/model_input.csv": "b178822b539240b7589d44a8e5093d5f75fb7ad768811149b957befc678ec84f",
+    "cases/42410099999_20240612T0600Z/predictions.csv": "47ee50f12dff75f2edd8b84bc30a7dca0ae14fb1d272c3c830676174f1a497c6",
+    "cases/42410099999_20240620T0600Z/manifest.json": "6cabd447f1f3b0d90930ee94fa71c10acc230ac78e9e52a081ce6e816b4a4694",
+    "cases/42410099999_20240620T0600Z/model_input.csv": "8cc2da6193ee39ae3b2c7212486185a7da152edcfbc28c3761f5fec5f893280a",
+    "cases/42410099999_20240620T0600Z/predictions.csv": "41cc97c7063ecf0de54fdcb5125d12f3b7c1e9766c6ad9729877c389fb53e012",
+    "cases/42410099999_20240628T0600Z/manifest.json": "66be2e45f629993bf9cf79fd09a754847e3a60754c69b20f59009b3bb0a6f2bd",
+    "cases/42410099999_20240628T0600Z/model_input.csv": "5814d3c48d33adffd8a17563cf33972876400b4c131bc1a677347a0259630d6e",
+    "cases/42410099999_20240628T0600Z/predictions.csv": "ddd55dd1868fede3608ab5edc7449fc1608f8ea6577893032e9fc5e8293f4e3d",
+    "cases/42410099999_20240706T0600Z/manifest.json": "7c5d3d5d6e0b5ea7227eb4282a242afca5a5b11230834f0064220eeb532a76ce",
+    "cases/42410099999_20240706T0600Z/model_input.csv": "daa2e5d0a583fbe36ad0008a66d0407d0a731d270eb9332fe91a6bf8666c7225",
+    "cases/42410099999_20240706T0600Z/predictions.csv": "fd2b67b391391d2abc10746eaa9df2ec2488650c40cbc3e87adf9d7e8cd513f5",
+    "cases/42410099999_20240714T0600Z/manifest.json": "e421763578a8c3fe3ec2c0fa56fbae4d0fbfac72d0b9a8302ebd7f09fdadd179",
+    "cases/42410099999_20240714T0600Z/model_input.csv": "777ae2c869a280ea354f54731ae519eab118797b6789b5bafd65459aa0559fad",
+    "cases/42410099999_20240714T0600Z/predictions.csv": "61223af16a2777b14e696db3ffa82c50bdfbe7beff153d29f613c136a6bd833d",
+    "cases/42410099999_20240722T0600Z/manifest.json": "dff03de34d15bf47d37074a7b5e9743e6d50c64edb704736f0efa5f9d1cb57bb",
+    "cases/42410099999_20240722T0600Z/model_input.csv": "0e8ec48601e4f2773cc590e7f18c60ec9dc732e08bbb0354a26b604441eb51a0",
+    "cases/42410099999_20240722T0600Z/predictions.csv": "35cdbdf6456ea226ff53b4fc1dfe8dd484846232b48e04306f3f105d9ef0690a",
+    "cases/42410099999_20240730T0600Z/manifest.json": "0dfdedaccbdf41a2ce02a247e059572c38e533332a9d78f9c340653b96aa624d",
+    "cases/42410099999_20240730T0600Z/model_input.csv": "3eaee57093ca15b983c0ad99b3b66749d3936c8214a437d01928d68c993b6c49",
+    "cases/42410099999_20240730T0600Z/predictions.csv": "3e5c69d39d2a21d8dee4c3b6fa18cd236c893e3650adcf4843689fc542c9b57a",
+    "cases/42410099999_20240807T0600Z/manifest.json": "32456d49477ec4ad6054b368ef0f77fa78245f985a081913f3ed2b7ba5f04bad",
+    "cases/42410099999_20240807T0600Z/model_input.csv": "817b772a405b7089ad5094d8f234b186b1b3fa9757b8eba471dc0b12b7dd1a37",
+    "cases/42410099999_20240807T0600Z/predictions.csv": "d8389a314a2f21207356368ba0f5f10ca6f6d177b01a6efd8d5e1435956d5676",
+    "cases/42410099999_20240815T0600Z/manifest.json": "15168f831a8980ff30e1d9d6af8754bfa64e236e6676fbbe317f0c79af7c5e93",
+    "cases/42410099999_20240815T0600Z/model_input.csv": "093567f6e110b2725692776a69635934c4cd445803f17be207e52c0c11b84b59",
+    "cases/42410099999_20240815T0600Z/predictions.csv": "113e5a3db4656448e9316585b87756413ec58ba8be98151d1c88101d9898bd61",
+    "cases/42410099999_20240831T0600Z/manifest.json": "45e8c5e938a162e05822dc86153f497b4f1833690ce24fbd69eb658edc8a0b68",
+    "cases/42410099999_20240831T0600Z/model_input.csv": "711f9fbbffef6529832653efca1ed8070a886b05d1f3593c037a4039e65ae455",
+    "cases/42410099999_20240831T0600Z/predictions.csv": "dae4aae1fa255f05c279235f0f81fa5f0c34086ca75058973e7fee023c01b604",
+    "cases/42410099999_20240908T0600Z/manifest.json": "d201fafe00b3fb38d38e25bdf64e2f1d5011da8ee415a5cce085d32b08830e16",
+    "cases/42410099999_20240908T0600Z/model_input.csv": "79a7e3385067fa4e8d0b26f388cdf4091a34cd56d975ed524ba49b093bc377fc",
+    "cases/42410099999_20240908T0600Z/predictions.csv": "aa05f8e2286605f9e509899ef718aabc5dfe7178b02e012c5f73536e2b74f34f",
+    "cases/42410099999_20241002T0600Z/manifest.json": "bb1f9d41ff3c8da5a19015ec969b27bde47597e236a71c3f2ca3a888dd5ab74c",
+    "cases/42410099999_20241002T0600Z/model_input.csv": "ba7dcd3128db1c98c0b21e94732f9b578af10c60e9b0f0d0a3a98e9aba314f25",
+    "cases/42410099999_20241002T0600Z/predictions.csv": "21132cf421e377e28edb44f4079b3061f020d812787d790d0e6b8accf1c3ea43",
+    "cases/42410099999_20241010T0600Z/manifest.json": "2c3c431396cab142ed0a7c251064519ac292ffb8cc1672ffbafe8eb5316bc71b",
+    "cases/42410099999_20241010T0600Z/model_input.csv": "c6b1ef20af0292e8871affffd8bd1fff8fb0fa8b64d7e8d7a3f05b8c799a60e9",
+    "cases/42410099999_20241010T0600Z/predictions.csv": "1c5c423f10677bc52eebfd43cdf59ff34e609712505cbc40baeab7d6cc8b760d",
+    "cases/42410099999_20241018T0600Z/manifest.json": "7c5bcfe8a70da93e705e89dda076df97f850dac9888eb69b01c0fa6dad0e9b29",
+    "cases/42410099999_20241018T0600Z/model_input.csv": "b310d64c3617c03d5f0aa513887958a1f0754952219c1ad1fe6173cb93f432cf",
+    "cases/42410099999_20241018T0600Z/predictions.csv": "b004fe2c8a5fb208490f04f5141307d80868679b361bab27199bfc6287923aae",
+    "cases/42410099999_20241026T0600Z/manifest.json": "56ed059eca88956fae8f46d6b42708eb43d0944efba31c104291fe2180cfcef5",
+    "cases/42410099999_20241026T0600Z/model_input.csv": "c6e7627d2cd61282ee80af19b88c2c4900d76e42216d42e2ba05d224c6682016",
+    "cases/42410099999_20241026T0600Z/predictions.csv": "5e13670ba8f7c9629c96105a785777881931efe93c97aae9fa86c60b1ed78585",
+    "cases/42410099999_20241103T0600Z/manifest.json": "af49d5d8215b2a0d5fa8e3fcdadd20b0944f719a9d501b289488b291bb0c736c",
+    "cases/42410099999_20241103T0600Z/model_input.csv": "4188e9f4cc155823dbbb4bc83108145f136a59d0249a2e591cc8caea59e66d10",
+    "cases/42410099999_20241103T0600Z/predictions.csv": "a688b7f90bf87218efe1a179e3b2ca79a408a19d9027649f69ae212f2ec05b60",
+    "cases/42410099999_20241111T0600Z/manifest.json": "94fff376ac0c0828a4048cc86ec21d8889b78227fe8c92f0d7062c124e62af21",
+    "cases/42410099999_20241111T0600Z/model_input.csv": "9749ec5fd3502ed237fb5698e8ee7c9b5f1e2b4f49887929caa77f5b15c7d44d",
+    "cases/42410099999_20241111T0600Z/predictions.csv": "29b7c64ae3522cd67f87079827fa01b736e85200a2487783355bf1777df2e521",
+    "cases/42410099999_20241119T0600Z/manifest.json": "bf4cd1dd83cf1df7a3392f807ae9ed24424230b1cc4f7ab93df3dd8d13381bcd",
+    "cases/42410099999_20241119T0600Z/model_input.csv": "983771b0ddd25d5d1e70e2105a3483201ac05923ac73e2d97f501095164fedde",
+    "cases/42410099999_20241119T0600Z/predictions.csv": "a58bb3ece259e2fd12b262b6cb1d560903a3d21e3d994250504faf57b88dc33c",
+    "cases/42410099999_20241127T0600Z/manifest.json": "8a975357b9f6f61b82664c43da8a4ff78a422aba7a01443a8f2cd6d54a7c9fb4",
+    "cases/42410099999_20241127T0600Z/model_input.csv": "6afbbee8442cb37f15284303b79a1be508cd8e3887a79737bcfce475ec1ae1cc",
+    "cases/42410099999_20241127T0600Z/predictions.csv": "070513f42cac0859fe48b350c589b2be8828fca3d745fa6cf3421ba9d9e5e718",
+    "cases/42410099999_20241205T0600Z/manifest.json": "8770fcccd163b76f41585f34b7dc1e81062b06c23dfc5f8a827ab7b66533bf76",
+    "cases/42410099999_20241205T0600Z/model_input.csv": "ab12d286d43d1f43541b8b913c4be4da35d72c5c0d8cf070e842d6d8d1a8334e",
+    "cases/42410099999_20241205T0600Z/predictions.csv": "15c4f2439f38ffd2577021d6cd590ec6274b50c1dac903ff841eb34c271cbff2",
+    "cases/42410099999_20241213T0600Z/manifest.json": "74fca1a4a065b4d3e7fa17ed0440fe8aa8c2e8101eaef7f9dde9500175035254",
+    "cases/42410099999_20241213T0600Z/model_input.csv": "ea428eb91ff95f9ecf8667ebdf587f2f1715d5361099dde1bba78282df273420",
+    "cases/42410099999_20241213T0600Z/predictions.csv": "266e11bf035077f4a843070605ffbca5fd458fb95177961d6a57f94f496ab964",
+    "cases/42410099999_20241221T0600Z/manifest.json": "e25847732d813d5bfde08eef775259f16ea9a6c36ab24fdc271d5c522411b39d",
+    "cases/42410099999_20241221T0600Z/model_input.csv": "6d40d54deca34103564739741b86f38ec797476ffb123ed92f63923af5346743",
+    "cases/42410099999_20241221T0600Z/predictions.csv": "56203a751c36f00b69293f7d87fcc084316ed5eb7aeace9229df6258bf755e3d",
+    "cases/42410099999_20241229T0600Z/manifest.json": "77b6cfe8f0f725121eeedbe0d692c03fa8f80958921099a99636615e8326fe06",
+    "cases/42410099999_20241229T0600Z/model_input.csv": "cb5e12d97c41bf3e62d5bf53bdea2196f1d25446b204f0e6781d55d360e46bf3",
+    "cases/42410099999_20241229T0600Z/predictions.csv": "888df6cc74a76b955c10ba24169306673c2af6628536b297451947ea1d778105",
+    "cases/42410099999_20250106T0600Z/manifest.json": "9d65b8a86551bb91957e9bad8dd7537c71485dff6657e2aef3499784bc6be551",
+    "cases/42410099999_20250106T0600Z/model_input.csv": "56cf0400f49a4ff7d85d5691535d4fb497580713bd7266e97373c098ad84cffc",
+    "cases/42410099999_20250106T0600Z/predictions.csv": "39232134d8f6c2f0315b249caafe27db5b4b79e53e475a3fbe710095219ca432",
+    "cases/42410099999_20250114T0600Z/manifest.json": "fc3c231de9d33d61d7354edd4c34a86ff7eb909067d4b25f9ac9737f347ec8de",
+    "cases/42410099999_20250114T0600Z/model_input.csv": "4a9302608fe70796efee80aac3e758a0e6005a02ac5e04c5cf5dd4ee3066a425",
+    "cases/42410099999_20250114T0600Z/predictions.csv": "79e95a1b57082ea8496b89a4ec969e90089cc819e783a93b83af683b0a4c655b",
+    "cases/42410099999_20250122T0600Z/manifest.json": "0e05e9ad0f860a560e429f89c1cb826cdfaf14a69c3711d53aa8da35460a62dc",
+    "cases/42410099999_20250122T0600Z/model_input.csv": "0cb573f3c6af20beec1683e42f11b3f714418e18983b82f2b494c5b1fbd1a0cf",
+    "cases/42410099999_20250122T0600Z/predictions.csv": "939e485c7fb521c57c40ec2c3d2032d48366d3066c53ec1e2064cbe6ac165727",
+    "cases/42410099999_20250207T0600Z/manifest.json": "e704d58de968e9dc321cd7089ba023fe8d733bfacee51aa181094861167dff15",
+    "cases/42410099999_20250207T0600Z/model_input.csv": "36d4f4c86ba45201579b5f20ab1cdd4d995e8c39170cb203854631cdf00a2345",
+    "cases/42410099999_20250207T0600Z/predictions.csv": "eee97557dd96c4d4de0a78e0b3cb1de8000ff02ece8a16bd471aff0a45b4844f",
+    "cases/42410099999_20250215T0600Z/manifest.json": "f592ecf10cf596a9fc4093e0f1877715efd3a317e4be49ad71b116e001311c49",
+    "cases/42410099999_20250215T0600Z/model_input.csv": "2140441c82c61ee31aeb5b43254b91b9ebbace8f94813fab9ff575b3d0513d29",
+    "cases/42410099999_20250215T0600Z/predictions.csv": "e1cbefe698ff4c9de47a2887e5fde6bc2d042f46b00abf970a07e7ca0f079fd1",
+    "cases/42410099999_20250223T0600Z/manifest.json": "94f46fdf15a7b0e65cc59261f6e909147b9882af2d12b525017302d860e4778e",
+    "cases/42410099999_20250223T0600Z/model_input.csv": "34493db3ecabefd25f771f906938b76086646037a8a15944095a05611f44fb10",
+    "cases/42410099999_20250223T0600Z/predictions.csv": "9a215577623f2991b7e96489b58b39c14979455b8e25f460e8597def06c46db3",
+    "cases/42410099999_20250311T0600Z/manifest.json": "e2a192dbce0d6a815775346c8e6147b13027a9b1dbe8b6e74b5565a2676b222d",
+    "cases/42410099999_20250311T0600Z/model_input.csv": "bdb3435bec23476eda052397b80a1b57ca13f6e3bdc0b293eb01575dfe87989d",
+    "cases/42410099999_20250311T0600Z/predictions.csv": "3b3f30bfa4aa9f99796f017f7a8cd4b874b760954c8d1dba2cf34e4b1165c837",
+    "cases/42410099999_20250319T0600Z/manifest.json": "b19db4c78a731f5dbc25adae2e32d4515021d33821d05cebddb744d374254f00",
+    "cases/42410099999_20250319T0600Z/model_input.csv": "0ac6a80fed0584c77bf19be3c4a821e2b6bce0829231807a22af6f70a0c2a99f",
+    "cases/42410099999_20250319T0600Z/predictions.csv": "9cf880872fe5728b92efadf1d10cf4e20ef2b4a9796c0cba7f5c23c02d469980",
+    "cases/43128599999_20240409T0600Z/manifest.json": "095ad04f44fd17a331f061dfd24baa4570ce28c4898cf52e1fb6b2bf49bde93b",
+    "cases/43128599999_20240409T0600Z/model_input.csv": "d5519fddc0e440a2e8b42b38ebd72ea7ec4f2926e9192c1b159d91078fc6f24a",
+    "cases/43128599999_20240409T0600Z/predictions.csv": "dbb778eddeded7b4886c50e88f92fa102f1e84af27ae04672e4c78980396d5b6",
+    "cases/43128599999_20240417T0600Z/manifest.json": "a8ca0025c8ce921b0d51d603bff12557a59a823cd0eb0a6058ffebdac83a6ec9",
+    "cases/43128599999_20240417T0600Z/model_input.csv": "aff908817ec202d20844c1f4c962b7699da095a9e4124c63026c79d68cb1a145",
+    "cases/43128599999_20240417T0600Z/predictions.csv": "e803007d0f2a85eec7562dfb842dd8e944cbbb04df27c5e0b6d0f839075dd048",
+    "cases/43128599999_20240503T0600Z/manifest.json": "1ef2d2a048eec5c0c6123b8aa75a74912c1c0ccecaefdfabe238feb51587964b",
+    "cases/43128599999_20240503T0600Z/model_input.csv": "7ffc9cc2f25b54546d6f47fb939c340bdb073455ef1dcf5f766afd8ec3414c1b",
+    "cases/43128599999_20240503T0600Z/predictions.csv": "1baeba51dfc064ab93f455a72d689c7f742d5e516011994369a639e2219c0bc2",
+    "cases/43128599999_20240519T0600Z/manifest.json": "fc278a240bec66e4dd14299522b88d6ed51285895774de760fb537d9f8262a9d",
+    "cases/43128599999_20240519T0600Z/model_input.csv": "656669f9949021ecbccbfe4c2ad90e145c37e92fd8f5147004e4caacfb33d3a7",
+    "cases/43128599999_20240519T0600Z/predictions.csv": "5707f91e0ffccf2466b8475e6d837abc8ef926d137cb9a7d2155643595548fcb",
+    "cases/43128599999_20240527T0600Z/manifest.json": "c14e32f822f6a5079098de2c93c7305c621a706c1ce1d9af4654b6509bd99ff0",
+    "cases/43128599999_20240527T0600Z/model_input.csv": "5efe8029f2e7c11da5f6d2b7dd20120c8682c703157769f8a6c567d4fce2c420",
+    "cases/43128599999_20240527T0600Z/predictions.csv": "31d4f529447a22441724c476234ffc892fb32059668a057c25584622de5df7a7",
+    "cases/43128599999_20240604T0600Z/manifest.json": "22b301aba8ecd06b0f7d7799ba2b3951784d2df46b7c097e3f2f90baf0fc9a2c",
+    "cases/43128599999_20240604T0600Z/model_input.csv": "98576b3f71c0a4051bb0c3b3c4cfa017a965163d9ca9ef88e71ba0903546f80a",
+    "cases/43128599999_20240604T0600Z/predictions.csv": "8648c56433bbccd874a0e8bddbb3b008b6ddb3bf213e6aeb744105fab419d935",
+    "cases/43128599999_20240620T0600Z/manifest.json": "25981661aecebfd167fc8024676499145b687fe4fa265df9ceccced3545ee57b",
+    "cases/43128599999_20240620T0600Z/model_input.csv": "a1f49e4e29cd74722db57bef72d910c85a2e65bc389a0fa34e622253ca0e177f",
+    "cases/43128599999_20240620T0600Z/predictions.csv": "52a5aff98cb964f895fcc7bf00f918e1fe052814599ff8aa31376a62b4e8fadd",
+    "cases/43128599999_20240807T0600Z/manifest.json": "e4dbc90c03c8cc0a86bf4037deb23aead0872462f769f9bd2ab1681df5ef4581",
+    "cases/43128599999_20240807T0600Z/model_input.csv": "9cf7bb3f9e1663d72a5223004053c93ce0187fefe67130441e8e4026127baafe",
+    "cases/43128599999_20240807T0600Z/predictions.csv": "3138f538a4124b82fc8882c8a08516a4e40ffc224ad1ceebe261d31cc379e15c",
+    "cases/43128599999_20240815T0600Z/manifest.json": "b73e41779ad666aea06816a9836ffe04b754cdf17596fb0bf3b241f880dade18",
+    "cases/43128599999_20240815T0600Z/model_input.csv": "0b319c88be6cca1c144985a4f55c0314dd1a49e64e9859bb5a1fd288661b526a",
+    "cases/43128599999_20240815T0600Z/predictions.csv": "1d50a7b1b0ba765604a18c60e78652870e18e8abb73e3dfa9718212d626337f3",
+    "cases/43128599999_20240908T0600Z/manifest.json": "b6e740e1ced9dfd04512c89c77afd8b34168cd323ea5cc08b635872b7ce8a45c",
+    "cases/43128599999_20240908T0600Z/model_input.csv": "6a59255be697bc89580c81bab1269e2d47a204b5d0788e8cb3e2f546b94b501c",
+    "cases/43128599999_20240908T0600Z/predictions.csv": "53c89c4724cf9ac6f62b7adf9344f0e08721cba54558ad8ffc0b48054a9c8ebb",
+    "cases/43128599999_20241010T0600Z/manifest.json": "5ec11eb31e44c9a8a15e7d27cfda30d8317592989d84935c2ac9ac6799a10ac0",
+    "cases/43128599999_20241010T0600Z/model_input.csv": "d4831b4ff40e35a69d23d9a8e5ef8fd8b376d37a0ce41241b04485551213456b",
+    "cases/43128599999_20241010T0600Z/predictions.csv": "c44cb328966c2218aad477602421b6eabf660c6bb50ae02ba7d9ee0eeb0705e6",
+    "cases/43128599999_20241018T0600Z/manifest.json": "16fd667ab5bd6d3fe9ac7b39b7e5d04191912a4ce86ba827717306cee701fb2f",
+    "cases/43128599999_20241018T0600Z/model_input.csv": "de346714fbf0e5d2af0a7b518c71e249cb99fa26a79fd6083478bbbd2172cb96",
+    "cases/43128599999_20241018T0600Z/predictions.csv": "bacaac2e3b8db513f53bed535758383a24be08b934b6090d70f3fb11382bcd1c",
+    "cases/43128599999_20241026T0600Z/manifest.json": "9d43cc6929ff6dedfd5de06d57dfee44b1311901b757afa4fab94b86f16da23e",
+    "cases/43128599999_20241026T0600Z/model_input.csv": "f34270aa26b72323341aa2950b0915bde4c1fda12312596cf49d7d9f1727fbe9",
+    "cases/43128599999_20241026T0600Z/predictions.csv": "07854afc7012d8fb58e27e9bf1678ed7ab1df529b920b8a03499ee436915592d",
+    "cases/43128599999_20241103T0600Z/manifest.json": "2c048e47536261e429bc51aa11be935991a25b2389a4031415c96e4ffccd5b35",
+    "cases/43128599999_20241103T0600Z/model_input.csv": "b4988d0a890647b82f35d563d817dd0d464cb27a7cd277373b6eef3cb56c6676",
+    "cases/43128599999_20241103T0600Z/predictions.csv": "d353e7069d67556b83b8cb3eba576940a15b0d91a60896247a3d09ef4bfaa9a0",
+    "cases/43128599999_20241127T0600Z/manifest.json": "f6259004c8e6273a2ae12280149f71574bbf1779ec7015bd66848ea7f315d48a",
+    "cases/43128599999_20241127T0600Z/model_input.csv": "f74dc0bd4ecfca953f5d206cb23536d4c668f2887db573bf2468d5ec6f01d99c",
+    "cases/43128599999_20241127T0600Z/predictions.csv": "174456634e6b12419786619f838397f4c38d05de37d53d39d879ac78a94ddf7d",
+    "cases/43128599999_20241213T0600Z/manifest.json": "f1e2217bd76332d3c9112cf704205254b7c963244e4f86cc6645d6056e85e1a1",
+    "cases/43128599999_20241213T0600Z/model_input.csv": "41478c3cee61b960e1bf531ef35c759ed1ed51ec7aad639c63a2d14121ed73e4",
+    "cases/43128599999_20241213T0600Z/predictions.csv": "cdac1c27f981adcb9b2e3173ca719b2259f9a0152b7c2fd358cbef3473969ee0",
+    "cases/43128599999_20241221T0600Z/manifest.json": "4e33f834349725a261f850df9ed8cd7624a4c1fd1442a3b884131701b2276794",
+    "cases/43128599999_20241221T0600Z/model_input.csv": "753f34ff76c8c6725c16b9053cb8cfe11fded78ed8bf1bead8cce10a2d371e84",
+    "cases/43128599999_20241221T0600Z/predictions.csv": "27efbb5ceddc0d6d8cdd04e6bd4f7132d7d53ae03de6b485ec466cebe5d643b6",
+    "cases/43128599999_20241229T0600Z/manifest.json": "332957855fe5f34676262b5113cd7502ed02c1f4fdcd3a799bcae8846eafabdc",
+    "cases/43128599999_20241229T0600Z/model_input.csv": "3da4a2190651a5ef7d8abc5ca31be2b45a7e972b83ebb3286163a935943957f8",
+    "cases/43128599999_20241229T0600Z/predictions.csv": "7262da66e150b9211def4af7cab6e3c5d744f0fd41879c51023ccbf06c6eeaa9",
+    "cases/43128599999_20250106T0600Z/manifest.json": "cc994e14480d2ba4fbff532f94031332e99a980c95b53c7542fe4cc072dace2f",
+    "cases/43128599999_20250106T0600Z/model_input.csv": "c7019f95f689a360f093537f2f3dcedd2deae0b48eba9bcd554d66134ff34875",
+    "cases/43128599999_20250106T0600Z/predictions.csv": "bc3954136db7e09a0c2551a55b4825ab42834c13bceff6bffac6ffe4494b29da",
+    "cases/43128599999_20250130T0600Z/manifest.json": "79d00b13d7baef2b60c17853bddb616f5a38883e02b29f53058de03f72d2d42e",
+    "cases/43128599999_20250130T0600Z/model_input.csv": "aaf20736c0897a5b6b3ebfcff1ff39c607a7179d2606a1aa38322a800dd10c82",
+    "cases/43128599999_20250130T0600Z/predictions.csv": "34a4a67c1f59c02aad240caa003b303f373c038eb6e7dfc947f036e36c219199",
+    "cases/43128599999_20250215T0600Z/manifest.json": "01528701447f9b5f459acfc02429b17b67d3b1a0f2bd6909102fbf23b2408410",
+    "cases/43128599999_20250215T0600Z/model_input.csv": "4ef66ece7148298401882d5ad6bdafcfc57f47d51f5dc26bc03ed3bb7a47d3ff",
+    "cases/43128599999_20250215T0600Z/predictions.csv": "653bf2c37d5898fa944cac018a7dec485d5829d17bc6ce57ad1ba935f2475565",
+    "cases/43128599999_20250223T0600Z/manifest.json": "41d94d2eacb945ed3add1d68c456baaf55aa53174e9e8ce5844883bf231fbf96",
+    "cases/43128599999_20250223T0600Z/model_input.csv": "dc9af6fddb058462bff593d79b22e256d06aa379106e8ff4ebc6b80b39c98d87",
+    "cases/43128599999_20250223T0600Z/predictions.csv": "f94af5bbabd7003493e88cebcb62415c007fec1841c92a554878f637f5b63f80",
+    "cases/43128599999_20250311T0600Z/manifest.json": "d11d299abfc82c1fc2f874af92420ffcc915b23e54dbdce711a0b579a55419ca",
+    "cases/43128599999_20250311T0600Z/model_input.csv": "6d7e28e14dba8ab0e8252ceeb857d1121cb1868a8facda8e21a09e9717a8ec56",
+    "cases/43128599999_20250311T0600Z/predictions.csv": "a82e6fd0568975d82d50f18834710e44d981102b2a4ff40dcc7bef7bd624fc18",
+    "cases/43279099999_20240401T0600Z/manifest.json": "f0b0f8106dfe93cd89d3eb110a0c68f8707dfa074e85c694768431ba4c6e2425",
+    "cases/43279099999_20240401T0600Z/model_input.csv": "324e3cee45e2156c502a73dbf67c794b4aba6835163d749ff2b32c220593b03d",
+    "cases/43279099999_20240401T0600Z/predictions.csv": "6d00e19916e6c96220fecd4541ba279cc87436d7b6f04c2c56875e36f634b3e1",
+    "cases/43279099999_20240409T0600Z/manifest.json": "37c1e0e25bf914d6a37d05c6291d1d8d1f59b1eab9758c3886e939c6108675e9",
+    "cases/43279099999_20240409T0600Z/model_input.csv": "5562a03ba3f5601c7cbbf48b143a9e3bcada62f5281bfc3531d57813cc3013e3",
+    "cases/43279099999_20240409T0600Z/predictions.csv": "5d219a75b95185d25a02e06d65626bb68a765f87d432855386e58f2e2152d8fe",
+    "cases/43279099999_20240417T0600Z/manifest.json": "147938a0dcec3f02b243582401e4f428a7287bdba1fb0dbe78d896e345004351",
+    "cases/43279099999_20240417T0600Z/model_input.csv": "de8736d7577abc7939f221ec73023aadd09e53ca397dd86e0cd728a84c89843f",
+    "cases/43279099999_20240417T0600Z/predictions.csv": "47dcc0ade2324eb1914b1ea6d27c95a35c239c989f6c3df3f02794306be22402",
+    "cases/43279099999_20240425T0600Z/manifest.json": "71d4de612ed5d1f85fccbf2a13d54a3a9768ea8b62d2b2e9d3ce3b2bc4e4945b",
+    "cases/43279099999_20240425T0600Z/model_input.csv": "1861712b763ef0b34d6ebd30c1520d18674f2cbc5b60dd98a5a7175ba0bcd60c",
+    "cases/43279099999_20240425T0600Z/predictions.csv": "062f4c5c548620660f73735a89d7fe375925abfbd57a2556c4299a2765e78965",
+    "cases/43279099999_20240503T0600Z/manifest.json": "0b3cc9fe6b211ccd28a36e10060cb70c5678d7de27e45a9da84197ddaab80fd9",
+    "cases/43279099999_20240503T0600Z/model_input.csv": "ec741b9a546ee87c1e12011a1d397d2de895216d3cedb7fb20e361a6e75be719",
+    "cases/43279099999_20240503T0600Z/predictions.csv": "ad43f46b89351720c0b32834639c25f45daca052cce78349160398bd4ace6f8f",
+    "cases/43279099999_20240511T0600Z/manifest.json": "809e391dcccea77af4d3a29e2a579f3d1b3f3144a08a0c2a070bd9f070d7e74c",
+    "cases/43279099999_20240511T0600Z/model_input.csv": "987d22895c2ded3d0c45eb6e84269604824b7b3aeb13076654e634d5c1f0bc84",
+    "cases/43279099999_20240511T0600Z/predictions.csv": "9c128441947e3e240c4b7cc1bb8a1b678e57ac8df8a226a834284994561649c1",
+    "cases/43279099999_20240519T0600Z/manifest.json": "f7dc106c2ee4789432a7cbc8274daf2ac5befb37d038669cd9e215cc4b9c2def",
+    "cases/43279099999_20240519T0600Z/model_input.csv": "c86b8f5d407081a27a84a9e193f233a4858b229a74094d54c98f5a519c621c7e",
+    "cases/43279099999_20240519T0600Z/predictions.csv": "0751d83d2c9852bccb6b26bcead864de85e499693401b3978eb90a761671b0fd",
+    "cases/43279099999_20240527T0600Z/manifest.json": "1a7c9a50416b4add112fe649cb000d529e0049872fecd8dfbd62668fc510b961",
+    "cases/43279099999_20240527T0600Z/model_input.csv": "750923ea989e2cd91548626cfa06ae7ce8962f1a6ac54d2a52cfc3dc4552d315",
+    "cases/43279099999_20240527T0600Z/predictions.csv": "4f3fce1fb8b68bbe32a798f7fc6bcc715d4b976d2dd05f4bb0c6ce0f6a44d6f0",
+    "cases/43279099999_20240604T0600Z/manifest.json": "615da0b20325e2e353a7c901cd00b8eb99618c45f9bdffbf92bcd76052bf66fc",
+    "cases/43279099999_20240604T0600Z/model_input.csv": "82c7c4147f572693093b3afa513d925bc3fb26ef5ce82dcecccc8c20672ebbe8",
+    "cases/43279099999_20240604T0600Z/predictions.csv": "cf639c5597c169cd41c2ab09157b1a48151a0ca568b8d9c4e88db86091658f6f",
+    "cases/43279099999_20240612T0600Z/manifest.json": "74c5788f27803e98728d78b133b04364c62b1da230b47737c8dab5edb3bd416d",
+    "cases/43279099999_20240612T0600Z/model_input.csv": "4381ada7905a9424162916672c856a4cb8b141de39d808036826febd88ea88a1",
+    "cases/43279099999_20240612T0600Z/predictions.csv": "904dd173fcbcce79d668352af925c5224b54ea7ab9951566984e7ae469efea87",
+    "cases/43279099999_20240620T0600Z/manifest.json": "e2f006a019d6d6addc14917ae839b144503f296733a1dbeb7a34beeb5bc468a9",
+    "cases/43279099999_20240620T0600Z/model_input.csv": "3efae415bea9bd5281cd7432f7d90795937ef72716f9cc02cd18e4483ac25747",
+    "cases/43279099999_20240620T0600Z/predictions.csv": "a23715c449c5e4b60f2f5d1f31cd6f93433bd9a4a368b65e0f71272d6f66b7ff",
+    "cases/43279099999_20240628T0600Z/manifest.json": "66408cf6a55d2d3565c55f73e3de282817d48bf48f22e0cf0fcf0c967c33df9a",
+    "cases/43279099999_20240628T0600Z/model_input.csv": "b1a0b2b3ccf6ce05973dd4dd6bfaf57c625e03227c660872bf50bacf6aead57d",
+    "cases/43279099999_20240628T0600Z/predictions.csv": "239a7df4ed387f2b4eb4814b212fad3f465ee3d9a810a9edaa5250e32ec25d00",
+    "cases/43279099999_20240706T0600Z/manifest.json": "0a51ab29cff0d687fd139622e25210d4244ba9960f981355569e376244e2e97e",
+    "cases/43279099999_20240706T0600Z/model_input.csv": "92cd4045f7b568d78cbfda5adb1c32c030f549870c572962569a35e1fcaec02e",
+    "cases/43279099999_20240706T0600Z/predictions.csv": "d410da82c1acfc7f701199ee44c99a17c218155aa70f7edf131400fa71bc897e",
+    "cases/43279099999_20240714T0600Z/manifest.json": "9d00ee8e3a206289151ef6923b81abfd4af7fc4fe17780ecef03017d02da75be",
+    "cases/43279099999_20240714T0600Z/model_input.csv": "adda02351f1df7c1cf89c8cda90f78b2bb3b037ff1cc74f967c957d25cb1b2b7",
+    "cases/43279099999_20240714T0600Z/predictions.csv": "e67c1284c42da049d0c55270b23b41674f434bf8961d61138e0d2b827607d16c",
+    "cases/43279099999_20240722T0600Z/manifest.json": "9ef7b8b93eae827153e388bab7d6d6192a72b611381b187fea0e9272244abbf6",
+    "cases/43279099999_20240722T0600Z/model_input.csv": "f397e8e3883b2b4e235d2de858481592ec218261a6488317efc31eabb336263c",
+    "cases/43279099999_20240722T0600Z/predictions.csv": "dd924953d17b58965de0ba6b3f38b1d99288fa3fceeb325f7382bfaed4a014a3",
+    "cases/43279099999_20240730T0600Z/manifest.json": "7fc43662e3160b0db03827b11c4ab2aa5075ce8ac140f443bf1cd500085f38a3",
+    "cases/43279099999_20240730T0600Z/model_input.csv": "e9e47d0db6318f26ef2b8a7a389b00271a9ac8f5b20189404b233c264b571466",
+    "cases/43279099999_20240730T0600Z/predictions.csv": "ac59cfb9a48cd88478fd692c7706e930803bbf3da544ed27fb3cb80469447ffb",
+    "cases/43279099999_20240807T0600Z/manifest.json": "554769cde77d5257aa5e1b20f7920d03aa5479ed15e5de069747ef058b196565",
+    "cases/43279099999_20240807T0600Z/model_input.csv": "dd76f0481ecd33883c7fa234b946febb0a4376242c5608198352215932f38012",
+    "cases/43279099999_20240807T0600Z/predictions.csv": "ad05f74287e24575592e7e0d5931a7f53557dd8abcfe7ff1c5c9b3fb3f3a6dbf",
+    "cases/43279099999_20240815T0600Z/manifest.json": "3e13af9c42d2df60bc56dc67ede74292eceb2ac5a70b349069837ddb72e56c78",
+    "cases/43279099999_20240815T0600Z/model_input.csv": "4dd3e4243731433400eb5677a4a2c1451a180b889930c77828ce4cdea22900d4",
+    "cases/43279099999_20240815T0600Z/predictions.csv": "111e5feb9b04dda38e0f432b27690994acc61f99cdfd0344320d91b57cf1685a",
+    "cases/43279099999_20240823T0600Z/manifest.json": "39e274623adaa406641fbe666ca6e66738017216005a9808ca56b10fb9e2ccf1",
+    "cases/43279099999_20240823T0600Z/model_input.csv": "a08304b497117db9ab16406b5032bac0a1311831fe196eecdbc8d49d183de769",
+    "cases/43279099999_20240823T0600Z/predictions.csv": "84839d4c6e7d7964a78e606e2eafba316eb6fec9f1d41584cd4592a9c5340412",
+    "cases/43279099999_20240831T0600Z/manifest.json": "4fe83eca05916f3b6ba7e153da174b146add2aed299eb6d23cd566bcc3465ea2",
+    "cases/43279099999_20240831T0600Z/model_input.csv": "c579a5ddd62f0b60259ab1790e32920d40ff0e71a2ce7773042c6bc154e02f5d",
+    "cases/43279099999_20240831T0600Z/predictions.csv": "450b81632c56bebe3f29be1d6e4a229ff205099508b513c86c08a390329564d8",
+    "cases/43279099999_20240908T0600Z/manifest.json": "b1872e5de3a98a803b14faa6151232b98f386315fc426b430d50f200f55b35f1",
+    "cases/43279099999_20240908T0600Z/model_input.csv": "9d1df86dd7061d34c1b16ffc3aadd370c9eabe19ffe7d6d7f08fc9cffded8dfb",
+    "cases/43279099999_20240908T0600Z/predictions.csv": "0c15aa5487aa7cb8a861e771536a29fa1b4d820b9adb56ce3ed1e3cfd7f6aa2b",
+    "cases/43279099999_20240924T0600Z/manifest.json": "2512df04fe7e495167f556f1d7f5167e2559c1e4cda7eda1d75bc58fddae9003",
+    "cases/43279099999_20240924T0600Z/model_input.csv": "d1099fd2fb73676af07eec700e5c7e6a7d35d9efb31c2cb4a22ac0e4a50fec10",
+    "cases/43279099999_20240924T0600Z/predictions.csv": "ea85cae99665ad37efc787639d31770cf6887c585def2b028a21e8dc7cc0ca57",
+    "cases/43279099999_20241002T0600Z/manifest.json": "dd51a1901ad8db6c45deca49e8e1ef5fb69d65e8eab9d5680c0878b5277c5c0f",
+    "cases/43279099999_20241002T0600Z/model_input.csv": "98767678d2f8f06842c50a0e499d66fcb98bc3122e66f471ac577982855dc507",
+    "cases/43279099999_20241002T0600Z/predictions.csv": "eabefe95dec1ac0b23011d501c52202e65e07558cb0b223079a45c4a2b88799d",
+    "cases/43279099999_20241010T0600Z/manifest.json": "2930f94c0ce2158fb0a273cacb13db9070962c325cf0e38e0c7e4ee1b8bcec26",
+    "cases/43279099999_20241010T0600Z/model_input.csv": "2b4e6c7f4014af95cbf4eebdf7e734f568ed87ea66a41f0c2231b0315286b267",
+    "cases/43279099999_20241010T0600Z/predictions.csv": "6ba6b0dcaa4d8aae80f94d7d6c8a302f0974ceb303502f44b8f5ae4db7d3ac9e",
+    "cases/43279099999_20241018T0600Z/manifest.json": "6981719a6df289e879743f3681c3ed63e2a07a66624c296ca0dbba3bb1c5368a",
+    "cases/43279099999_20241018T0600Z/model_input.csv": "f045fb38321e41ffb5cd36fe9daed5f4c462163eaac9ceb428c5eb170253547c",
+    "cases/43279099999_20241018T0600Z/predictions.csv": "1aacf548fc9522bd976f0bb7db7d871701a957b40911bb0de6eed8b2b5294588",
+    "cases/43279099999_20241026T0600Z/manifest.json": "77b9ced7991c2e355c7ef09b6df01c99e3e42003314f7e8c9cd46de9391e5e81",
+    "cases/43279099999_20241026T0600Z/model_input.csv": "afc04f00d5a2cf510b77fe5c8eea5cc1c1b293622e60aa396bfd0f419f3ec7b1",
+    "cases/43279099999_20241026T0600Z/predictions.csv": "a754c59330a8fd7bca449a48166fbb848e97b5d96b8e00fabefc5772d9f26850",
+    "cases/43279099999_20241103T0600Z/manifest.json": "08fb053b428c9b4f7e7136d2884a9be959b84c24cae6b4661579fd718d819b8e",
+    "cases/43279099999_20241103T0600Z/model_input.csv": "95c3ffd8db238198071d296e0724ad8c68633dd603a1c1999bf3cc0fa414aa70",
+    "cases/43279099999_20241103T0600Z/predictions.csv": "accfbb9519c42758cae66be20a2777f56f77619398122fc136123a9da4c315b5",
+    "cases/43279099999_20241111T0600Z/manifest.json": "8f6f2ae70392291f9c5d684c1cf66d920569a264d7ee469930e1b4469b8311c4",
+    "cases/43279099999_20241111T0600Z/model_input.csv": "2979d7b0b5cba00f59d9790e274b873d10a5da47cdec85db9d02874e8734fd54",
+    "cases/43279099999_20241111T0600Z/predictions.csv": "776e9c0a417b6644ecd991aa8fdf07db824e780e10e2901a16753df3e2f93c29",
+    "cases/43279099999_20241119T0600Z/manifest.json": "fcf592f341396910390d830511c8cb35691d8d133e677bfd8fd1b4ff88e2f145",
+    "cases/43279099999_20241119T0600Z/model_input.csv": "912df3bebcb2b6f6a9e960b71594af93a982cef612cbde0815a56be7da7833f1",
+    "cases/43279099999_20241119T0600Z/predictions.csv": "8e82436ad521b04ebb883acf5d57c6d51b838b48155fec38394f6716ad387563",
+    "cases/43279099999_20241127T0600Z/manifest.json": "47b2cbe381512b95a96bffc8b3504b2eba1ab4bec0e4eef75274db17e243d1e3",
+    "cases/43279099999_20241127T0600Z/model_input.csv": "687fd002739eeb1b87241ddcddb405c9ec62502e80471cd3b3869c5728afe661",
+    "cases/43279099999_20241127T0600Z/predictions.csv": "430f87ae10fd0c94b2812222ffd843aa695ee38f65058f97b817bf83cca085ca",
+    "cases/43279099999_20241205T0600Z/manifest.json": "1a45b9b22ed96def4b762e026e8bb871a080dd8bdb4cdea0aba1e80b4833a755",
+    "cases/43279099999_20241205T0600Z/model_input.csv": "bc3d6be07a448f45807c98845e5e1d10d3da3a91ac24f9339a963b1b26094416",
+    "cases/43279099999_20241205T0600Z/predictions.csv": "b67abcb3325f4d4aa983e53bd6448080b45bde7c33b0718017cdb402a66f5b6b",
+    "cases/43279099999_20241213T0600Z/manifest.json": "75593513753627473e08c51da96892553337c39cd158741e6f5fdc204cafa85c",
+    "cases/43279099999_20241213T0600Z/model_input.csv": "2476a898327f6c68e188274d39c8b3adabf16cc015a7e24be3018e848a59e8c9",
+    "cases/43279099999_20241213T0600Z/predictions.csv": "bea5c63efb3773144e97442db72ea20e572b4714103a82e58ca9d44e3ee7a0b3",
+    "cases/43279099999_20241221T0600Z/manifest.json": "aa17a4505b6657963814efaaf68777f9571674e1f9f6315631b654c9c625394a",
+    "cases/43279099999_20241221T0600Z/model_input.csv": "3424705f65e560daa7fc1822665ae606bbc989f3f3b19ff106c6fa0246936477",
+    "cases/43279099999_20241221T0600Z/predictions.csv": "d98847cfd8e76ff684dbf65a06c0806311fdc0095e388a36b1efff5fab91e8af",
+    "cases/43279099999_20241229T0600Z/manifest.json": "5d40cc95718f0914af8c40146582295483a6c7b6f9a7d1bfe0b37d697c096399",
+    "cases/43279099999_20241229T0600Z/model_input.csv": "b8d2bbf507a555db386bae87f2e3eb93ebe93912ef716dbffaa7ddf525db407a",
+    "cases/43279099999_20241229T0600Z/predictions.csv": "d718575e3f7c30367d26b37120bd3f1fdb1c6d529ccb6de5c117f31d88271fab",
+    "cases/43279099999_20250106T0600Z/manifest.json": "a622dd82a9d93a9908139d74ead925b983f3796a1854653846032f84250a10fa",
+    "cases/43279099999_20250106T0600Z/model_input.csv": "a9c3ef40b0db3b4e8836e263edc7b7857d1d06a204e738e21b7aefc7bf825230",
+    "cases/43279099999_20250106T0600Z/predictions.csv": "99cec59302b0fa6599ac371eaf23eaa87a437dd0b34e96633624e563e7017a25",
+    "cases/43279099999_20250114T0600Z/manifest.json": "549ebf85f53d2113d4bbd9a44b3812e5ef4e43ecacbc85ee5e8aa7870176b7d8",
+    "cases/43279099999_20250114T0600Z/model_input.csv": "f9b8bf0bf25cc70036b5fec50dc7eb13e8966c00ca3264168bbcadd9f45d142f",
+    "cases/43279099999_20250114T0600Z/predictions.csv": "33eb9ea80e2702e35addbf61daee1918b9ef4a3e95ca3f46bb2ee7831129744c",
+    "cases/43279099999_20250122T0600Z/manifest.json": "058eb91bde755a2e5cfc3030a96d46c1011ba5a26eaf6a1b7243643f2d88e893",
+    "cases/43279099999_20250122T0600Z/model_input.csv": "bfd402656d1ff7c288a496eecc7b9f74330de8a522b3dcd251941ec31931bc68",
+    "cases/43279099999_20250122T0600Z/predictions.csv": "90737bf1ce91a2ea3c6c59fd01e360ddb164002ea2ff99af4a9f5c4e3c7a1d23",
+    "cases/43279099999_20250130T0600Z/manifest.json": "63dc20d3f004dcca29b13f3b554b8cecd78923cdb38a1f1620ea65ed8bb6ae3b",
+    "cases/43279099999_20250130T0600Z/model_input.csv": "13c7b6ca1433cf8d7b353e5c8a407af288fa3ed6e9d93f630ed334f3e6edd356",
+    "cases/43279099999_20250130T0600Z/predictions.csv": "f4f440e3eda7aa848bc0e7343794d61342ec8a49becc90af75e1ad69467017fa",
+    "cases/43279099999_20250207T0600Z/manifest.json": "f5ca1a53d862dac5299f948e76e89447ea7b9bc54984e25ab75ee2297628876b",
+    "cases/43279099999_20250207T0600Z/model_input.csv": "5a3475c20790d08e1520ecce1150ba7e237cef3776b1582169fd5ae432446de4",
+    "cases/43279099999_20250207T0600Z/predictions.csv": "19d0f4a6378e0c5945ecf7236853d810795e37f993b60b480995d4fa60a3b280",
+    "cases/43279099999_20250215T0600Z/manifest.json": "3d2594c291df11b881564b99dcae853a4bd7e6398c88f69133243eface405414",
+    "cases/43279099999_20250215T0600Z/model_input.csv": "882747dc6d354e88163f7d07fb58a66d4799697e7440c674070cae64fea3582f",
+    "cases/43279099999_20250215T0600Z/predictions.csv": "011473b99cc77c48fedef6eb97b265b62edf49b8e6c8f2eeee6bdd4ac8a1c0f8",
+    "cases/43279099999_20250223T0600Z/manifest.json": "f61d1c2ef865303b9ad4eb644d96a1d35a7d095f0dfd6329c3ef5b9a265c79f7",
+    "cases/43279099999_20250223T0600Z/model_input.csv": "97dceb188bb0f5d800cb39194ca60cbb7455b1b63b7585b4dcdea2e46ece18b4",
+    "cases/43279099999_20250223T0600Z/predictions.csv": "da1dc955608656a5aac698d02e533aaf0b19014c57da7008c3c1a5a0f299d0c0",
+    "cases/43279099999_20250311T0600Z/manifest.json": "cd6d405f19c152e2e86fd6ab8b9160ce576d442abfcfc7d5898270e49a0c646a",
+    "cases/43279099999_20250311T0600Z/model_input.csv": "7728640b641c0f1453094cbf178c2efc355be6988306b5721a8bcb0a6722e301",
+    "cases/43279099999_20250311T0600Z/predictions.csv": "6d5e4c2268f737b6ee5355736e436cd28375f65323e5cfa7b1275aa97767394a",
+    "cases/43279099999_20250319T0600Z/manifest.json": "c506ce8bdc952a217db1bf068b579ab1562a0078cb2406be231a232852e947e7",
+    "cases/43279099999_20250319T0600Z/model_input.csv": "69adb46f0646af1794abd6de54080480d4dd4b3cc417a0c64d9b35522f42ad62",
+    "cases/43279099999_20250319T0600Z/predictions.csv": "2a95c515e09d44cc87a648488541b59f8c107ce1d67fc543364eee5baf35a8cc",
+    "model.json": "f8e426040714533ca54b4584a23ab07d51b45484041f8d0f3654c907c749a302",
+    "origins.csv": "25d01cc930023f60187e3cd92a59f4b8cfa314114ce341fa781a43a5527e6ad0",
+    "predictions.csv": "ca58c659c5c4e0dfe15dc8c5aa04928824d43c38c7abd27ff5762c9886257b01"
+  }
+}

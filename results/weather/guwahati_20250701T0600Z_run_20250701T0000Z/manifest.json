@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "stage": "single_case_baselines_only",
+  "station": {
+    "id": "42410099999",
+    "name": "GUWAHATI INTERNATIONAL LOKPRIYA GOPINATH BORDOLOI INTERNATIONAL, IN",
+    "latitude": 26.106092,
+    "longitude": 91.585939,
+    "elevation_m": 49.37
+  },
+  "origin": "2025-07-01T06:00:00+00:00",
+  "observation_source": {
+    "url": "https://www.ncei.noaa.gov/data/global-hourly/access/2025/42410099999.csv",
+    "retrieved_at": "2026-09-05T11:33:48.140492+00:00",
+    "sha256": "5cea6d723baa7a489120db65b69b1240062a063a46cceeabc97c030d5864e897",
+    "bytes": 5905075
+  },
+  "observation_audit": {
+    "raw_rows": 12499,
+    "rejected_temperature_rows": 17,
+    "off_hour_rows": 5343,
+    "excluded_report_type_rows": 1863,
+    "report_type": "FM-15",
+    "accepted_quality_codes": [
+      "1",
+      "5"
+    ],
+    "accepted_exact_hour_rows": 5291,
+    "duplicate_exact_hour_rows": 0,
+    "conflicting_hours": 0,
+    "first_report": "2025-01-01T00:00:00+00:00",
+    "last_report": "2025-08-24T21:30:00+00:00"
+  },
+  "history_hours": 672,
+  "history_observed_hours": 635,
+  "history_missing_times": [
+    "2025-06-04 07:00:00+00:00",
+    "2025-06-04 08:00:00+00:00",
+    "2025-06-05 05:00:00+00:00",
+    "2025-06-06 14:00:00+00:00",
+    "2025-06-06 17:00:00+00:00",
+    "2025-06-06 18:00:00+00:00",
+    "2025-06-06 20:00:00+00:00",
+    "2025-06-08 11:00:00+00:00",
+    "2025-06-08 12:00:00+00:00",
+    "2025-06-08 13:00:00+00:00",
+    "2025-06-08 14:00:00+00:00",
+    "2025-06-09 01:00:00+00:00",
+    "2025-06-09 04:00:00+00:00",
+    "2025-06-09 15:00:00+00:00",
+    "2025-06-09 19:00:00+00:00",
+    "2025-06-09 21:00:00+00:00",
+    "2025-06-09 22:00:00+00:00",
+    "2025-06-10 11:00:00+00:00",
+    "2025-06-11 21:00:00+00:00",
+    "2025-06-11 22:00:00+00:00",
+    "2025-06-11 23:00:00+00:00",
+    "2025-06-12 00:00:00+00:00",
+    "2025-06-12 01:00:00+00:00",
+    "2025-06-12 02:00:00+00:00",
+    "2025-06-13 05:00:00+00:00",
+    "2025-06-13 08:00:00+00:00",
+    "2025-06-13 10:00:00+00:00",
+    "2025-06-15 10:00:00+00:00",
+    "2025-06-16 21:00:00+00:00",
+    "2025-06-18 07:00:00+00:00",
+    "2025-06-18 08:00:00+00:00",
+    "2025-06-18 09:00:00+00:00",
+    "2025-06-18 10:00:00+00:00",
+    "2025-06-21 21:00:00+00:00",
+    "2025-06-23 05:00:00+00:00",
+    "2025-06-26 09:00:00+00:00",
+    "2025-06-29 08:00:00+00:00"
+  ],
+  "target_hours": 48,
+  "target_observed_hours": 48,
+  "target_start": "2025-07-01T07:00:00+00:00",
+  "target_end": "2025-07-03T06:00:00+00:00",
+  "forecast_source": {
+    "url": "https://single-runs-api.open-meteo.com/v1/forecast?elevation=49.37&forecast_hours=55&hourly=temperature_2m&latitude=26.106092&longitude=91.585939&models=ecmwf_ifs&run=2025-07-01T00%3A00&temperature_unit=celsius&timezone=UTC",
+    "retrieved_at": "2026-09-05T11:35:47.743590+00:00",
+    "sha256": "214903cf0c35a24d62476169224c9e7d9495fa8e1f39675001de9e86a6e0ee23",
+    "bytes": 1586
+  },
+  "forecast_model": "ecmwf_ifs",
+  "forecast_run": "2025-07-01T00:00:00+00:00",
+  "forecast_grid": {
+    "latitude": 26.115992,
+    "longitude": 91.57722,
+    "elevation": 49.37
+  },
+  "forecast_kind": "hindcast",
+  "forecast_vintage_basis": "https://open-meteo.com/en/docs/single-runs-api",
+  "assumed_minimum_run_age_hours": 6,
+  "operational_availability_verified": false,
+  "observation_availability_verified": false,
+  "scores": {
+    "persistence_c": {
+      "n": 48,
+      "mae_c": 1.2083333333333333,
+      "rmse_c": 1.4433756729740645,
+      "bias_c": 0.0
+    },
+    "yesterday_c": {
+      "n": 48,
+      "mae_c": 0.8333333333333334,
+      "rmse_c": 1.224744871391589,
+      "bias_c": 0.3333333333333333
+    },
+    "ecmwf_ifs_c": {
+      "n": 48,
+      "mae_c": 1.7791666666666668,
+      "rmse_c": 1.9386421364793798,
+      "bias_c": -1.1458333333333337
+    }
+  },
+  "limitations": [
+    "One retrospective case is a data/benchmark smoke test, not evidence of general forecast skill.",
+    "No TimesFM prediction or bias correction has been run in this slice.",
+    "History gaps remain missing; run with --timesfm to apply the explicit model-input policy.",
+    "Only exact-hour FM-15 METAR reports with quality code 1 or 5 are used; temperatures are often rounded to whole degrees.",
+    "Station sensor height has not been verified; station air temperature and grid 2m temperature are not identical measurements.",
+    "ECMWF values are served through Open-Meteo with station-elevation adjustment, not unprocessed native-grid values.",
+    "The run age is an explicit alignment assumption; historical publication and observation receipt times are unknown.",
+    "Earlier IFS runs are labelled Cycle 49R1 hindcasts by the source, not proven historical operational forecasts."
+  ]
+}

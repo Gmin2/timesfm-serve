@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "id": "india_station_correction_v1",
+  "frozen_at": "2026-09-05T12:24:08Z",
+  "target": "station_air_temperature_c",
+  "observation_year": 2025,
+  "stations": [
+    {"id": "42410099999", "name": "Guwahati", "observation_sha256": "5cea6d723baa7a489120db65b69b1240062a063a46cceeabc97c030d5864e897"},
+    {"id": "43128599999", "name": "Hyderabad", "observation_sha256": "f068b61b4d70748ff3559e5534c1421487d917b94b741cb1453714f33843aa6b"},
+    {"id": "43279099999", "name": "Chennai", "observation_sha256": "b88a9dad4e7227be43cc4be8da61d2e25318c6c50f2ec9d0bcc08fd42c4bd8bd"}
+  ],
+  "station_selection": "Three geographically distinct airports, fixed before candidate forecast scores; not selected for model performance.",
+  "horizon_hours": 48,
+  "origin_step_hours": 48,
+  "origin_utc_hour": 6,
+  "minimum_run_age_hours": 6,
+  "forecast_model": "ecmwf_ifs",
+  "forecast_kind": "hindcast",
+  "history_policy": {"context_hours": 168, "max_gap_hours": 6, "max_imputed_fraction": 0.1},
+  "history_selection": "Seven days chosen for a local correction pilot after observation-only coverage audit, before development or test forecast scores.",
+  "observation_policy": {"report_type": "FM-15", "quality_codes": ["1", "5"], "exact_hours_only": true, "minimum_target_hours": 1, "fill_targets": false},
+  "fit_cutoff": "2025-03-31T06:00:00Z",
+  "training_label_delay_hours": 1,
+  "ridge_alpha": 10.0,
+  "bias_correction": "Fixed mean observed-minus-forecast residual per station on training rows only.",
+  "splits": {
+    "train": {"start": "2025-01-29T06:00:00Z", "end": "2025-03-28T06:00:00Z", "origins_per_station": 30},
+    "development": {"start": "2025-04-01T06:00:00Z", "end": "2025-04-27T06:00:00Z", "origins_per_station": 14},
+    "holdout": {"start": "2025-05-01T06:00:00Z", "end": "2025-05-29T06:00:00Z", "origins_per_station": 15}
+  },
+  "previously_scored_period_excluded": {"start": "2025-06-01T00:00:00Z", "end": "2025-08-25T00:00:00Z"},
+  "smoke_test": "January 29/31 fitting and February 4 prediction were inspected only within this protocol's training period.",
+  "timesfm": {
+    "model_id": "google/timesfm-3.0-pytorch",
+    "revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+    "point_estimate": "p50",
+    "fine_tuned": false,
+    "nwp_covariate": "Past 168 hours and future 48 hours of temperature guidance. Past guidance concatenates nonoverlapping 48-hour segments from earlier runs, each initialized six hours before its segment origin; future guidance uses the current origin's run. No future observations or reanalysis covariates."
+  },
+  "methods": ["persistence_c", "yesterday_c", "ecmwf_ifs_c", "bias_corrected_c", "ridge_corrected_c", "timesfm_c", "timesfm_nwp_c"],
+  "selection": {"split": "development", "metric": "pooled_rmse_c", "candidates_in_tie_order": ["bias_corrected_c", "ridge_corrected_c", "timesfm_c", "timesfm_nwp_c"], "refit_after_selection": false},
+  "scoring": {
+    "primary_baseline": "ecmwf_ifs_c",
+    "primary_metric": "pooled_rmse_c",
+    "common_observation_mask": true,
+    "lead_bands": [[1, 6], [7, 24], [25, 48]],
+    "bootstrap": {"replicates": 2000, "seed": 20250905, "block_origins": 4, "method": "paired circular moving blocks of scheduled origin dates; all stations resampled together"},
+    "pilot_pass": {"minimum_accepted_origin_fraction": 0.8, "minimum_scored_hour_fraction": 0.75, "minimum_accepted_origins_per_station": 10, "selected_candidate_rmse_delta_upper_95ci_below_zero": true}
+  },
+  "limits": [
+    "Three-station February-May pilot, not an India-wide or full-year benchmark and not a direct comparison with Indus predictions.",
+    "ECMWF Cycle 49R1 hindcasts via Open-Meteo, not independently verified archived operational forecasts or native-grid ECMWF values.",
+    "Forecast publication and observation receipt times are unverified. The six-hour run-age convention and observations through origin are retrospective availability assumptions.",
+    "The test period is unseen by this project's temperature comparison, not proven absent from TimesFM pretraining or all upstream model development.",
+    "Station temperature is often rounded; sensor height and station/grid representativeness remain unverified.",
+    "Eligibility rules may select a nonrepresentative sample. All rejected and failed origins must be reported.",
+    "One month of testing gives limited seasonal and temporal coverage; block-bootstrap intervals are exploratory.",
+    "A pilot pass is evidence only for this retrospective station task, not proof of operational ECMWF or Pravah superiority."
+  ]
+}

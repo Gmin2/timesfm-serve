@@ -1,0 +1,135 @@
+{
+  "stage": "frozen_backtest",
+  "started_at": "2026-09-05T11:59:40.527461+00:00",
+  "protocol_sha256": "016f96f94b2b0a5e997e1caa67573e32144d5a1b3d21cfbaa93a9a0b2f01ea0e",
+  "pipeline_sha256": {
+    "weather_backtest.py": "4c7a4311fd60602f111ef7ff773493f3a2a5d701661f3544cfc832c5c3c881ab",
+    "weather_case.py": "a6493a04504587cb7c990e631b80ba12d03797129cae0b1c7a69a98fa4b39584",
+    "weather_model.py": "5bd029d5030520d051b1e199f999972c0d77422d357aee98f61b4036c16bc447"
+  },
+  "observation_source": {
+    "url": "https://www.ncei.noaa.gov/data/global-hourly/access/2025/42410099999.csv",
+    "retrieved_at": "2026-09-05T11:33:48.140492+00:00",
+    "sha256": "5cea6d723baa7a489120db65b69b1240062a063a46cceeabc97c030d5864e897",
+    "bytes": 5905075
+  },
+  "station": {
+    "id": "42410099999",
+    "name": "GUWAHATI INTERNATIONAL LOKPRIYA GOPINATH BORDOLOI INTERNATIONAL, IN",
+    "latitude": 26.106092,
+    "longitude": 91.585939,
+    "elevation_m": 49.37
+  },
+  "observation_audit": {
+    "raw_rows": 12499,
+    "rejected_temperature_rows": 17,
+    "off_hour_rows": 5343,
+    "excluded_report_type_rows": 1863,
+    "report_type": "FM-15",
+    "accepted_quality_codes": [
+      "1",
+      "5"
+    ],
+    "accepted_exact_hour_rows": 5291,
+    "duplicate_exact_hour_rows": 0,
+    "conflicting_hours": 0,
+    "first_report": "2025-01-01T00:00:00+00:00",
+    "last_report": "2025-08-24T21:30:00+00:00"
+  },
+  "planned_origins": 25,
+  "eligible_origins": 5,
+  "command_computes_forecast_scores": true,
+  "run_status": "complete",
+  "split": "holdout",
+  "limitations": [
+    "One station and a limited season; no annual or geographic generalization.",
+    "The July 1 demonstration trajectory is excluded from both evaluation splits.",
+    "Dates, checkpoint, inputs and gap rules are fixed before new model scores are inspected.",
+    "Earlier observations may enter later contexts once they are in the past; no future targets are used as inputs.",
+    "Historical forecast publication and observation receipt times are unverified. The six-hour run age is an assumption.",
+    "The 2025 ECMWF archive is labelled as a hindcast, not a proven operational vintage.",
+    "Exclusion of these dates from TimesFM pretraining is unverified.",
+    "Input/data eligibility can bias the accepted sample; report all rejections and denominators.",
+    "METAR rounding, unverified station sensor height, and Open-Meteo elevation handling remain limitations.",
+    "Do not change this protocol in place after inspecting scores; a revised experiment needs a new version."
+  ],
+  "finished_at": "2026-09-05T11:59:57.103860+00:00",
+  "results": {
+    "counts": {
+      "planned_origins": 25,
+      "accepted_origins": 5,
+      "data_rejected_origins": 20,
+      "error_origins": 0,
+      "accepted_origin_fraction": 0.2,
+      "planned_forecast_hours": 1200,
+      "observed_target_hours_all_origins": 1171,
+      "scored_forecast_hours": 227,
+      "scored_fraction_of_planned_hours": 0.18916666666666668,
+      "scored_fraction_of_accepted_hours": 0.9458333333333333
+    },
+    "rejection_reason_combinations": {
+      "history_policy": 8,
+      "incomplete_previous_day": 6,
+      "history_policy;incomplete_previous_day": 6
+    },
+    "scores": {
+      "persistence_c": {
+        "n": 227,
+        "mae_c": 4.052863436123348,
+        "rmse_c": 4.735283253300354,
+        "bias_c": 3.198237885462555
+      },
+      "yesterday_c": {
+        "n": 227,
+        "mae_c": 1.6740088105726871,
+        "rmse_c": 2.287680086072232,
+        "bias_c": 1.1013215859030836
+      },
+      "ecmwf_ifs_c": {
+        "n": 227,
+        "mae_c": 1.3762114537444934,
+        "rmse_c": 1.634835534440576,
+        "bias_c": -0.7585903083700442
+      },
+      "timesfm_c": {
+        "n": 227,
+        "mae_c": 1.5315997926149074,
+        "rmse_c": 2.027540589199699,
+        "bias_c": 0.9575345211617222
+      }
+    },
+    "uncertainty": {
+      "n": 227,
+      "mean_quantile_pinball_c": 0.5711516719674341,
+      "p10_p90_coverage": 0.7665198237885462,
+      "p10_p90_nominal_coverage": 0.8,
+      "mean_p10_p90_width_c": 3.5421329447876513
+    },
+    "paired_origin_comparisons": {
+      "persistence_c": {
+        "n_origins": 5,
+        "timesfm_wins": 5,
+        "ties": 0,
+        "timesfm_losses": 0,
+        "mean_origin_mae_delta_c": -2.518498697119144,
+        "delta_definition": "TimesFM MAE minus baseline MAE on the same origin; negative is better for TimesFM."
+      },
+      "yesterday_c": {
+        "n_origins": 5,
+        "timesfm_wins": 3,
+        "ties": 0,
+        "timesfm_losses": 2,
+        "mean_origin_mae_delta_c": -0.1477416820096779,
+        "delta_definition": "TimesFM MAE minus baseline MAE on the same origin; negative is better for TimesFM."
+      },
+      "ecmwf_ifs_c": {
+        "n_origins": 5,
+        "timesfm_wins": 2,
+        "ties": 0,
+        "timesfm_losses": 3,
+        "mean_origin_mae_delta_c": 0.17307870035233255,
+        "delta_definition": "TimesFM MAE minus baseline MAE on the same origin; negative is better for TimesFM."
+      }
+    }
+  }
+}

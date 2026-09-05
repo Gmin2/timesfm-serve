@@ -1,0 +1,129 @@
+{
+  "protocol_sha256": "ed8f97fa2c0e58057e7fbeb6a4bbb66199204def9bf06635289fe2d9e6e34228",
+  "pipeline_sha256": {
+    "weather_case.py": "a6493a04504587cb7c990e631b80ba12d03797129cae0b1c7a69a98fa4b39584",
+    "weather_model.py": "5bd029d5030520d051b1e199f999972c0d77422d357aee98f61b4036c16bc447",
+    "weather_correction.py": "b4277d4393401b49e94ec0a17737598352d2e14c04add660aab67ff3b9bdf295",
+    "weather_conditioned.py": "86e487d750e8d1cb513057f827b655811d3481f8aac646244efdc81ac330aa1b",
+    "weather_correction_backtest.py": "4ae947fb1698236d16bdb890730438a3d4237f28f05e32ad6cbd7fe6cf761ddd"
+  },
+  "runtime_versions": {
+    "numpy": "2.5.2",
+    "pandas": "3.0.5",
+    "scikit-learn": "1.9.0",
+    "torch": "2.14.0",
+    "timesfm": "3.0.1"
+  },
+  "stage": "audit",
+  "run_status": "complete",
+  "started_at": "2026-09-05T12:30:09.303609+00:00",
+  "limits": [
+    "Three-station February-May pilot, not an India-wide or full-year benchmark and not a direct comparison with Indus predictions.",
+    "ECMWF Cycle 49R1 hindcasts via Open-Meteo, not independently verified archived operational forecasts or native-grid ECMWF values.",
+    "Forecast publication and observation receipt times are unverified. The six-hour run-age convention and observations through origin are retrospective availability assumptions.",
+    "The test period is unseen by this project's temperature comparison, not proven absent from TimesFM pretraining or all upstream model development.",
+    "Station temperature is often rounded; sensor height and station/grid representativeness remain unverified.",
+    "Eligibility rules may select a nonrepresentative sample. All rejected and failed origins must be reported.",
+    "One month of testing gives limited seasonal and temporal coverage; block-bootstrap intervals are exploratory.",
+    "A pilot pass is evidence only for this retrospective station task, not proof of operational ECMWF or Pravah superiority."
+  ],
+  "observations": {
+    "42410099999": {
+      "station": {
+        "id": "42410099999",
+        "name": "GUWAHATI INTERNATIONAL LOKPRIYA GOPINATH BORDOLOI INTERNATIONAL, IN",
+        "latitude": 26.106092,
+        "longitude": 91.585939,
+        "elevation_m": 49.37
+      },
+      "source": {
+        "url": "https://www.ncei.noaa.gov/data/global-hourly/access/2025/42410099999.csv",
+        "retrieved_at": "2026-09-05T11:33:48.140492+00:00",
+        "sha256": "5cea6d723baa7a489120db65b69b1240062a063a46cceeabc97c030d5864e897",
+        "bytes": 5905075
+      },
+      "audit": {
+        "raw_rows": 12499,
+        "rejected_temperature_rows": 17,
+        "off_hour_rows": 5343,
+        "excluded_report_type_rows": 1863,
+        "report_type": "FM-15",
+        "accepted_quality_codes": [
+          "1",
+          "5"
+        ],
+        "accepted_exact_hour_rows": 5291,
+        "duplicate_exact_hour_rows": 0,
+        "conflicting_hours": 0,
+        "first_report": "2025-01-01T00:00:00+00:00",
+        "last_report": "2025-08-24T21:30:00+00:00"
+      }
+    },
+    "43128599999": {
+      "station": {
+        "id": "43128599999",
+        "name": "HYDERABAD INTERNATIONAL AIRPORT RAJIV GANDHI INTERNATIONAL, IN",
+        "latitude": 17.2333333,
+        "longitude": 78.4166666,
+        "elevation_m": 617.0
+      },
+      "source": {
+        "url": "https://www.ncei.noaa.gov/data/global-hourly/access/2025/43128599999.csv",
+        "retrieved_at": "2026-09-05T12:21:32.704947+00:00",
+        "sha256": "f068b61b4d70748ff3559e5534c1421487d917b94b741cb1453714f33843aa6b",
+        "bytes": 4567133
+      },
+      "audit": {
+        "raw_rows": 10546,
+        "rejected_temperature_rows": 19,
+        "off_hour_rows": 5301,
+        "excluded_report_type_rows": 0,
+        "report_type": "FM-15",
+        "accepted_quality_codes": [
+          "1",
+          "5"
+        ],
+        "accepted_exact_hour_rows": 5239,
+        "duplicate_exact_hour_rows": 0,
+        "conflicting_hours": 0,
+        "first_report": "2025-01-01T00:00:00+00:00",
+        "last_report": "2025-08-24T21:30:00+00:00"
+      }
+    },
+    "43279099999": {
+      "station": {
+        "id": "43279099999",
+        "name": "CHENNAI INTERNATIONAL, IN",
+        "latitude": 12.994414,
+        "longitude": 80.180517,
+        "elevation_m": 15.84
+      },
+      "source": {
+        "url": "https://www.ncei.noaa.gov/data/global-hourly/access/2025/43279099999.csv",
+        "retrieved_at": "2026-09-05T12:21:55.182859+00:00",
+        "sha256": "b88a9dad4e7227be43cc4be8da61d2e25318c6c50f2ec9d0bcc08fd42c4bd8bd",
+        "bytes": 5424213
+      },
+      "audit": {
+        "raw_rows": 13009,
+        "rejected_temperature_rows": 15,
+        "off_hour_rows": 5573,
+        "excluded_report_type_rows": 1851,
+        "report_type": "FM-15",
+        "accepted_quality_codes": [
+          "1",
+          "5"
+        ],
+        "accepted_exact_hour_rows": 5581,
+        "duplicate_exact_hour_rows": 0,
+        "conflicting_hours": 0,
+        "first_report": "2025-01-01T00:00:00+00:00",
+        "last_report": "2025-08-24T21:30:00+00:00"
+      }
+    }
+  },
+  "computes_forecast_scores": false,
+  "artifact_sha256": {
+    "origins.csv": "27f4e21ef844800edf54e7f5d4427717e46a4641ede1a673b1fad608c106dff7"
+  }
+}

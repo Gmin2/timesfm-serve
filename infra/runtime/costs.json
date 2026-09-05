@@ -1,0 +1,27 @@
+{
+  "checked_at": "2026-09-05",
+  "region": "us-east-1",
+  "currency": "USD",
+  "hours_per_month": 730,
+  "purchase_option": "On-Demand, no free credits or discounts assumed",
+  "rates": {
+    "g6_xlarge_hour": {"usd": 0.8048, "sku": "TPKUC6XYSUQ3VFK2", "source": "AWS Pricing GetProducts: AmazonEC2, Linux, Shared, NA, Used, g6.xlarge"},
+    "t3_medium_hour": {"usd": 0.0416, "sku": "NN4EGUUQRWVYP98C", "source": "AWS Pricing GetProducts: AmazonEC2, Linux, Shared, NA, Used, t3.medium"},
+    "rds_t4g_micro_hour": {"usd": 0.016, "sku": "9HPEGXQTDDGH53C9", "source": "AWS Pricing GetProducts: AmazonRDS, PostgreSQL, Single-AZ, db.t4g.micro"},
+    "ebs_gp3_gb_month": {"usd": 0.08, "sku": "JG3KUJMBRGHV3N8G", "source": "AWS Pricing GetProducts: AmazonEC2, gp3"},
+    "rds_gp3_gb_month": {"usd": 0.115, "sku": "KYVYY29G957PKY3B", "source": "AWS Pricing GetProducts: AmazonRDS, PostgreSQL, Single-AZ, General Purpose-GP3"},
+    "eks_standard_hour": {"usd": 0.10, "source": "https://aws.amazon.com/eks/pricing/"},
+    "nat_hour": {"usd": 0.045, "source": "https://aws.amazon.com/vpc/pricing/"},
+    "nat_gb": {"usd": 0.045, "source": "https://aws.amazon.com/vpc/pricing/"},
+    "public_ipv4_hour": {"usd": 0.005, "source": "https://aws.amazon.com/vpc/pricing/"},
+    "alb_hour": {"usd": 0.0225, "source": "https://aws.amazon.com/elasticloadbalancing/pricing/"},
+    "alb_lcu_hour": {"usd": 0.008, "source": "https://aws.amazon.com/elasticloadbalancing/pricing/"}
+  },
+  "limits": [
+    "Estimate, not a quote or a hard spending cap; verify rates again before approval.",
+    "IPv4 estimate assumes one NAT address. The internal ALB and API Gateway VPC link use private addresses.",
+    "Additional charges include API Gateway requests, on-demand CodeBuild minutes, request/storage services, logs, backups beyond allowance, cross-AZ traffic, data transfer, taxes and retained resources.",
+    "GPU node group is zero by default; other resources continue billing when it is zero.",
+    "Single-AZ RDS and one NAT are pilot availability compromises, not a highly available production design."
+  ]
+}

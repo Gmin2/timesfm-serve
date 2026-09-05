@@ -1,0 +1,326 @@
+{
+  "protocol_sha256": "ed8f97fa2c0e58057e7fbeb6a4bbb66199204def9bf06635289fe2d9e6e34228",
+  "pipeline_sha256": {
+    "weather_case.py": "a6493a04504587cb7c990e631b80ba12d03797129cae0b1c7a69a98fa4b39584",
+    "weather_model.py": "5bd029d5030520d051b1e199f999972c0d77422d357aee98f61b4036c16bc447",
+    "weather_correction.py": "b4277d4393401b49e94ec0a17737598352d2e14c04add660aab67ff3b9bdf295",
+    "weather_conditioned.py": "86e487d750e8d1cb513057f827b655811d3481f8aac646244efdc81ac330aa1b",
+    "weather_correction_backtest.py": "4ae947fb1698236d16bdb890730438a3d4237f28f05e32ad6cbd7fe6cf761ddd"
+  },
+  "runtime_versions": {
+    "numpy": "2.5.2",
+    "pandas": "3.0.5",
+    "scikit-learn": "1.9.0",
+    "torch": "2.14.0",
+    "timesfm": "3.0.1"
+  },
+  "correction_model_sha256": "df80a662eef0972c8506631e7f7737269ad1cfedea3574acd54a07061e8ed0ae",
+  "stage": "development",
+  "run_status": "complete",
+  "started_at": "2026-09-05T12:30:22.459420+00:00",
+  "limits": [
+    "Three-station February-May pilot, not an India-wide or full-year benchmark and not a direct comparison with Indus predictions.",
+    "ECMWF Cycle 49R1 hindcasts via Open-Meteo, not independently verified archived operational forecasts or native-grid ECMWF values.",
+    "Forecast publication and observation receipt times are unverified. The six-hour run-age convention and observations through origin are retrospective availability assumptions.",
+    "The test period is unseen by this project's temperature comparison, not proven absent from TimesFM pretraining or all upstream model development.",
+    "Station temperature is often rounded; sensor height and station/grid representativeness remain unverified.",
+    "Eligibility rules may select a nonrepresentative sample. All rejected and failed origins must be reported.",
+    "One month of testing gives limited seasonal and temporal coverage; block-bootstrap intervals are exploratory.",
+    "A pilot pass is evidence only for this retrospective station task, not proof of operational ECMWF or Pravah superiority."
+  ],
+  "observations": {
+    "42410099999": {
+      "station": {
+        "id": "42410099999",
+        "name": "GUWAHATI INTERNATIONAL LOKPRIYA GOPINATH BORDOLOI INTERNATIONAL, IN",
+        "latitude": 26.106092,
+        "longitude": 91.585939,
+        "elevation_m": 49.37
+      },
+      "source": {
+        "url": "https://www.ncei.noaa.gov/data/global-hourly/access/2025/42410099999.csv",
+        "retrieved_at": "2026-09-05T11:33:48.140492+00:00",
+        "sha256": "5cea6d723baa7a489120db65b69b1240062a063a46cceeabc97c030d5864e897",
+        "bytes": 5905075
+      },
+      "audit": {
+        "raw_rows": 12499,
+        "rejected_temperature_rows": 17,
+        "off_hour_rows": 5343,
+        "excluded_report_type_rows": 1863,
+        "report_type": "FM-15",
+        "accepted_quality_codes": [
+          "1",
+          "5"
+        ],
+        "accepted_exact_hour_rows": 5291,
+        "duplicate_exact_hour_rows": 0,
+        "conflicting_hours": 0,
+        "first_report": "2025-01-01T00:00:00+00:00",
+        "last_report": "2025-08-24T21:30:00+00:00"
+      }
+    },
+    "43128599999": {
+      "station": {
+        "id": "43128599999",
+        "name": "HYDERABAD INTERNATIONAL AIRPORT RAJIV GANDHI INTERNATIONAL, IN",
+        "latitude": 17.2333333,
+        "longitude": 78.4166666,
+        "elevation_m": 617.0
+      },
+      "source": {
+        "url": "https://www.ncei.noaa.gov/data/global-hourly/access/2025/43128599999.csv",
+        "retrieved_at": "2026-09-05T12:21:32.704947+00:00",
+        "sha256": "f068b61b4d70748ff3559e5534c1421487d917b94b741cb1453714f33843aa6b",
+        "bytes": 4567133
+      },
+      "audit": {
+        "raw_rows": 10546,
+        "rejected_temperature_rows": 19,
+        "off_hour_rows": 5301,
+        "excluded_report_type_rows": 0,
+        "report_type": "FM-15",
+        "accepted_quality_codes": [
+          "1",
+          "5"
+        ],
+        "accepted_exact_hour_rows": 5239,
+        "duplicate_exact_hour_rows": 0,
+        "conflicting_hours": 0,
+        "first_report": "2025-01-01T00:00:00+00:00",
+        "last_report": "2025-08-24T21:30:00+00:00"
+      }
+    },
+    "43279099999": {
+      "station": {
+        "id": "43279099999",
+        "name": "CHENNAI INTERNATIONAL, IN",
+        "latitude": 12.994414,
+        "longitude": 80.180517,
+        "elevation_m": 15.84
+      },
+      "source": {
+        "url": "https://www.ncei.noaa.gov/data/global-hourly/access/2025/43279099999.csv",
+        "retrieved_at": "2026-09-05T12:21:55.182859+00:00",
+        "sha256": "b88a9dad4e7227be43cc4be8da61d2e25318c6c50f2ec9d0bcc08fd42c4bd8bd",
+        "bytes": 5424213
+      },
+      "audit": {
+        "raw_rows": 13009,
+        "rejected_temperature_rows": 15,
+        "off_hour_rows": 5573,
+        "excluded_report_type_rows": 1851,
+        "report_type": "FM-15",
+        "accepted_quality_codes": [
+          "1",
+          "5"
+        ],
+        "accepted_exact_hour_rows": 5581,
+        "duplicate_exact_hour_rows": 0,
+        "conflicting_hours": 0,
+        "first_report": "2025-01-01T00:00:00+00:00",
+        "last_report": "2025-08-24T21:30:00+00:00"
+      }
+    }
+  },
+  "results": {
+    "counts": {
+      "planned_origins": 42,
+      "accepted_origins": 27,
+      "data_rejected_origins": 15,
+      "error_origins": 0,
+      "accepted_origin_fraction": 0.6428571428571429,
+      "planned_hours": 2016,
+      "observed_target_hours_all_origins": 1818,
+      "scored_hours": 1243,
+      "accepted_origins_by_station": {
+        "42410099999": 4,
+        "43128599999": 11,
+        "43279099999": 12
+      },
+      "scored_hour_fraction": 0.6165674603174603
+    },
+    "scores": {
+      "persistence_c": {
+        "n": 1243,
+        "mae_c": 3.910699919549477,
+        "rmse_c": 4.727234048978472,
+        "bias_c": 3.2719227674979887
+      },
+      "yesterday_c": {
+        "n": 1243,
+        "mae_c": 1.3604183427192276,
+        "rmse_c": 2.1178093996529164,
+        "bias_c": -0.2711182622687047
+      },
+      "ecmwf_ifs_c": {
+        "n": 1243,
+        "mae_c": 1.4674175382139985,
+        "rmse_c": 1.8875507803796077,
+        "bias_c": -0.6331456154465005
+      },
+      "bias_corrected_c": {
+        "n": 1243,
+        "mae_c": 1.320493185202766,
+        "rmse_c": 1.8098599125944599,
+        "bias_c": -0.033027568022054775
+      },
+      "ridge_corrected_c": {
+        "n": 1243,
+        "mae_c": 1.3499836896314172,
+        "rmse_c": 1.809069152218459,
+        "bias_c": 0.8517974794625685
+      },
+      "timesfm_c": {
+        "n": 1243,
+        "mae_c": 1.0922061478238094,
+        "rmse_c": 1.5333710582695315,
+        "bias_c": -0.31889570823908814
+      },
+      "timesfm_nwp_c": {
+        "n": 1243,
+        "mae_c": 1.0262957655031262,
+        "rmse_c": 1.4702179617602673,
+        "bias_c": -0.26322050854168105
+      }
+    },
+    "uncertainty": {
+      "timesfm": {
+        "n": 1243,
+        "mean_quantile_pinball_c": 0.42914683428166156,
+        "p10_p90_coverage": 0.8374899436846339,
+        "p10_p90_nominal_coverage": 0.8,
+        "mean_p10_p90_width_c": 3.80443031482896
+      },
+      "timesfm_nwp": {
+        "n": 1243,
+        "mean_quantile_pinball_c": 0.4010951896279429,
+        "p10_p90_coverage": 0.8173773129525342,
+        "p10_p90_nominal_coverage": 0.8,
+        "mean_p10_p90_width_c": 3.3850262842155328
+      }
+    },
+    "rejection_reasons": {
+      "history_policy": 14,
+      "history_policy;no_verification_observations": 1
+    }
+  },
+  "selected_candidate": "timesfm_nwp_c",
+  "finished_at": "2026-09-05T12:31:02.998620+00:00",
+  "artifact_sha256": {
+    "cases/42410099999_20250419T0600Z/guidance.csv": "9696aef1a4c7c41998ef748af3e6614824cff998dc50fb8e721c86ec0bbd9864",
+    "cases/42410099999_20250419T0600Z/manifest.json": "7d61a3fe0d801f5b17b6ac46bf00a226715dcfaa631910cbd5ff11bc259b85f7",
+    "cases/42410099999_20250419T0600Z/model_input.csv": "fea778b1c2e7fcda67ef6adca005a845758ebd1f7f225ead855eb7d62f503b02",
+    "cases/42410099999_20250419T0600Z/predictions.csv": "eb1942b3d227e7e1ed62067d130a371c050d7d7f1e99250689518aaa52e73356",
+    "cases/42410099999_20250421T0600Z/guidance.csv": "14a8d203d40d765d3714c11d490e32bbd31c5833f8cc6bc682bd349d6588c20d",
+    "cases/42410099999_20250421T0600Z/manifest.json": "054b0e5ff5c0708056bf5fb944aeca48e337eae2aeb23d8fc0f5d276135a6bc5",
+    "cases/42410099999_20250421T0600Z/model_input.csv": "3ae2ca4029bb74a4421b603dba220362b77858f3c0b441cf391f2b6b944d9188",
+    "cases/42410099999_20250421T0600Z/predictions.csv": "a6168c2046d61da6feb3d7be6cc9b5f5d05c69fb2732f09048ff9982df340f8f",
+    "cases/42410099999_20250423T0600Z/guidance.csv": "c6f4dc1fab30e34c1e3a2406d9ed0b40b8fac8e8a58eaf431edb69fd31be2cb2",
+    "cases/42410099999_20250423T0600Z/manifest.json": "4002f73b1a0bd75a0bc628a107ced85b959474e7b265bf90cda8410aef7d6ced",
+    "cases/42410099999_20250423T0600Z/model_input.csv": "932d6ff618b2e084291c55a71b526477704963f092f75dea6fbf458229a2f80c",
+    "cases/42410099999_20250423T0600Z/predictions.csv": "b765a1bbe41bc1878ab8a631206a3a78760bc616f92f8801d70ca1413e5c840d",
+    "cases/42410099999_20250425T0600Z/guidance.csv": "e561b058b46863e186e391b9085673a03f125f3b5a007ca86f5f3f5613190cd5",
+    "cases/42410099999_20250425T0600Z/manifest.json": "eb1544447cea9ae9d34c8da249eeb109a863bf6d022380c2ac6eded7a87e06a6",
+    "cases/42410099999_20250425T0600Z/model_input.csv": "4f594ad9688b1f6b1cd41dea9cb5c91b3fb5e159c9995c31bc16de9c33d0c4c4",
+    "cases/42410099999_20250425T0600Z/predictions.csv": "061d0b90e74e088f16d2fb2ceb0a815b5ce874862835e867524ab34c2557374c",
+    "cases/43128599999_20250405T0600Z/guidance.csv": "1699bd4f15a6880a488ddc262d252b62a886d5c4f7aeef77f9a5b953cb93605d",
+    "cases/43128599999_20250405T0600Z/manifest.json": "898b92d5f73b7dd68e663dcb8fec95e4e63c9667b5ae0b85a0ae736fc85c7b69",
+    "cases/43128599999_20250405T0600Z/model_input.csv": "07efeacbdd5063c23b10b42bc04e348d032ef0728a0b1d02753cb57861838467",
+    "cases/43128599999_20250405T0600Z/predictions.csv": "06b604ee27cef04cae032ee5c5537f1749a953cf14d31db7f67ac8e15120efaf",
+    "cases/43128599999_20250407T0600Z/guidance.csv": "f7aad677522d49d372031407cdaa03434aeec8e7e9506fce7c0ac9c3d8a91371",
+    "cases/43128599999_20250407T0600Z/manifest.json": "7c6a108bf9195e289c0cf3fb3b8db899d6462e0457e0194adebbfd0f0be78c20",
+    "cases/43128599999_20250407T0600Z/model_input.csv": "62cee2fccf3d615fb980f493bab50e3216d09ced111dbbd5e68082940250a8ef",
+    "cases/43128599999_20250407T0600Z/predictions.csv": "f5819ec5a4a47121b4500a23037b82b84edd7f5b2c61dd56a1d0d246933d852e",
+    "cases/43128599999_20250409T0600Z/guidance.csv": "6dbdae0c999326efa5ae8f80f0685904bbac0b58485a426bd6d7ace3010583bf",
+    "cases/43128599999_20250409T0600Z/manifest.json": "26ff584e53b4c85888c23078e8b6f2d282e1048d3079c2a3d7e585bad5ab027a",
+    "cases/43128599999_20250409T0600Z/model_input.csv": "af07b12f934fb7c86cca052330b88cc8ef3da71acef07a1dca7a7a453e243d08",
+    "cases/43128599999_20250409T0600Z/predictions.csv": "5a599e25e440ac8f47be6a4797832d18dd8dff6f9d6ef339a2785d4eea654a74",
+    "cases/43128599999_20250411T0600Z/guidance.csv": "ecc530944b4b0dbd32136927c2cba797484c2fb1929fb7667b6603b060c8e2a4",
+    "cases/43128599999_20250411T0600Z/manifest.json": "5bbe462e39081b949614bd4753596d29dd23b0e058aae52090e0acfc00bd7685",
+    "cases/43128599999_20250411T0600Z/model_input.csv": "f7485e473cb817a0282757a71a359dd1a4865ef96e0fad68c8fe7fd4cb2cf933",
+    "cases/43128599999_20250411T0600Z/predictions.csv": "af3ea3077db916f66cc9d2e8ab0efceb03309ef03cde4e22b8e56b0362e65c43",
+    "cases/43128599999_20250413T0600Z/guidance.csv": "2ec7b08d0bb9387b825d250b88cdf39adcbd30453a81a0a97fbb15e57502cdcc",
+    "cases/43128599999_20250413T0600Z/manifest.json": "37ff113df25b24a6124bddb0057adc2cbe842258c0574358b6424f3d5592a0dc",
+    "cases/43128599999_20250413T0600Z/model_input.csv": "c2dc0419acfbda7be8b4dfe1167e4a02ae7d406e860fea691ae870308feaf1eb",
+    "cases/43128599999_20250413T0600Z/predictions.csv": "49c853b77fd4e718295a896d0579e027a69c5ae3bb3d4c268f4b185582546686",
+    "cases/43128599999_20250415T0600Z/guidance.csv": "84538e92cfe8e7335e1fae57de60641548552eabb49e5a097ba425a400f821c4",
+    "cases/43128599999_20250415T0600Z/manifest.json": "f27f39625e532fe475b07326dd359926758ab2c31c1baf8658a133afa4202a40",
+    "cases/43128599999_20250415T0600Z/model_input.csv": "01a274db67bacf8ad63c71fba887607222c1d58471a30fc0bee730e4b8319903",
+    "cases/43128599999_20250415T0600Z/predictions.csv": "3ef5967cf2c31b08e12cad196ac29d6c369c2f20c5347662532f86a493d156c4",
+    "cases/43128599999_20250419T0600Z/guidance.csv": "cecb1058b656ca2b2d06dfba6eb506878443a3b0553224ee9a922ef1ac1a4746",
+    "cases/43128599999_20250419T0600Z/manifest.json": "d1b79c5ff4a7e01ca25cece42e9f003f270ac2aedb8b22bef183ea7e5b3e5e64",
+    "cases/43128599999_20250419T0600Z/model_input.csv": "65b81dc1e575c631649ffad28f25ca8f311a521dcf0e0fae23388af8a6333573",
+    "cases/43128599999_20250419T0600Z/predictions.csv": "67b99589b980ad01b589ea4bb4d990b9d3642b754c0a02b81aca3a3840dc893e",
+    "cases/43128599999_20250421T0600Z/guidance.csv": "3939b5fb76d4c1e728821738dde51b08379a991e0d14463afec6b27e2e4bd3ce",
+    "cases/43128599999_20250421T0600Z/manifest.json": "d8b0e199277a7941f720d35218625a92d9dce3572d7a3104e658447461dcfb5e",
+    "cases/43128599999_20250421T0600Z/model_input.csv": "21ff83ba053d98694d4cf95c8ddef56c327d4062b8f219bd356cf62776631e57",
+    "cases/43128599999_20250421T0600Z/predictions.csv": "2a164633fb5607c6b47f9be360df4f9300a32102fe0141de898f8f4c5150b9d0",
+    "cases/43128599999_20250423T0600Z/guidance.csv": "05239106ab47428029c8c9c91ad72aac7cdcf135879b4e18cd43464eaa34c3eb",
+    "cases/43128599999_20250423T0600Z/manifest.json": "920a2e1be92861dc4d22686876f8cca99b11677adacb3948c7a15fb81f83d192",
+    "cases/43128599999_20250423T0600Z/model_input.csv": "9486f7b2150acd5ea6fd15f709b4aa9ef82e77d1ee8a0d59f3031da6f22cdffe",
+    "cases/43128599999_20250423T0600Z/predictions.csv": "40f7ea4dfd29816dfa5f61c619e9d1178017a888352fb9957354da81d94c7b1d",
+    "cases/43128599999_20250425T0600Z/guidance.csv": "934cb96e38770e65d55b40dbda2b0762091a65625611cc9df3e0016e69dcd741",
+    "cases/43128599999_20250425T0600Z/manifest.json": "7b13e75927487ef179c01b18036b24ced5ba64f70edc0dbefdc4fe2ff9dfe623",
+    "cases/43128599999_20250425T0600Z/model_input.csv": "c88fa4744efffb351711b347790ffa248270556c6eadc7ea1075dbd6e4242282",
+    "cases/43128599999_20250425T0600Z/predictions.csv": "33b12cb3df2454d5400afcbc2bf7b48c07850a584ccd7e06b4af2e451396b797",
+    "cases/43128599999_20250427T0600Z/guidance.csv": "b06c06749cda7b4698de9fa70a3b063c62c924c69f5e7752bf027dd4eacfa3ad",
+    "cases/43128599999_20250427T0600Z/manifest.json": "5b9ea4694fe5f669143ce9ade7316a00c2c4bf89aa7c0732657a828658c3faec",
+    "cases/43128599999_20250427T0600Z/model_input.csv": "dfaddb574af087893d765d95134d066402bfa575ecb0053421e06af3dd406ff8",
+    "cases/43128599999_20250427T0600Z/predictions.csv": "67e87f78bef3f08925b9a8e160230803724fa9709d00676a5c8c1a3f321b4115",
+    "cases/43279099999_20250405T0600Z/guidance.csv": "dc1f14a91235ab684ea5d8894a243ae7f65a95f51da49050da9b55e1b0213332",
+    "cases/43279099999_20250405T0600Z/manifest.json": "3fccd84049aa8fc64d761dcf89276dae77036cc6e626ecdf1353c739e781aa6d",
+    "cases/43279099999_20250405T0600Z/model_input.csv": "2766bb5082a1e45ccc3050c30e856eb0d4febc0bb0323b75ffc9f258818ea3cc",
+    "cases/43279099999_20250405T0600Z/predictions.csv": "9b2fe4caf20fec129fc2244b92940881642249d3ba6e95dd5fd9d60b335c4842",
+    "cases/43279099999_20250407T0600Z/guidance.csv": "24858d111e486066b1cd8c52658d15a8c6a40a9278b90de8f5bb203da3993f82",
+    "cases/43279099999_20250407T0600Z/manifest.json": "7fbd6bedd1405db34be72caa3bdb271f5b6f302d052a611b63a8dec7e102f8c0",
+    "cases/43279099999_20250407T0600Z/model_input.csv": "1d3dc77dc14e0510757d445b86811a3d63b74140bc44ce5c0c8405439fe86e95",
+    "cases/43279099999_20250407T0600Z/predictions.csv": "d21997e689a599a5666ecb721e12c746f378aa7d445c766be9299178857e7185",
+    "cases/43279099999_20250409T0600Z/guidance.csv": "2b6470354c6621d3937dc74e0fd088799975e83946c7b9028028944adc5bb991",
+    "cases/43279099999_20250409T0600Z/manifest.json": "b0f1addc1269fd03645bad7e89ee468b7f46280aab995e07be840a7f46447116",
+    "cases/43279099999_20250409T0600Z/model_input.csv": "389cee14d4f17aa8f5b68192d52b48fff96de5cbe76e9ecce7d001bfbcea470b",
+    "cases/43279099999_20250409T0600Z/predictions.csv": "afd27c29fdb2a3e2fc7f00ee8c304e547bd6d3e83f01efab52e8c93bf20795d4",
+    "cases/43279099999_20250411T0600Z/guidance.csv": "6d23b29f79883a4bd2836ad5e47cc4fe854ec90c8b1a7ecff93c24c5585d27fc",
+    "cases/43279099999_20250411T0600Z/manifest.json": "489225f3ac5c0ffe582cbf0f63d596f7e47bb1d55f053282545f414f909cb691",
+    "cases/43279099999_20250411T0600Z/model_input.csv": "9efb7aa430f2fa3b9c86bdac0e0a220632915b1099dc8f8a161a2264ef4f8537",
+    "cases/43279099999_20250411T0600Z/predictions.csv": "25d24c53beec19bdd309dad2f60e5f570dd66ddb629fc3e1d9a92a24097b7b21",
+    "cases/43279099999_20250413T0600Z/guidance.csv": "ef24b084db8a1b3fed80cdef9491e2206b32effa51cda301ca27904579d9a6c2",
+    "cases/43279099999_20250413T0600Z/manifest.json": "f57e06baa6e8b73cb6367f5f6ff3cbb85304707e8c3a068885050560a4319201",
+    "cases/43279099999_20250413T0600Z/model_input.csv": "f177602fd8fe32a7cc7388f3c3c39a1c1a7545276dee31e38856942a6f014060",
+    "cases/43279099999_20250413T0600Z/predictions.csv": "15524f76d43b859ebbe655a25ed6c60a7fdcf7a704d636726628af762e23cceb",
+    "cases/43279099999_20250415T0600Z/guidance.csv": "3866317943e6a69ae81cc30e5ab469c56a8376997c01ae9d30ef611e725e890c",
+    "cases/43279099999_20250415T0600Z/manifest.json": "d8264e76b9453a63041cd4c4a78cd2286ab9efb61e1dd16b86ef9577c461ee41",
+    "cases/43279099999_20250415T0600Z/model_input.csv": "e391f1771302e77b87f0bebb8bce5432653da459bbdc154360aa5932fbe3e256",
+    "cases/43279099999_20250415T0600Z/predictions.csv": "259d9941b95bbc5c3675dda9cf87cb142e441b78dc232f4780aa5b192bd1409e",
+    "cases/43279099999_20250417T0600Z/guidance.csv": "f2f62bb82714edb7d2018d5e393520cee0aa4a726803d874f4e5c7e764f965e5",
+    "cases/43279099999_20250417T0600Z/manifest.json": "d54bec3cec3e6902b9eeb34f83a77b6b3a4ced304915f30a49d97815e9af359f",
+    "cases/43279099999_20250417T0600Z/model_input.csv": "4d51a55a634dd1686c9460db81845975b426f98cddef090bc47fd0e07a635e10",
+    "cases/43279099999_20250417T0600Z/predictions.csv": "79f72933294a7c5347aaf23ea0d4aeb61d7179371ae52f9a6cf5873d2e481f0c",
+    "cases/43279099999_20250419T0600Z/guidance.csv": "4d8d9febc6addab5e53e0ef1e38d5dca991ab75354ec7008be64c2a63991c61f",
+    "cases/43279099999_20250419T0600Z/manifest.json": "31685f31a4d9f39abd7e01a38e607bae041de0472926cd0460dc685832176e44",
+    "cases/43279099999_20250419T0600Z/model_input.csv": "52e5d26495f307c973bd20dfaa29dd8c38e8ca514f8c0827af9a08e7d4ad009e",
+    "cases/43279099999_20250419T0600Z/predictions.csv": "516e4990178ecef9581981a66c7cff6c96dbb4720bc62fff0d5aa0b1a6bb4e57",
+    "cases/43279099999_20250421T0600Z/guidance.csv": "e43421832a640251c7a2e44294eb17a360905f867b758e2448ef106103a7d3f7",
+    "cases/43279099999_20250421T0600Z/manifest.json": "e2d19ea6fe13f8b534c7b3bf73fe57ee1e6b0dd77448f4939a6651d6a8d10cbe",
+    "cases/43279099999_20250421T0600Z/model_input.csv": "eac6ad31a4dd9d0abaf767fa749a71738a5c5e7dd9ab895f26c4aa929ac7ad8d",
+    "cases/43279099999_20250421T0600Z/predictions.csv": "b924818ae0666298e98b9610dd4138a2506003e5558e088d92b7180e4a0ba212",
+    "cases/43279099999_20250423T0600Z/guidance.csv": "a1df40c193d6aa08bf404dedb06ed9f2f66212191fb81a8011bd653658c911ba",
+    "cases/43279099999_20250423T0600Z/manifest.json": "8f3ab8b36ad1eb71a9c658499dde6e6a869f702d8ee198f33fdb9ebd2660a80f",
+    "cases/43279099999_20250423T0600Z/model_input.csv": "877b61def68519a933a4c7fd21798d4faeb1a840172db93cccf193c0d4696735",
+    "cases/43279099999_20250423T0600Z/predictions.csv": "d4bb04def04b093e1b8ae7afb4aff081123f5c84c175d4594955b9a61d6c7e6c",
+    "cases/43279099999_20250425T0600Z/guidance.csv": "c906d8c5b2bca2b418047255332891470645bc6af6a676788e00fd39d1ea805b",
+    "cases/43279099999_20250425T0600Z/manifest.json": "204c484979f613717f9e196963b79ed87f5e6f1ef8184e2b86ed4fc80d4875f4",
+    "cases/43279099999_20250425T0600Z/model_input.csv": "9d4d3930bdebbbebad3947a36c5b4f97d99dd6c5df6cd623c6e3bc1552f2ec78",
+    "cases/43279099999_20250425T0600Z/predictions.csv": "1c75b432c960e7f9e46719513c373948a6dce9ec33eaa36b970fa95fc9e23921",
+    "cases/43279099999_20250427T0600Z/guidance.csv": "af98413381c505448eef21c4826f747fa38eb87f2424138ea2b9b050cf2dce04",
+    "cases/43279099999_20250427T0600Z/manifest.json": "eeba1dbc71f933908d691ef64c144ace3ee81d2251cbeb0a4030514213cd2942",
+    "cases/43279099999_20250427T0600Z/model_input.csv": "db47f81cbce6148f18514dd9041ce75f484eeee6ad7b05224d5b4573ba21999a",
+    "cases/43279099999_20250427T0600Z/predictions.csv": "4cb897da9e932a3207c3fbc79ea781de5e05fdc905a54c1f09bb33a3f3eef7b5",
+    "lead_bands.csv": "ddb35668c90f5a4a6257cba0322b2360bfca04f69b2e1ecdf4aa987cb27af83d",
+    "origins.csv": "487613ef45a5a7f7d969b599752814aff965d44abc238026871d0a192675c5de",
+    "per_lead.csv": "7e0bdea892ff71829b65a5fd3e248d3f164dfb682358145be4a85a43b6e592ae",
+    "per_origin.csv": "a1a93e582249a46fac76ab3f6c9055158599b8d61d623c1517101674e2dd261b",
+    "per_station.csv": "7a0491bfec29d5559fb177e07a7fde31a609bddd8caf5c073aaab01d9a9e6936",
+    "predictions.csv": "bdd9a8bc5414d9642f794c882f9c4ded4747a6560b73f1e89be3eb369cfe174d"
+  }
+}

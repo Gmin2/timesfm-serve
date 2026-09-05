@@ -1,14 +1,14 @@
 import os
 import secrets
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
-import psycopg
-from psycopg.types.json import Jsonb
 from psycopg_pool import ConnectionPool
 
-DSN = os.environ.get("DATABASE_URL", "postgresql://tfm:tfm@localhost:5432/tfm")
+from timesfm_serve.database_config import database_dsn
+
+DSN = database_dsn()
 MIGRATIONS = Path(__file__).resolve().parent.parent / "migrations"
 
 # arbitrary but fixed, so every process takes the same lock
@@ -39,6 +39,9 @@ def migrate():
     cover the ddl too. a transaction scoped lock rather than a session one so
     this still works behind a pooler in transaction mode.
     """
+    paths = sorted(MIGRATIONS.glob("*.sql"))
+    if not paths:
+        raise RuntimeError("No database migrations found; check the application package")
     open_pool()
     with pool.connection() as c:
         c.autocommit = False
@@ -51,7 +54,7 @@ def migrate():
             )
             applied = {r[0] for r in c.execute("select name from schema_migrations").fetchall()}
 
-            for path in sorted(MIGRATIONS.glob("*.sql")):
+            for path in paths:
                 if path.name in applied:
                     continue
                 c.execute(path.read_text())
@@ -63,33 +66,32 @@ def migrate():
             raise
 
 
+def initialize():
+    """Production runtime verifies migrations; only the operator job applies DDL."""
+    if os.environ.get("DATABASE_AUTO_MIGRATE", "1") == "1":
+        return migrate()
+    if os.environ.get("DATABASE_AUTO_MIGRATE") != "0":
+        raise ValueError("DATABASE_AUTO_MIGRATE must be 0 or 1")
+    expected = {p.name for p in MIGRATIONS.glob("*.sql")}
+    if not expected:
+        raise RuntimeError("No packaged database migrations")
+    open_pool()
+    with conn() as c:
+        applied = {r[0] for r in c.execute("select name from schema_migrations").fetchall()}
+    if not expected <= applied:
+        raise RuntimeError("Database migrations are pending; run the operator migration job")
+
+
 # ---------------------------------------------------------------- accounts
 
 
-def find_or_create_account(name: str, email: str | None = None, github_id: str | None = None) -> int:
+def find_or_create_account(name: str, email: str | None = None) -> int:
     with conn() as c:
         row = c.execute(
-            "insert into accounts (name, email, github_id) values (%s, %s, %s)"
+            "insert into accounts (name, email) values (%s, %s)"
             " on conflict (name) do update set name = excluded.name"
             " returning id",
-            (name, email, github_id),
-        ).fetchone()
-    return row[0]
-
-
-def account_by_github(github_id: str) -> int | None:
-    with conn() as c:
-        row = c.execute("select id from accounts where github_id = %s", (github_id,)).fetchone()
-    return row[0] if row else None
-
-
-def create_account_for_github(github_id: str, name: str, email: str | None) -> int:
-    with conn() as c:
-        row = c.execute(
-            "insert into accounts (name, email, github_id, credits_granted) values (%s, %s, %s, %s)"
-            " on conflict (github_id) do update set email = excluded.email"
-            " returning id",
-            (name, email, github_id, int(os.environ.get("SIGNUP_CREDITS", "50000"))),
+            (name, email),
         ).fetchone()
     return row[0]
 
@@ -112,32 +114,6 @@ def usage(account_id: int) -> dict | None:
         "credits_remaining": granted - used,
         "rate_limit_per_min": rate,
     }
-
-
-def reserve_credits(account_id: int, points: int) -> int | None:
-    """charge before the model runs.
-
-    one atomic statement whose where clause is the guard, so concurrent
-    requests cannot each pass a check and then all spend. returns the
-    remaining balance, or None when there is not enough left.
-    """
-    with conn() as c:
-        row = c.execute(
-            "update accounts set credits_used = credits_used + %s"
-            " where id = %s and suspended_at is null"
-            "   and credits_used + %s <= credits_granted"
-            " returning credits_granted - credits_used",
-            (points, account_id, points),
-        ).fetchone()
-    return row[0] if row else None
-
-
-def refund_credits(account_id: int, points: int) -> None:
-    with conn() as c:
-        c.execute(
-            "update accounts set credits_used = greatest(0, credits_used - %s) where id = %s",
-            (points, account_id),
-        )
 
 
 # ---------------------------------------------------------------- api keys
@@ -218,117 +194,3 @@ def bump_rate_limit(key_hash: str, window_ms: int) -> tuple[int, datetime]:
 def sweep_rate_limits() -> None:
     with conn() as c:
         c.execute("delete from rate_limit_counters where window_start < now() - interval '1 hour'")
-
-
-# ---------------------------------------------------------------- sessions
-
-
-def create_session(account_id: int, days: int = 30) -> str:
-    token = secrets.token_urlsafe(32)
-    with conn() as c:
-        c.execute(
-            "insert into sessions (token, account_id, expires_at) values (%s, %s, %s)",
-            (token, account_id, datetime.now(timezone.utc) + timedelta(days=days)),
-        )
-    return token
-
-
-def account_for_session(token: str) -> int | None:
-    with conn() as c:
-        row = c.execute(
-            "select account_id from sessions where token = %s and expires_at > now()",
-            (token,),
-        ).fetchone()
-    return row[0] if row else None
-
-
-def delete_session(token: str) -> None:
-    with conn() as c:
-        c.execute("delete from sessions where token = %s", (token,))
-
-
-# ------------------------------------------------------------------- runs
-
-
-def record_run(
-    account_id,
-    model,
-    horizon,
-    context_len,
-    n_past,
-    n_future,
-    points,
-    latency_ms,
-    request_id=None,
-):
-    with conn() as c:
-        c.execute(
-            "insert into forecast_runs (account_id, model, horizon, context_len, n_past_cov,"
-            " n_future_cov, points, latency_ms, request_id)"
-            " values (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
-            (
-                account_id,
-                model,
-                horizon,
-                context_len,
-                n_past,
-                n_future,
-                points,
-                latency_ms,
-                request_id,
-            ),
-        )
-
-
-# ------------------------------------------------------------------- jobs
-
-
-def create_job(job_id, account_id, n_series, horizon, points):
-    with conn() as c:
-        c.execute(
-            "insert into jobs (id, account_id, n_series, horizon, points) values (%s, %s, %s, %s, %s)",
-            (job_id, account_id, n_series, horizon, points),
-        )
-
-
-def set_job_status(job_id, status, error=None):
-    col = {"running": "started_at", "done": "finished_at", "failed": "finished_at"}.get(status)
-    stamp = f", {col} = now()" if col else ""
-    with conn() as c:
-        c.execute(
-            f"update jobs set status = %s, error = %s{stamp} where id = %s",
-            (status, error, job_id),
-        )
-
-
-def job_account_and_points(job_id) -> tuple[int, int] | None:
-    with conn() as c:
-        row = c.execute("select account_id, points from jobs where id = %s", (job_id,)).fetchone()
-    return row
-
-
-def save_results(job_id, rows):
-    with conn() as c, c.cursor() as cur:
-        cur.executemany(
-            "insert into job_results (job_id, series_id, forecast, quantiles) values (%s, %s, %s, %s)",
-            [(job_id, sid, Jsonb(f), Jsonb(q)) for sid, f, q in rows],
-        )
-
-
-def get_job(job_id, account_id):
-    with conn() as c:
-        job = c.execute(
-            "select status, n_series, horizon, points, error, created_at, started_at, finished_at"
-            " from jobs where id = %s and account_id = %s",
-            (job_id, account_id),
-        ).fetchone()
-        if job is None:
-            return None
-        results = c.execute(
-            "select series_id, forecast, quantiles from job_results where job_id = %s",
-            (job_id,),
-        ).fetchall()
-    return job, results
-
-
-__all__ = ["psycopg", "pool", "conn", "migrate"]

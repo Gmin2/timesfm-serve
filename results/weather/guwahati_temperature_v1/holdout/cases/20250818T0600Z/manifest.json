@@ -1,0 +1,113 @@
+{
+  "origin": "2025-08-18T06:00:00+00:00",
+  "run": "2025-08-18T00:00:00+00:00",
+  "forecast_kind": "hindcast",
+  "forecast_source": {
+    "url": "https://single-runs-api.open-meteo.com/v1/forecast?elevation=49.37&forecast_hours=55&hourly=temperature_2m&latitude=26.106092&longitude=91.585939&models=ecmwf_ifs&run=2025-08-18T00%3A00&temperature_unit=celsius&timezone=UTC",
+    "retrieved_at": "2026-09-05T11:59:54.820376+00:00",
+    "sha256": "999ef03095d2f82ca6c5969228ecd05b3c2ce10777fdf5b272f57b907e585c30",
+    "bytes": 1585
+  },
+  "forecast_grid": {
+    "latitude": 26.115992,
+    "longitude": 91.57722,
+    "elevation": 49.37
+  },
+  "timesfm": {
+    "model_id": "google/timesfm-3.0-pytorch",
+    "revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+    "checkpoint_sha256": {
+      "config.json": "ff17bbc07b792c5a904cca265b8468579d736a4fe84981da25eb871b0a125bc6",
+      "model.safetensors": "a7592b0a8432baee54483254e5647856911ce69e09d09a9bb65904b2d98f17da"
+    },
+    "device": "mps",
+    "platform": {
+      "system": "Darwin",
+      "machine": "arm64",
+      "python": "3.14.6"
+    },
+    "packages": {
+      "timesfm": "3.0.1",
+      "torch": "2.14.0",
+      "numpy": "2.5.2",
+      "pandas": "3.0.5",
+      "huggingface-hub": "1.30.0"
+    },
+    "point_estimate": "p50",
+    "quantile_levels": [
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.7,
+      0.8,
+      0.9
+    ],
+    "predict_options": {
+      "horizon": 48,
+      "return_quantiles": true,
+      "sort_quantiles": true,
+      "make_positive": false,
+      "use_symmetric_averaging": false,
+      "use_znorm": false,
+      "padding_mode": "none"
+    },
+    "history_policy": {
+      "name": "causal_forward_fill_v1",
+      "context_hours": 672,
+      "max_gap_hours": 6,
+      "max_imputed_fraction": 0.1,
+      "mask_usage": "audit_only_not_a_model_covariate"
+    },
+    "context_start": "2025-07-21T07:00:00+00:00",
+    "context_end": "2025-08-18T06:00:00+00:00",
+    "context_hours": 672,
+    "context_float32_sha256": "188fe03121b859bb3f47a3d7ec9ac2e303a3ae1a134c2cb5e9494de8dd734ac6",
+    "imputed_hours": 10,
+    "imputed_fraction": 0.01488095238095238,
+    "max_source_age_hours": 3,
+    "covariates": null,
+    "fine_tuned": false,
+    "model_load_seconds": 1.5431849579908885,
+    "predict_seconds": 0.07172779197571799,
+    "timing_scope": "One inference call including wrapper processing; excludes loading and data I/O. Not a service latency benchmark."
+  },
+  "scores": {
+    "persistence_c": {
+      "n": 46,
+      "mae_c": 3.717391304347826,
+      "rmse_c": 3.991839501870742,
+      "bias_c": 3.5
+    },
+    "yesterday_c": {
+      "n": 46,
+      "mae_c": 1.8695652173913044,
+      "rmse_c": 2.23606797749979,
+      "bias_c": 1.608695652173913
+    },
+    "ecmwf_ifs_c": {
+      "n": 46,
+      "mae_c": 1.2565217391304346,
+      "rmse_c": 1.4893827142696456,
+      "bias_c": -0.43478260869565216
+    },
+    "timesfm_c": {
+      "n": 46,
+      "mae_c": 1.7484386692876401,
+      "rmse_c": 2.1961641804181338,
+      "bias_c": 1.6478992545086404
+    }
+  },
+  "uncertainty": {
+    "n": 46,
+    "mean_quantile_pinball_c": 0.6645247408733276,
+    "p10_p90_coverage": 0.7391304347826086,
+    "p10_p90_nominal_coverage": 0.8,
+    "mean_p10_p90_width_c": 3.7990228818810503
+  },
+  "status": "scored",
+  "reason": "",
+  "detail": ""
+}

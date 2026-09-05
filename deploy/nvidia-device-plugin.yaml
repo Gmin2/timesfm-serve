@@ -1,0 +1,51 @@
+# Adapted from NVIDIA k8s-device-plugin v0.20.0 static deployment.
+# Copyright (c) 2019, NVIDIA CORPORATION. Licensed under Apache-2.0.
+# https://github.com/NVIDIA/k8s-device-plugin/blob/v0.20.0/deployments/static/nvidia-device-plugin.yml
+# Changes: GPU-node selector, our workload taint, resource bounds and fail-fast initialization.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nvidia-device-plugin-daemonset
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      name: nvidia-device-plugin-ds
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: nvidia-device-plugin-ds
+    spec:
+      nodeSelector:
+        workload: gpu
+        kubernetes.io/arch: amd64
+      tolerations:
+        - key: workload
+          operator: Equal
+          value: gpu
+          effect: NoSchedule
+      priorityClassName: system-node-critical
+      automountServiceAccountToken: false
+      containers:
+        - image: nvcr.io/nvidia/k8s-device-plugin:v0.20.0@sha256:a61ba9fd8efb82f3a79f877f7580e02c1e8e7593f62473644bc9c79e315c3312
+          name: nvidia-device-plugin-ctr
+          env:
+            - name: FAIL_ON_INIT_ERROR
+              value: "true"
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: 250m, memory: 256Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: kubelet-device-plugins-dir
+              mountPath: /var/lib/kubelet/device-plugins
+      volumes:
+        - name: kubelet-device-plugins-dir
+          hostPath:
+            path: /var/lib/kubelet/device-plugins
+            type: Directory

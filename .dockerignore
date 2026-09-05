@@ -1,5 +1,6 @@
 .git/
 .venv/
+docs/
 tmp/
 results/
 __pycache__/
@@ -7,3 +8,11 @@ __pycache__/
 .env
 .pytest_cache/
 .ruff_cache/
+data/weather/raw/
+infra/
+deploy/rendered/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.tfvars.json

@@ -1,0 +1,167 @@
+{
+  "protocol_sha256": "fd8704bd6d225f8b38303b348e80aab56f678cf3c5af5df9cb9c2c0324b251e9",
+  "source_snapshot_sha256": "f3b1958d5abc5bc6d89e4205de108afd0a4614312b9c063aa2fffd9af4359720",
+  "pipeline_sha256": {
+    "weather_case.py": "a6493a04504587cb7c990e631b80ba12d03797129cae0b1c7a69a98fa4b39584",
+    "weather_model.py": "5bd029d5030520d051b1e199f999972c0d77422d357aee98f61b4036c16bc447",
+    "weather_correction.py": "b4277d4393401b49e94ec0a17737598352d2e14c04add660aab67ff3b9bdf295",
+    "weather_conditioned.py": "86e487d750e8d1cb513057f827b655811d3481f8aac646244efdc81ac330aa1b",
+    "weather_correction_backtest.py": "4ae947fb1698236d16bdb890730438a3d4237f28f05e32ad6cbd7fe6cf761ddd",
+    "weather_seasonal.py": "b6f34ef54a4bf62be9aa05cc829e28aa3a4475a9e96a8d498da4ffb6e4b6dabd",
+    "weather_seasonal_data.py": "ff64d6b09b57ba08d51d443bacda2670720aa6bc1df7f621a415ea4071dafc10"
+  },
+  "runtime_versions": {
+    "numpy": "2.5.2",
+    "pandas": "3.0.5",
+    "scikit-learn": "1.9.0",
+    "torch": "2.14.0",
+    "timesfm": "3.0.1"
+  },
+  "correction_model_sha256": "f8e426040714533ca54b4584a23ab07d51b45484041f8d0f3654c907c749a302",
+  "station": "42410099999",
+  "origin": "2026-01-30T06:00:00+00:00",
+  "run": "2026-01-30T00:00:00+00:00",
+  "status": "scored",
+  "forecast_source": {
+    "url": "https://single-runs-api.open-meteo.com/v1/forecast?elevation=54.0&forecast_hours=55&hourly=temperature_2m&latitude=26.1&longitude=91.58&models=ecmwf_ifs&run=2026-01-30T00%3A00&temperature_unit=celsius&timezone=UTC",
+    "retrieved_at": "2026-09-05T12:53:20.472976+00:00",
+    "sha256": "c17aff6634f955e73859c812e78614cb79dcc526d59551a6a907b9371460e210",
+    "bytes": 1584
+  },
+  "forecast_grid": {
+    "latitude": 26.115992,
+    "longitude": 91.57722,
+    "elevation": 54.0
+  },
+  "history_policy": {
+    "name": "causal_forward_fill_v1",
+    "context_hours": 168,
+    "max_gap_hours": 6,
+    "max_imputed_fraction": 0.1,
+    "mask_usage": "audit_only_not_a_model_covariate"
+  },
+  "guidance_sources": [
+    {
+      "segment_origin": "2026-01-22T06:00:00+00:00",
+      "run": "2026-01-22T00:00:00+00:00",
+      "source": {
+        "url": "https://single-runs-api.open-meteo.com/v1/forecast?elevation=54.0&forecast_hours=55&hourly=temperature_2m&latitude=26.1&longitude=91.58&models=ecmwf_ifs&run=2026-01-22T00%3A00&temperature_unit=celsius&timezone=UTC",
+        "retrieved_at": "2026-09-05T12:53:07.824852+00:00",
+        "sha256": "cf12c1e55cddd6f8ec4e9d209cc3d849e95c39d7723a8059fc532c99f23ec921",
+        "bytes": 1583
+      },
+      "grid": {
+        "latitude": 26.115992,
+        "longitude": 91.57722,
+        "elevation": 54.0
+      }
+    },
+    {
+      "segment_origin": "2026-01-24T06:00:00+00:00",
+      "run": "2026-01-24T00:00:00+00:00",
+      "source": {
+        "url": "https://single-runs-api.open-meteo.com/v1/forecast?elevation=54.0&forecast_hours=55&hourly=temperature_2m&latitude=26.1&longitude=91.58&models=ecmwf_ifs&run=2026-01-24T00%3A00&temperature_unit=celsius&timezone=UTC",
+        "retrieved_at": "2026-09-05T12:53:21.167094+00:00",
+        "sha256": "c0b766c646068b0c8bf566695e1db24d31a0d39ad94b3b3b1658d3f76dad7dcc",
+        "bytes": 1584
+      },
+      "grid": {
+        "latitude": 26.115992,
+        "longitude": 91.57722,
+        "elevation": 54.0
+      }
+    },
+    {
+      "segment_origin": "2026-01-26T06:00:00+00:00",
+      "run": "2026-01-26T00:00:00+00:00",
+      "source": {
+        "url": "https://single-runs-api.open-meteo.com/v1/forecast?elevation=54.0&forecast_hours=55&hourly=temperature_2m&latitude=26.1&longitude=91.58&models=ecmwf_ifs&run=2026-01-26T00%3A00&temperature_unit=celsius&timezone=UTC",
+        "retrieved_at": "2026-09-05T12:53:21.913557+00:00",
+        "sha256": "62d8fa6b033c86a107ed474f430107726995c8661062420127d397f373f8d76d",
+        "bytes": 1584
+      },
+      "grid": {
+        "latitude": 26.115992,
+        "longitude": 91.57722,
+        "elevation": 54.0
+      }
+    },
+    {
+      "segment_origin": "2026-01-28T06:00:00+00:00",
+      "run": "2026-01-28T00:00:00+00:00",
+      "source": {
+        "url": "https://single-runs-api.open-meteo.com/v1/forecast?elevation=54.0&forecast_hours=55&hourly=temperature_2m&latitude=26.1&longitude=91.58&models=ecmwf_ifs&run=2026-01-28T00%3A00&temperature_unit=celsius&timezone=UTC",
+        "retrieved_at": "2026-09-05T12:53:22.594808+00:00",
+        "sha256": "202c4f8a24de30e774c3abad98cdb209d147402199caec5c32b99079048dfb0c",
+        "bytes": 1584
+      },
+      "grid": {
+        "latitude": 26.115992,
+        "longitude": 91.57722,
+        "elevation": 54.0
+      }
+    },
+    {
+      "segment_origin": "2026-01-30T06:00:00+00:00",
+      "run": "2026-01-30T00:00:00+00:00",
+      "source": {
+        "url": "https://single-runs-api.open-meteo.com/v1/forecast?elevation=54.0&forecast_hours=55&hourly=temperature_2m&latitude=26.1&longitude=91.58&models=ecmwf_ifs&run=2026-01-30T00%3A00&temperature_unit=celsius&timezone=UTC",
+        "retrieved_at": "2026-09-05T12:53:20.472976+00:00",
+        "sha256": "c17aff6634f955e73859c812e78614cb79dcc526d59551a6a907b9371460e210",
+        "bytes": 1584
+      },
+      "grid": {
+        "latitude": 26.115992,
+        "longitude": 91.57722,
+        "elevation": 54.0
+      }
+    }
+  ],
+  "timesfm_model": {
+    "model_id": "google/timesfm-3.0-pytorch",
+    "revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+    "device": "mps",
+    "checkpoint_sha256": {
+      "config.json": "ff17bbc07b792c5a904cca265b8468579d736a4fe84981da25eb871b0a125bc6",
+      "model.safetensors": "a7592b0a8432baee54483254e5647856911ce69e09d09a9bb65904b2d98f17da"
+    },
+    "point_estimate": "p50",
+    "fine_tuned": false,
+    "packages": {
+      "timesfm": "3.0.1",
+      "torch": "2.14.0",
+      "numpy": "2.5.2",
+      "pandas": "3.0.5"
+    },
+    "predict_options": {
+      "horizon": 48,
+      "return_quantiles": true,
+      "sort_quantiles": true,
+      "make_positive": false,
+      "use_symmetric_averaging": false,
+      "use_znorm": false,
+      "padding_mode": "none"
+    },
+    "load_seconds": 1.3709489580069203
+  },
+  "timesfm_inputs": {
+    "context_float32_sha256": "8e4d315b5938d57265b75cac21604fe51bdb65568bcc6d782bcde14862f82347",
+    "covariate_float32_sha256": "4905e830d16192f134476b00e21dd4c79e85e5097ecf4fd2dd7efdb13943ca58",
+    "context_hours": 168,
+    "future_hours": 48,
+    "covariate_shape": [
+      1,
+      216
+    ],
+    "imputed_observation_hours": 0,
+    "predict_seconds": {
+      "history": 0.3168734589999076,
+      "nwp": 0.09076920899678953
+    }
+  },
+  "artifact_sha256": {
+    "guidance.csv": "a09f886a59c23b047c0d6fd01c1105cb39d927f6363a13f3af94329ad773f614",
+    "model_input.csv": "4e39ccaa9caeff3e4cf087c43d9265623fcf12ae82c31487497316ff255c4a5c",
+    "predictions.csv": "394577275bdd0575dc25ce9b94b29080bcdf1acbb19b091e9bdb0ff446ccf930"
+  }
+}

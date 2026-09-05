@@ -1,0 +1,100 @@
+split,station,origin,run,origin_month,calendar_season,forecast_epoch,status,reason,detail,imputed_history_hours,target_observed_hours,scored_hours
+holdout,42410099999,2025-12-05 06:00:00+00:00,2025-12-05 00:00:00+00:00,2025-12,DJF,ifs_49r1_hindcast,scored,,,0.0,47,47
+holdout,43128599999,2025-12-05 06:00:00+00:00,2025-12-05 00:00:00+00:00,2025-12,DJF,ifs_49r1_hindcast,scored,,,6.0,47,47
+holdout,43279099999,2025-12-05 06:00:00+00:00,2025-12-05 00:00:00+00:00,2025-12,DJF,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,42410099999,2025-12-13 06:00:00+00:00,2025-12-13 00:00:00+00:00,2025-12,DJF,ifs_49r1_hindcast,scored,,,1.0,48,48
+holdout,43128599999,2025-12-13 06:00:00+00:00,2025-12-13 00:00:00+00:00,2025-12,DJF,ifs_49r1_hindcast,scored,,,5.0,47,47
+holdout,43279099999,2025-12-13 06:00:00+00:00,2025-12-13 00:00:00+00:00,2025-12,DJF,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,42410099999,2025-12-21 06:00:00+00:00,2025-12-21 00:00:00+00:00,2025-12,DJF,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,43128599999,2025-12-21 06:00:00+00:00,2025-12-21 00:00:00+00:00,2025-12,DJF,ifs_49r1_hindcast,scored,,,5.0,45,45
+holdout,43279099999,2025-12-21 06:00:00+00:00,2025-12-21 00:00:00+00:00,2025-12,DJF,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,42410099999,2025-12-29 06:00:00+00:00,2025-12-29 00:00:00+00:00,2025-12,DJF,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,43128599999,2025-12-29 06:00:00+00:00,2025-12-29 00:00:00+00:00,2025-12,DJF,ifs_49r1_hindcast,scored,,,11.0,47,47
+holdout,43279099999,2025-12-29 06:00:00+00:00,2025-12-29 00:00:00+00:00,2025-12,DJF,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,42410099999,2026-01-06 06:00:00+00:00,2026-01-06 00:00:00+00:00,2026-01,DJF,ifs_49r1_hindcast,scored,,,3.0,46,46
+holdout,43128599999,2026-01-06 06:00:00+00:00,2026-01-06 00:00:00+00:00,2026-01,DJF,ifs_49r1_hindcast,scored,,,4.0,41,41
+holdout,43279099999,2026-01-06 06:00:00+00:00,2026-01-06 00:00:00+00:00,2026-01,DJF,ifs_49r1_hindcast,scored,,,1.0,45,45
+holdout,42410099999,2026-01-14 06:00:00+00:00,2026-01-14 00:00:00+00:00,2026-01,DJF,ifs_49r1_hindcast,scored,,,1.0,48,48
+holdout,43128599999,2026-01-14 06:00:00+00:00,2026-01-14 00:00:00+00:00,2026-01,DJF,ifs_49r1_hindcast,scored,,,7.0,47,47
+holdout,43279099999,2026-01-14 06:00:00+00:00,2026-01-14 00:00:00+00:00,2026-01,DJF,ifs_49r1_hindcast,scored,,,1.0,48,48
+holdout,42410099999,2026-01-22 06:00:00+00:00,2026-01-22 00:00:00+00:00,2026-01,DJF,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,43128599999,2026-01-22 06:00:00+00:00,2026-01-22 00:00:00+00:00,2026-01,DJF,ifs_49r1_hindcast,scored,,,3.0,46,46
+holdout,43279099999,2026-01-22 06:00:00+00:00,2026-01-22 00:00:00+00:00,2026-01,DJF,ifs_49r1_hindcast,scored,,,2.0,47,47
+holdout,42410099999,2026-01-30 06:00:00+00:00,2026-01-30 00:00:00+00:00,2026-01,DJF,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,43128599999,2026-01-30 06:00:00+00:00,2026-01-30 00:00:00+00:00,2026-01,DJF,ifs_49r1_hindcast,scored,,,9.0,46,46
+holdout,43279099999,2026-01-30 06:00:00+00:00,2026-01-30 00:00:00+00:00,2026-01,DJF,ifs_49r1_hindcast,scored,,,3.0,48,48
+holdout,42410099999,2026-02-07 06:00:00+00:00,2026-02-07 00:00:00+00:00,2026-02,DJF,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,43128599999,2026-02-07 06:00:00+00:00,2026-02-07 00:00:00+00:00,2026-02,DJF,ifs_49r1_hindcast,scored,,,6.0,47,47
+holdout,43279099999,2026-02-07 06:00:00+00:00,2026-02-07 00:00:00+00:00,2026-02,DJF,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,42410099999,2026-02-15 06:00:00+00:00,2026-02-15 00:00:00+00:00,2026-02,DJF,ifs_49r1_hindcast,scored,,,0.0,47,47
+holdout,43128599999,2026-02-15 06:00:00+00:00,2026-02-15 00:00:00+00:00,2026-02,DJF,ifs_49r1_hindcast,scored,,,3.0,48,48
+holdout,43279099999,2026-02-15 06:00:00+00:00,2026-02-15 00:00:00+00:00,2026-02,DJF,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,42410099999,2026-02-23 06:00:00+00:00,2026-02-23 00:00:00+00:00,2026-02,DJF,ifs_49r1_hindcast,scored,,,1.0,47,47
+holdout,43128599999,2026-02-23 06:00:00+00:00,2026-02-23 00:00:00+00:00,2026-02,DJF,ifs_49r1_hindcast,scored,,,3.0,47,47
+holdout,43279099999,2026-02-23 06:00:00+00:00,2026-02-23 00:00:00+00:00,2026-02,DJF,ifs_49r1_hindcast,scored,,,1.0,47,47
+holdout,42410099999,2026-03-03 06:00:00+00:00,2026-03-03 00:00:00+00:00,2026-03,MAM,ifs_49r1_hindcast,scored,,,3.0,47,47
+holdout,43128599999,2026-03-03 06:00:00+00:00,2026-03-03 00:00:00+00:00,2026-03,MAM,ifs_49r1_hindcast,scored,,,6.0,47,47
+holdout,43279099999,2026-03-03 06:00:00+00:00,2026-03-03 00:00:00+00:00,2026-03,MAM,ifs_49r1_hindcast,scored,,,3.0,47,47
+holdout,42410099999,2026-03-11 06:00:00+00:00,2026-03-11 00:00:00+00:00,2026-03,MAM,ifs_49r1_hindcast,scored,,,1.0,47,47
+holdout,43128599999,2026-03-11 06:00:00+00:00,2026-03-11 00:00:00+00:00,2026-03,MAM,ifs_49r1_hindcast,scored,,,2.0,46,46
+holdout,43279099999,2026-03-11 06:00:00+00:00,2026-03-11 00:00:00+00:00,2026-03,MAM,ifs_49r1_hindcast,scored,,,1.0,47,47
+holdout,42410099999,2026-03-19 06:00:00+00:00,2026-03-19 00:00:00+00:00,2026-03,MAM,ifs_49r1_hindcast,scored,,,3.0,47,47
+holdout,43128599999,2026-03-19 06:00:00+00:00,2026-03-19 00:00:00+00:00,2026-03,MAM,ifs_49r1_hindcast,scored,,,8.0,47,47
+holdout,43279099999,2026-03-19 06:00:00+00:00,2026-03-19 00:00:00+00:00,2026-03,MAM,ifs_49r1_hindcast,scored,,,4.0,47,47
+holdout,42410099999,2026-03-27 06:00:00+00:00,2026-03-27 00:00:00+00:00,2026-03,MAM,ifs_49r1_hindcast,data_rejected,history_policy,History has a leading gap or a gap longer than 6 hours,,48,0
+holdout,43128599999,2026-03-27 06:00:00+00:00,2026-03-27 00:00:00+00:00,2026-03,MAM,ifs_49r1_hindcast,data_rejected,history_policy,History has a leading gap or a gap longer than 6 hours,,45,0
+holdout,43279099999,2026-03-27 06:00:00+00:00,2026-03-27 00:00:00+00:00,2026-03,MAM,ifs_49r1_hindcast,data_rejected,history_policy,History has a leading gap or a gap longer than 6 hours,,48,0
+holdout,42410099999,2026-04-04 06:00:00+00:00,2026-04-04 00:00:00+00:00,2026-04,MAM,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,43128599999,2026-04-04 06:00:00+00:00,2026-04-04 00:00:00+00:00,2026-04,MAM,ifs_49r1_hindcast,scored,,,1.0,48,48
+holdout,43279099999,2026-04-04 06:00:00+00:00,2026-04-04 00:00:00+00:00,2026-04,MAM,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,42410099999,2026-04-12 06:00:00+00:00,2026-04-12 00:00:00+00:00,2026-04,MAM,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,43128599999,2026-04-12 06:00:00+00:00,2026-04-12 00:00:00+00:00,2026-04,MAM,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,43279099999,2026-04-12 06:00:00+00:00,2026-04-12 00:00:00+00:00,2026-04,MAM,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,42410099999,2026-04-20 06:00:00+00:00,2026-04-20 00:00:00+00:00,2026-04,MAM,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,43128599999,2026-04-20 06:00:00+00:00,2026-04-20 00:00:00+00:00,2026-04,MAM,ifs_49r1_hindcast,scored,,,4.0,46,46
+holdout,43279099999,2026-04-20 06:00:00+00:00,2026-04-20 00:00:00+00:00,2026-04,MAM,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,42410099999,2026-04-28 06:00:00+00:00,2026-04-28 00:00:00+00:00,2026-04,MAM,ifs_49r1_hindcast,scored,,,1.0,48,48
+holdout,43128599999,2026-04-28 06:00:00+00:00,2026-04-28 00:00:00+00:00,2026-04,MAM,ifs_49r1_hindcast,scored,,,2.0,47,47
+holdout,43279099999,2026-04-28 06:00:00+00:00,2026-04-28 00:00:00+00:00,2026-04,MAM,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,42410099999,2026-05-06 06:00:00+00:00,2026-05-06 00:00:00+00:00,2026-05,MAM,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,43128599999,2026-05-06 06:00:00+00:00,2026-05-06 00:00:00+00:00,2026-05,MAM,ifs_49r1_hindcast,scored,,,2.0,48,48
+holdout,43279099999,2026-05-06 06:00:00+00:00,2026-05-06 00:00:00+00:00,2026-05,MAM,ifs_49r1_hindcast,scored,,,0.0,48,48
+holdout,42410099999,2026-05-14 06:00:00+00:00,2026-05-14 00:00:00+00:00,2026-05,MAM,ifs_50r1_archive_availability_unverified,scored,,,1.0,48,48
+holdout,43128599999,2026-05-14 06:00:00+00:00,2026-05-14 00:00:00+00:00,2026-05,MAM,ifs_50r1_archive_availability_unverified,scored,,,0.0,47,47
+holdout,43279099999,2026-05-14 06:00:00+00:00,2026-05-14 00:00:00+00:00,2026-05,MAM,ifs_50r1_archive_availability_unverified,scored,,,0.0,48,48
+holdout,42410099999,2026-05-22 06:00:00+00:00,2026-05-22 00:00:00+00:00,2026-05,MAM,ifs_50r1_archive_availability_unverified,scored,,,0.0,48,48
+holdout,43128599999,2026-05-22 06:00:00+00:00,2026-05-22 00:00:00+00:00,2026-05,MAM,ifs_50r1_archive_availability_unverified,scored,,,1.0,48,48
+holdout,43279099999,2026-05-22 06:00:00+00:00,2026-05-22 00:00:00+00:00,2026-05,MAM,ifs_50r1_archive_availability_unverified,scored,,,0.0,48,48
+holdout,42410099999,2026-05-30 06:00:00+00:00,2026-05-30 00:00:00+00:00,2026-05,MAM,ifs_50r1_archive_availability_unverified,scored,,,0.0,48,48
+holdout,43128599999,2026-05-30 06:00:00+00:00,2026-05-30 00:00:00+00:00,2026-05,MAM,ifs_50r1_archive_availability_unverified,scored,,,1.0,48,48
+holdout,43279099999,2026-05-30 06:00:00+00:00,2026-05-30 00:00:00+00:00,2026-05,MAM,ifs_50r1_archive_availability_unverified,scored,,,0.0,48,48
+holdout,42410099999,2026-06-07 06:00:00+00:00,2026-06-07 00:00:00+00:00,2026-06,JJA,ifs_50r1_archive_availability_unverified,scored,,,0.0,48,48
+holdout,43128599999,2026-06-07 06:00:00+00:00,2026-06-07 00:00:00+00:00,2026-06,JJA,ifs_50r1_archive_availability_unverified,scored,,,2.0,47,47
+holdout,43279099999,2026-06-07 06:00:00+00:00,2026-06-07 00:00:00+00:00,2026-06,JJA,ifs_50r1_archive_availability_unverified,scored,,,0.0,48,48
+holdout,42410099999,2026-06-15 06:00:00+00:00,2026-06-15 00:00:00+00:00,2026-06,JJA,ifs_50r1_archive_availability_unverified,scored,,,0.0,48,48
+holdout,43128599999,2026-06-15 06:00:00+00:00,2026-06-15 00:00:00+00:00,2026-06,JJA,ifs_50r1_archive_availability_unverified,scored,,,5.0,48,48
+holdout,43279099999,2026-06-15 06:00:00+00:00,2026-06-15 00:00:00+00:00,2026-06,JJA,ifs_50r1_archive_availability_unverified,scored,,,0.0,48,48
+holdout,42410099999,2026-06-23 06:00:00+00:00,2026-06-23 00:00:00+00:00,2026-06,JJA,ifs_50r1_archive_availability_unverified,data_rejected,incomplete_nwp,Missing current-hour or future ECMWF temperature,0.0,47,0
+holdout,43128599999,2026-06-23 06:00:00+00:00,2026-06-23 00:00:00+00:00,2026-06,JJA,ifs_50r1_archive_availability_unverified,data_rejected,incomplete_nwp,Missing current-hour or future ECMWF temperature,4.0,47,0
+holdout,43279099999,2026-06-23 06:00:00+00:00,2026-06-23 00:00:00+00:00,2026-06,JJA,ifs_50r1_archive_availability_unverified,data_rejected,incomplete_nwp,Missing current-hour or future ECMWF temperature,0.0,48,0
+holdout,42410099999,2026-07-01 06:00:00+00:00,2026-07-01 00:00:00+00:00,2026-07,JJA,ifs_50r1_archive_availability_unverified,data_rejected,incomplete_nwp,Selected ECMWF runs do not cover the complete covariate context and horizon,2.0,48,0
+holdout,43128599999,2026-07-01 06:00:00+00:00,2026-07-01 00:00:00+00:00,2026-07,JJA,ifs_50r1_archive_availability_unverified,data_rejected,incomplete_nwp,Selected ECMWF runs do not cover the complete covariate context and horizon,1.0,48,0
+holdout,43279099999,2026-07-01 06:00:00+00:00,2026-07-01 00:00:00+00:00,2026-07,JJA,ifs_50r1_archive_availability_unverified,data_rejected,incomplete_nwp,Selected ECMWF runs do not cover the complete covariate context and horizon,0.0,48,0
+holdout,42410099999,2026-07-09 06:00:00+00:00,2026-07-09 00:00:00+00:00,2026-07,JJA,ifs_50r1_archive_availability_unverified,scored,,,1.0,48,48
+holdout,43128599999,2026-07-09 06:00:00+00:00,2026-07-09 00:00:00+00:00,2026-07,JJA,ifs_50r1_archive_availability_unverified,scored,,,0.0,46,46
+holdout,43279099999,2026-07-09 06:00:00+00:00,2026-07-09 00:00:00+00:00,2026-07,JJA,ifs_50r1_archive_availability_unverified,scored,,,0.0,48,48
+holdout,42410099999,2026-07-17 06:00:00+00:00,2026-07-17 00:00:00+00:00,2026-07,JJA,ifs_50r1_archive_availability_unverified,scored,,,0.0,48,48
+holdout,43128599999,2026-07-17 06:00:00+00:00,2026-07-17 00:00:00+00:00,2026-07,JJA,ifs_50r1_archive_availability_unverified,scored,,,2.0,48,48
+holdout,43279099999,2026-07-17 06:00:00+00:00,2026-07-17 00:00:00+00:00,2026-07,JJA,ifs_50r1_archive_availability_unverified,scored,,,0.0,48,48
+holdout,42410099999,2026-07-25 06:00:00+00:00,2026-07-25 00:00:00+00:00,2026-07,JJA,ifs_50r1_archive_availability_unverified,scored,,,2.0,48,48
+holdout,43128599999,2026-07-25 06:00:00+00:00,2026-07-25 00:00:00+00:00,2026-07,JJA,ifs_50r1_archive_availability_unverified,scored,,,3.0,48,48
+holdout,43279099999,2026-07-25 06:00:00+00:00,2026-07-25 00:00:00+00:00,2026-07,JJA,ifs_50r1_archive_availability_unverified,scored,,,1.0,48,48
+holdout,42410099999,2026-08-02 06:00:00+00:00,2026-08-02 00:00:00+00:00,2026-08,JJA,ifs_50r1_archive_availability_unverified,scored,,,0.0,48,48
+holdout,43128599999,2026-08-02 06:00:00+00:00,2026-08-02 00:00:00+00:00,2026-08,JJA,ifs_50r1_archive_availability_unverified,scored,,,0.0,48,48
+holdout,43279099999,2026-08-02 06:00:00+00:00,2026-08-02 00:00:00+00:00,2026-08,JJA,ifs_50r1_archive_availability_unverified,scored,,,0.0,48,48
+holdout,42410099999,2026-08-10 06:00:00+00:00,2026-08-10 00:00:00+00:00,2026-08,JJA,ifs_50r1_archive_availability_unverified,scored,,,0.0,48,48
+holdout,43128599999,2026-08-10 06:00:00+00:00,2026-08-10 00:00:00+00:00,2026-08,JJA,ifs_50r1_archive_availability_unverified,scored,,,0.0,48,48
+holdout,43279099999,2026-08-10 06:00:00+00:00,2026-08-10 00:00:00+00:00,2026-08,JJA,ifs_50r1_archive_availability_unverified,scored,,,0.0,48,48
+holdout,42410099999,2026-08-18 06:00:00+00:00,2026-08-18 00:00:00+00:00,2026-08,JJA,ifs_50r1_archive_availability_unverified,scored,,,0.0,48,48
+holdout,43128599999,2026-08-18 06:00:00+00:00,2026-08-18 00:00:00+00:00,2026-08,JJA,ifs_50r1_archive_availability_unverified,scored,,,0.0,46,46
+holdout,43279099999,2026-08-18 06:00:00+00:00,2026-08-18 00:00:00+00:00,2026-08,JJA,ifs_50r1_archive_availability_unverified,scored,,,0.0,48,48

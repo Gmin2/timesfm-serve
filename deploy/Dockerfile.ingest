@@ -1,0 +1,16 @@
+FROM ghcr.io/astral-sh/uv:python3.12-trixie-slim@sha256:4bf11151c225e2a4d60e2a576b67d925660055199389d9a64fbdc02b6f3d43d5
+
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --only-group weather-ingest --no-install-project
+COPY timesfm_serve ./timesfm_serve
+COPY scripts ./scripts
+COPY migrations ./migrations
+ENV PATH="/app/.venv/bin:$PATH" PYTHONPATH=/app PGCONNECT_TIMEOUT=5 \
+    PGOPTIONS="-c statement_timeout=10000 -c lock_timeout=5000" OPENBLAS_NUM_THREADS=1
+USER 10001:10001
+CMD ["python", "-m", "scripts.weather_live_ingest"]

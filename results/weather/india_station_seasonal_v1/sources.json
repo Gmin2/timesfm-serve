@@ -1,0 +1,663 @@
+{
+  "schema_version": 1,
+  "policy": {
+    "version": "ghcnh_direct_temperature_v1",
+    "units": "degrees_celsius_already_scaled",
+    "exact_hours_only": true,
+    "source_223": {
+      "quality_codes": [
+        "1"
+      ],
+      "report_types": [
+        "FM12",
+        "FM15"
+      ]
+    },
+    "source_412": {
+      "quality_codes": [
+        ""
+      ],
+      "report_types": [
+        "FM12",
+        "FM94_1"
+      ]
+    },
+    "source_413": {
+      "quality_codes": [
+        ""
+      ],
+      "report_types": [
+        "FM15"
+      ]
+    },
+    "blank_quality_interpretation": "No supplied flag, not proof that all quality checks passed.",
+    "empty_measurement_code_required": true,
+    "conflicting_duplicates": "missing",
+    "fill_observations": false
+  },
+  "stations": [
+    {
+      "id": "42410099999",
+      "ghcnh_id": "INU042410-1",
+      "icao": "VEGT",
+      "wmo": "42410",
+      "name": "Guwahati"
+    },
+    {
+      "id": "43128599999",
+      "ghcnh_id": "INI0000VOHS",
+      "icao": "VOHS",
+      "wmo": null,
+      "name": "Hyderabad"
+    },
+    {
+      "id": "43279099999",
+      "ghcnh_id": "INI0000VOMM",
+      "icao": "VOMM",
+      "wmo": "43279",
+      "name": "Chennai"
+    }
+  ],
+  "sources": [
+    {
+      "station": "42410099999",
+      "year": 2024,
+      "source": {
+        "url": "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2024/psv/GHCNh_INU042410-1_2024.psv",
+        "retrieved_at": "2026-09-05T12:40:54.697106+00:00",
+        "sha256": "8594eef9f1d5b261a5c31e49223209649ff142e2e70b5ed1981a4181afc0acec",
+        "bytes": 13382634
+      },
+      "audit": {
+        "raw_rows": 16553,
+        "accepted_exact_hour_rows": 8346,
+        "accepted_unique_hours": 8346,
+        "off_hour_rows": 8200,
+        "invalid_temperature_rows": 2,
+        "rejected_source_quality_report_rows": 14,
+        "rejected_identity_rows": 2,
+        "rejected_measurement_rows": 0,
+        "duplicate_rows": 0,
+        "conflicting_hours": 0,
+        "first_report": "2024-01-01T00:00:00+00:00",
+        "last_report": "2024-12-31T23:30:00+00:00",
+        "source_quality_report_counts": [
+          {
+            "temperature_Source_Code": "",
+            "temperature_Quality_Code": "",
+            "temperature_Report_Type": "",
+            "rows": 2
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "1",
+            "temperature_Report_Type": "FM12",
+            "rows": 2720
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "1",
+            "temperature_Report_Type": "FM15",
+            "rows": 13819
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "1",
+            "temperature_Report_Type": "FM16",
+            "rows": 1
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "2",
+            "temperature_Report_Type": "FM12",
+            "rows": 2
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "2",
+            "temperature_Report_Type": "FM15",
+            "rows": 1
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "4",
+            "temperature_Report_Type": "FM15",
+            "rows": 8
+          }
+        ]
+      },
+      "metadata": {
+        "id": "42410099999",
+        "ghcnh_id": "INU042410-1",
+        "name": "Guwahati",
+        "latitude": 26.1,
+        "longitude": 91.58,
+        "elevation_m": 54.0
+      }
+    },
+    {
+      "station": "42410099999",
+      "year": 2025,
+      "source": {
+        "url": "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2025/psv/GHCNh_INU042410-1_2025.psv",
+        "retrieved_at": "2026-09-05T12:41:32.540657+00:00",
+        "sha256": "52f085c2288803e714dd8b586b0d36a6f3b0002d305c96701e7e87e141a84ccd",
+        "bytes": 13530389
+      },
+      "audit": {
+        "raw_rows": 16780,
+        "accepted_exact_hour_rows": 8401,
+        "accepted_unique_hours": 8401,
+        "off_hour_rows": 8369,
+        "invalid_temperature_rows": 6,
+        "rejected_source_quality_report_rows": 20,
+        "rejected_identity_rows": 6,
+        "rejected_measurement_rows": 0,
+        "duplicate_rows": 0,
+        "conflicting_hours": 0,
+        "first_report": "2025-01-01T00:00:00+00:00",
+        "last_report": "2025-12-31T23:30:00+00:00",
+        "source_quality_report_counts": [
+          {
+            "temperature_Source_Code": "",
+            "temperature_Quality_Code": "",
+            "temperature_Report_Type": "",
+            "rows": 6
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "1",
+            "temperature_Report_Type": "FM12",
+            "rows": 2857
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "1",
+            "temperature_Report_Type": "FM15",
+            "rows": 13903
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "1",
+            "temperature_Report_Type": "FM16",
+            "rows": 3
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "2",
+            "temperature_Report_Type": "FM15",
+            "rows": 4
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "4",
+            "temperature_Report_Type": "FM15",
+            "rows": 7
+          }
+        ]
+      },
+      "metadata": {
+        "id": "42410099999",
+        "ghcnh_id": "INU042410-1",
+        "name": "Guwahati",
+        "latitude": 26.1,
+        "longitude": 91.58,
+        "elevation_m": 54.0
+      }
+    },
+    {
+      "station": "42410099999",
+      "year": 2026,
+      "source": {
+        "url": "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2026/psv/GHCNh_INU042410-1_2026.psv",
+        "retrieved_at": "2026-09-05T12:40:32.022304+00:00",
+        "sha256": "e9692153582189a97b0b7a2f5f1928e9ac404a7ef4e5d1b7f1380466ee1259de",
+        "bytes": 9167495
+      },
+      "audit": {
+        "raw_rows": 11646,
+        "accepted_exact_hour_rows": 5817,
+        "accepted_unique_hours": 5817,
+        "off_hour_rows": 5826,
+        "invalid_temperature_rows": 3,
+        "rejected_source_quality_report_rows": 3815,
+        "rejected_identity_rows": 3,
+        "rejected_measurement_rows": 0,
+        "duplicate_rows": 0,
+        "conflicting_hours": 0,
+        "first_report": "2026-01-01T00:00:00+00:00",
+        "last_report": "2026-09-01T15:30:00+00:00",
+        "source_quality_report_counts": [
+          {
+            "temperature_Source_Code": "",
+            "temperature_Quality_Code": "",
+            "temperature_Report_Type": "",
+            "rows": 3
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "1",
+            "temperature_Report_Type": "FM12",
+            "rows": 626
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "1",
+            "temperature_Report_Type": "FM15",
+            "rows": 3405
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "4",
+            "temperature_Report_Type": "FM15",
+            "rows": 6
+          },
+          {
+            "temperature_Source_Code": "412",
+            "temperature_Quality_Code": "",
+            "temperature_Report_Type": "FM94_1",
+            "rows": 3
+          },
+          {
+            "temperature_Source_Code": "413",
+            "temperature_Quality_Code": "",
+            "temperature_Report_Type": "FM15",
+            "rows": 3797
+          },
+          {
+            "temperature_Source_Code": "413",
+            "temperature_Quality_Code": "",
+            "temperature_Report_Type": "FM16",
+            "rows": 3806
+          }
+        ]
+      },
+      "metadata": {
+        "id": "42410099999",
+        "ghcnh_id": "INU042410-1",
+        "name": "Guwahati",
+        "latitude": 26.1,
+        "longitude": 91.58,
+        "elevation_m": 54.0
+      }
+    },
+    {
+      "station": "43128599999",
+      "year": 2024,
+      "source": {
+        "url": "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2024/psv/GHCNh_INI0000VOHS_2024.psv",
+        "retrieved_at": "2026-09-05T12:41:05.553909+00:00",
+        "sha256": "dd069db527511b74a49abb455eb7a22fc1388aacba8c7174eda0859a92ff1cf9",
+        "bytes": 13060847
+      },
+      "audit": {
+        "raw_rows": 16265,
+        "accepted_exact_hour_rows": 8046,
+        "accepted_unique_hours": 8046,
+        "off_hour_rows": 8178,
+        "invalid_temperature_rows": 1,
+        "rejected_source_quality_report_rows": 82,
+        "rejected_identity_rows": 1,
+        "rejected_measurement_rows": 0,
+        "duplicate_rows": 0,
+        "conflicting_hours": 0,
+        "first_report": "2024-01-01T00:00:00+00:00",
+        "last_report": "2024-12-31T23:30:00+00:00",
+        "source_quality_report_counts": [
+          {
+            "temperature_Source_Code": "",
+            "temperature_Quality_Code": "",
+            "temperature_Report_Type": "",
+            "rows": 1
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "1",
+            "temperature_Report_Type": "FM15",
+            "rows": 16183
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "2",
+            "temperature_Report_Type": "FM15",
+            "rows": 2
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "4",
+            "temperature_Report_Type": "FM15",
+            "rows": 79
+          }
+        ]
+      },
+      "metadata": {
+        "id": "43128599999",
+        "ghcnh_id": "INI0000VOHS",
+        "name": "Hyderabad",
+        "latitude": 17.2333,
+        "longitude": 78.4167,
+        "elevation_m": 617.0
+      }
+    },
+    {
+      "station": "43128599999",
+      "year": 2025,
+      "source": {
+        "url": "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2025/psv/GHCNh_INI0000VOHS_2025.psv",
+        "retrieved_at": "2026-09-05T12:41:44.164251+00:00",
+        "sha256": "0875574d9e85d5b0ef50a2f74162158fb0397c3ff764209398451d1da558c882",
+        "bytes": 12820178
+      },
+      "audit": {
+        "raw_rows": 16264,
+        "accepted_exact_hour_rows": 8091,
+        "accepted_unique_hours": 8091,
+        "off_hour_rows": 8157,
+        "invalid_temperature_rows": 10,
+        "rejected_source_quality_report_rows": 39,
+        "rejected_identity_rows": 10,
+        "rejected_measurement_rows": 0,
+        "duplicate_rows": 0,
+        "conflicting_hours": 0,
+        "first_report": "2025-01-01T00:00:00+00:00",
+        "last_report": "2025-12-31T23:30:00+00:00",
+        "source_quality_report_counts": [
+          {
+            "temperature_Source_Code": "",
+            "temperature_Quality_Code": "",
+            "temperature_Report_Type": "",
+            "rows": 10
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "1",
+            "temperature_Report_Type": "FM15",
+            "rows": 16225
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "2",
+            "temperature_Report_Type": "FM15",
+            "rows": 3
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "4",
+            "temperature_Report_Type": "FM15",
+            "rows": 26
+          }
+        ]
+      },
+      "metadata": {
+        "id": "43128599999",
+        "ghcnh_id": "INI0000VOHS",
+        "name": "Hyderabad",
+        "latitude": 17.2333,
+        "longitude": 78.4167,
+        "elevation_m": 617.0
+      }
+    },
+    {
+      "station": "43128599999",
+      "year": 2026,
+      "source": {
+        "url": "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2026/psv/GHCNh_INI0000VOHS_2026.psv",
+        "retrieved_at": "2026-09-05T12:38:47.395317+00:00",
+        "sha256": "1e952e3a38d70494211c1c71d8fdb0d0b7c7d4f9e623f176314d6fc818998f16",
+        "bytes": 8571998
+      },
+      "audit": {
+        "raw_rows": 11630,
+        "accepted_exact_hour_rows": 5744,
+        "accepted_unique_hours": 5744,
+        "off_hour_rows": 5886,
+        "invalid_temperature_rows": 0,
+        "rejected_source_quality_report_rows": 3844,
+        "rejected_identity_rows": 0,
+        "rejected_measurement_rows": 0,
+        "duplicate_rows": 0,
+        "conflicting_hours": 0,
+        "first_report": "2026-01-01T00:00:00+00:00",
+        "last_report": "2026-09-01T15:00:00+00:00",
+        "source_quality_report_counts": [
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "1",
+            "temperature_Report_Type": "FM15",
+            "rows": 4008
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "4",
+            "temperature_Report_Type": "FM15",
+            "rows": 1
+          },
+          {
+            "temperature_Source_Code": "413",
+            "temperature_Quality_Code": "",
+            "temperature_Report_Type": "FM15",
+            "rows": 3778
+          },
+          {
+            "temperature_Source_Code": "413",
+            "temperature_Quality_Code": "",
+            "temperature_Report_Type": "FM16",
+            "rows": 3843
+          }
+        ]
+      },
+      "metadata": {
+        "id": "43128599999",
+        "ghcnh_id": "INI0000VOHS",
+        "name": "Hyderabad",
+        "latitude": 17.2333,
+        "longitude": 78.4167,
+        "elevation_m": 617.0
+      }
+    },
+    {
+      "station": "43279099999",
+      "year": 2024,
+      "source": {
+        "url": "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2024/psv/GHCNh_INI0000VOMM_2024.psv",
+        "retrieved_at": "2026-09-05T12:41:23.693860+00:00",
+        "sha256": "05443a3a5b671eac8d1445e161262388300700e5dc3f31d8658597f5ac46384d",
+        "bytes": 14197176
+      },
+      "audit": {
+        "raw_rows": 17397,
+        "accepted_exact_hour_rows": 8689,
+        "accepted_unique_hours": 8689,
+        "off_hour_rows": 8694,
+        "invalid_temperature_rows": 1,
+        "rejected_source_quality_report_rows": 35,
+        "rejected_identity_rows": 1,
+        "rejected_measurement_rows": 0,
+        "duplicate_rows": 0,
+        "conflicting_hours": 0,
+        "first_report": "2024-01-01T00:00:00+00:00",
+        "last_report": "2024-12-31T23:30:00+00:00",
+        "source_quality_report_counts": [
+          {
+            "temperature_Source_Code": "",
+            "temperature_Quality_Code": "",
+            "temperature_Report_Type": "",
+            "rows": 1
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "1",
+            "temperature_Report_Type": "FM12",
+            "rows": 2753
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "1",
+            "temperature_Report_Type": "FM15",
+            "rows": 14609
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "2",
+            "temperature_Report_Type": "FM15",
+            "rows": 1
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "4",
+            "temperature_Report_Type": "FM15",
+            "rows": 33
+          }
+        ]
+      },
+      "metadata": {
+        "id": "43279099999",
+        "ghcnh_id": "INI0000VOMM",
+        "name": "Chennai",
+        "latitude": 12.9944,
+        "longitude": 80.1805,
+        "elevation_m": 15.8
+      }
+    },
+    {
+      "station": "43279099999",
+      "year": 2025,
+      "source": {
+        "url": "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2025/psv/GHCNh_INI0000VOMM_2025.psv",
+        "retrieved_at": "2026-09-05T12:42:02.687722+00:00",
+        "sha256": "bcf26f9d5d96e9117973f97d175daea4a1f1bbfca654d051c08109259716b942",
+        "bytes": 13954221
+      },
+      "audit": {
+        "raw_rows": 17178,
+        "accepted_exact_hour_rows": 8601,
+        "accepted_unique_hours": 8601,
+        "off_hour_rows": 8574,
+        "invalid_temperature_rows": 2,
+        "rejected_source_quality_report_rows": 7,
+        "rejected_identity_rows": 2,
+        "rejected_measurement_rows": 0,
+        "duplicate_rows": 0,
+        "conflicting_hours": 0,
+        "first_report": "2025-01-01T00:00:00+00:00",
+        "last_report": "2025-12-31T23:30:00+00:00",
+        "source_quality_report_counts": [
+          {
+            "temperature_Source_Code": "",
+            "temperature_Quality_Code": "",
+            "temperature_Report_Type": "",
+            "rows": 2
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "1",
+            "temperature_Report_Type": "FM12",
+            "rows": 2822
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "1",
+            "temperature_Report_Type": "FM15",
+            "rows": 14349
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "2",
+            "temperature_Report_Type": "FM12",
+            "rows": 1
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "2",
+            "temperature_Report_Type": "FM15",
+            "rows": 2
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "4",
+            "temperature_Report_Type": "FM15",
+            "rows": 2
+          }
+        ]
+      },
+      "metadata": {
+        "id": "43279099999",
+        "ghcnh_id": "INI0000VOMM",
+        "name": "Chennai",
+        "latitude": 12.9944,
+        "longitude": 80.1805,
+        "elevation_m": 15.8
+      }
+    },
+    {
+      "station": "43279099999",
+      "year": 2026,
+      "source": {
+        "url": "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2026/psv/GHCNh_INI0000VOMM_2026.psv",
+        "retrieved_at": "2026-09-05T12:40:41.404833+00:00",
+        "sha256": "9a4af9915f9e13c9891f86ba3a2d9e39fabc1721591ffa29c6fe20e54e52f5b0",
+        "bytes": 8708336
+      },
+      "audit": {
+        "raw_rows": 11647,
+        "accepted_exact_hour_rows": 5820,
+        "accepted_unique_hours": 5820,
+        "off_hour_rows": 5827,
+        "invalid_temperature_rows": 0,
+        "rejected_source_quality_report_rows": 3814,
+        "rejected_identity_rows": 0,
+        "rejected_measurement_rows": 0,
+        "duplicate_rows": 0,
+        "conflicting_hours": 0,
+        "first_report": "2026-01-01T00:00:00+00:00",
+        "last_report": "2026-09-01T15:30:00+00:00",
+        "source_quality_report_counts": [
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "1",
+            "temperature_Report_Type": "FM12",
+            "rows": 658
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "1",
+            "temperature_Report_Type": "FM15",
+            "rows": 3368
+          },
+          {
+            "temperature_Source_Code": "223",
+            "temperature_Quality_Code": "4",
+            "temperature_Report_Type": "FM15",
+            "rows": 1
+          },
+          {
+            "temperature_Source_Code": "412",
+            "temperature_Quality_Code": "",
+            "temperature_Report_Type": "FM12",
+            "rows": 1
+          },
+          {
+            "temperature_Source_Code": "413",
+            "temperature_Quality_Code": "",
+            "temperature_Report_Type": "FM15",
+            "rows": 3806
+          },
+          {
+            "temperature_Source_Code": "413",
+            "temperature_Quality_Code": "",
+            "temperature_Report_Type": "FM16",
+            "rows": 3813
+          }
+        ]
+      },
+      "metadata": {
+        "id": "43279099999",
+        "ghcnh_id": "INI0000VOMM",
+        "name": "Chennai",
+        "latitude": 12.9944,
+        "longitude": 80.1805,
+        "elevation_m": 15.8
+      }
+    }
+  ]
+}
