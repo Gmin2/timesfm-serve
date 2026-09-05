@@ -18,7 +18,10 @@ from timesfm_serve.auth import Account, require_key
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 log = logging.getLogger("timesfm_serve")
 
-MODEL_ID = "google/timesfm-3.0-pytorch"
+MODEL_ID = os.environ.get("MODEL_ID", "google/timesfm-3.0-pytorch")
+# cpu in containers. "mps" runs on the apple gpu when python runs natively on
+# a mac, which is roughly 2x and is what the benchmark script uses.
+DEVICE = os.environ.get("DEVICE", "cpu")
 QUANTILE_LEVELS = [round(q, 1) for q in np.arange(0.1, 1.0, 0.1)]
 state = {}
 
@@ -30,9 +33,9 @@ def jlog(level: str, msg: str, **fields):
 @asynccontextmanager
 async def lifespan(app):
     db.migrate()
-    state["model"] = timesfm.TimesFM3Forecaster.from_pretrained(MODEL_ID, device="cpu")
-    metrics.MODEL_INFO.labels(model=MODEL_ID, device="cpu").set(1)
-    jlog("info", "model loaded", model=MODEL_ID)
+    state["model"] = timesfm.TimesFM3Forecaster.from_pretrained(MODEL_ID, device=DEVICE)
+    metrics.MODEL_INFO.labels(model=MODEL_ID, device=DEVICE).set(1)
+    jlog("info", "model loaded", model=MODEL_ID, device=DEVICE)
     yield
     state.clear()
 

@@ -7,25 +7,67 @@ the model is google's timesfm 3, used as a stand in. the point of the project
 is the serving layer around it: the thing a weather or grid model needs before
 anyone outside your company can call it.
 
-## does weather actually help
+## does a weather forecast actually help
 
-14 day ahead daily peak demand, weekly forecast origins from april 2023 to
-april 2024 (53 origins), 512 days of context, five states. demand is grid india
-daily peak met via zenodo 14983362, weather is era5 for the same states.
+7 day ahead daily peak demand, weekly forecast origins from april 2023 to
+april 2024, 512 days of context, six states. demand is grid india daily peak
+met via zenodo 14983362. weather is open-meteo: the reanalysis archive for what
+the weather was, and the previous-runs archive for what the forecast said at
+the correct lead time.
 
 | method | mean mape |
 |---|---|
-| seasonal naive, same weekday last week | 8.26 % |
-| timesfm 3, demand only | 6.24 % |
-| timesfm 3 with weather covariates | 4.55 % |
+| seasonal naive, same weekday last week | 7.82 % |
+| gradient boosted trees on demand lags, temperature and calendar | 7.43 % |
+| timesfm 3, demand only | 5.57 % |
+| **timesfm 3 + the temperature forecast that existed on the day** | **5.03 %** |
+| timesfm 3 + perfect temperature | 4.46 % |
+| timesfm 3 + perfect temperature, irradiance and wind | 4.25 % |
 
-per state numbers and crps are in `results/eval_14d_weekly_2023.csv`.
-reproduce with `uv run python scripts/eval.py`.
+the fourth row is what an operator would actually get. the fifth is the ceiling
+a perfect temperature forecast would reach. **today's forecast captures about
+half of the benefit that perfect weather would give, and the missing half is
+what a better weather model is worth.** that gap is the entire argument for
+something like indus, and it is measured here rather than asserted.
 
-one caveat stated plainly: the covariates are actual era5 weather for the
-forecast days, not a weather forecast. so 4.55 % is the ceiling a perfect
-weather model would buy you. the gap between the last two rows is what a good
-weather forecast is worth, which is the whole argument for a model like indus.
+per state numbers, crps and calibration are in
+`results/eval_7d_weekly_2023.csv`. reproduce with `uv run python scripts/eval.py`
+(add `--device mps` on an apple laptop, it is about 2x).
+
+### why the horizon is 7 days and the covariate is temperature
+
+both are constraints, stated rather than hidden.
+
+open-meteo's previous-runs archive carries lead times back about a week, so a
+14 day forecast cannot be evaluated with lead-correct weather. and for these
+locations it carries **temperature only** — radiation and wind come back
+completely empty. so the honest comparison holds the variable set fixed at
+temperature and varies only foresight. the last row shows what perfect
+radiation and wind would add on top.
+
+### three things that made the first version of this wrong
+
+worth writing down, because each one produced a confident number that was not
+true:
+
+1. **covariates were reanalysis actuals**, which is perfect hindsight weather.
+   that reported a 4.55 % headline at 14 days. it is a ceiling, not a result.
+2. **missing hours aggregated to zero.** the forecast archive returns a row for
+   every hour and leaves most variables null. `resample().sum()` treats null as
+   zero, which manufactured a 76 % low bias in irradiance that looked like a
+   finding. days are now dropped unless 20 of 24 hours are present.
+3. **the two archives disagree systematically.** the forecast model and the
+   reanalysis are different models on different grids. delhi's day-ahead
+   temperature sits about 4 °C above the reanalysis, which is far too large to
+   be forecast error, and scoring it as one made delhi's demand error double.
+   the forecast is now bias corrected against a trailing 60 day window, shifted
+   so it only ever uses what was known before the forecast was made. residual
+   bias is under 0.15 °C everywhere and lead 7 rmse is 1.0 to 2.0 °C, which is
+   what a real 7 day temperature forecast looks like.
+
+calibration is checked too: the p10 to p90 band should contain 80 % of actuals
+and lands between 71 % and 81 % across states, so the intervals are slightly
+narrow but broadly honest.
 
 ## shape
 
@@ -43,10 +85,15 @@ timesfm_serve/dashboard.py  account page: credits, create and revoke keys
 timesfm_serve/db.py       postgres: accounts, keys, credits, jobs, sessions
 timesfm_serve/demo.py     the demo page and its data
 migrations/               plain sql, applied in order behind an advisory lock
+scripts/covariates.py     lead-correct forecast weather, bias corrected
 scripts/eval.py           the benchmark that produced the table above
 ```
 
 running it is `docker compose up`: the api, a queue worker, postgres and redis.
+
+the demo page covers six states: karnataka, gujarat, delhi, maharashtra, tamil
+nadu and assam. assam is deliberately included as the small wet outlier, about
+a seventh of karnataka's peak, to check the approach is not tuned to one state.
 
 ## api
 
