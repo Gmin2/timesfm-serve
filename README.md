@@ -191,10 +191,15 @@ the checkpoint.
 uv run pytest
 ```
 
-24 tests against a real postgres rather than a mock, because the parts worth
+30 tests against a real postgres rather than a mock, because the parts worth
 testing are the sql: that concurrent reservations cannot oversell a grant, that
 a failed forecast refunds, that a revoked key stops working. ci runs them
 against a postgres service container.
+
+the benchmark's weather handling is tested too, and those tests exist because
+each case silently produced a confident wrong number: a thin day has to become
+missing rather than an average, the bias correction must never see the future,
+and an origin with no real forecast has to be dropped rather than filled in.
 
 ## history worth knowing
 
