@@ -1,4 +1,14 @@
 mock_provider "aws" {
+  mock_resource "aws_s3_bucket" {
+    override_during = plan
+    defaults = { arn = "arn:aws:s3:::example-artifacts" }
+  }
+  mock_resource "aws_vpc_endpoint" {
+    defaults = { network_interface_ids = ["eni-example-a", "eni-example-b"], cidr_blocks = ["198.51.100.0/24"] }
+  }
+  mock_data "aws_network_interface" {
+    defaults = { private_ip = "10.42.10.10" }
+  }
   mock_data "aws_caller_identity" {
     defaults = { account_id = "123456789012", arn = "arn:aws:iam::123456789012:role/test-operator", user_id = "test" }
   }
@@ -37,6 +47,14 @@ run "pilot_safety" {
   assert {
     condition     = !aws_s3_bucket.artifacts.force_destroy && alltrue([for r in aws_ecr_repository.images : !r.force_delete && r.image_tag_mutability == "IMMUTABLE"])
     error_message = "Artifact deletion and mutable image tags must not be implicit."
+  }
+  assert {
+    condition     = aws_vpc_endpoint.secrets.private_dns_enabled && aws_vpc_endpoint.secrets.vpc_endpoint_type == "Interface" && jsondecode(aws_vpc_endpoint.s3.policy).Statement[0].Action == ["s3:GetObject"]
+    error_message = "Secret access must be private and S3 egress must not permit writes."
+  }
+  assert {
+    condition     = aws_apigatewayv2_integration.weather.request_parameters["overwrite:header.x-weather-client-ip"] == "$context.identity.sourceIp" && aws_wafv2_web_acl.api.scope == "REGIONAL" && !aws_wafv2_web_acl.api.visibility_config[0].sampled_requests_enabled
+    error_message = "WAF must use a gateway-overwritten client identity without sampling credentials."
   }
 }
 

@@ -79,4 +79,48 @@ resource "aws_vpc_endpoint" "s3" {
   service_name      = "com.amazonaws.${var.region}.s3"
   vpc_endpoint_type = "Gateway"
   route_table_ids   = [aws_route_table.private.id]
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow", Principal = "*", Action = ["s3:GetObject"]
+      Resource = ["${aws_s3_bucket.artifacts.arn}/*", "arn:aws:s3:::prod-${var.region}-starport-layer-bucket/*"]
+    }]
+  })
+}
+
+resource "aws_security_group" "secrets_endpoint" {
+  name_prefix = "${var.name}-secrets-"
+  description = "Private Secrets Manager access from project nodes"
+  vpc_id      = aws_vpc.this.id
+}
+
+resource "aws_vpc_security_group_ingress_rule" "secrets_endpoint" {
+  security_group_id            = aws_security_group.secrets_endpoint.id
+  referenced_security_group_id = aws_eks_cluster.this.vpc_config[0].cluster_security_group_id
+  from_port                    = 443
+  to_port                      = 443
+  ip_protocol                  = "tcp"
+}
+
+resource "aws_vpc_endpoint" "secrets" {
+  vpc_id              = aws_vpc.this.id
+  service_name        = "com.amazonaws.${var.region}.secretsmanager"
+  vpc_endpoint_type   = "Interface"
+  private_dns_enabled = true
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.secrets_endpoint.id]
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow", Principal = "*"
+      Action = ["secretsmanager:GetSecretValue", "secretsmanager:PutSecretValue", "secretsmanager:DescribeSecret"]
+      Resource = concat([aws_db_instance.this.master_user_secret[0].secret_arn], values(aws_secretsmanager_secret.runtime)[*].arn,
+      aws_secretsmanager_secret.github_oauth[*].arn)
+    }]
+  })
+}
+
+data "aws_network_interface" "secrets" {
+  count = 2
+  id    = sort(tolist(aws_vpc_endpoint.secrets.network_interface_ids))[count.index]
 }

@@ -10,3 +10,4 @@ budget_email        = null # Optional; no email notifications until supplied.
 monthly_budget_usd  = 300
 gpu_nodes           = 0
 protect_data        = true
+enable_github_oauth = false

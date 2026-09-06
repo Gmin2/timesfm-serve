@@ -17,6 +17,13 @@ def aws_client(service):
     return boto3.client(service, config=Config(connect_timeout=5, read_timeout=20, retries={"mode": "standard", "total_max_attempts": 3}))
 
 
+def write_private(path, content):
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, "w") as stream:
+        os.fchmod(stream.fileno(), 0o600)
+        stream.write(content)
+
+
 def unpack_verified(archive, destination, expected_sha256):
     with archive.open("rb") as stream:
         digest = hashlib.file_digest(stream, "sha256").hexdigest()
@@ -60,16 +67,19 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--artifacts", choices=("none", "replays", "worker"), default="none")
     args = parser.parse_args()
-    secret = aws_client("secretsmanager").get_secret_value(SecretId=os.environ["DATABASE_SECRET_ARN"])["SecretString"]
+    secrets_client = aws_client("secretsmanager")
+    secret = secrets_client.get_secret_value(SecretId=os.environ["DATABASE_SECRET_ARN"])["SecretString"]
     payload = json.loads(secret)
     if not all(isinstance(payload.get(k), str) and payload[k] for k in ("username", "password")):
         raise ValueError("Invalid database credential payload")
     directory = Path("/run/weather")
     directory.mkdir(parents=True, exist_ok=True)
-    target = directory / "database.json"
-    fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "w") as stream:
-        json.dump({k: payload[k] for k in ("username", "password")}, stream)
+    write_private(directory / "database.json", json.dumps({k: payload[k] for k in ("username", "password")}))
+    if github_arn := os.environ.get("GITHUB_CLIENT_SECRET_ARN"):
+        github_secret = secrets_client.get_secret_value(SecretId=github_arn)["SecretString"].strip()
+        if not github_secret or len(github_secret) > 1024 or "\n" in github_secret or "\r" in github_secret:
+            raise ValueError("Invalid GitHub client secret payload")
+        write_private(directory / "github-client-secret", github_secret)
     shutil.copyfile("/certs/rds-global-bundle.pem", directory / "root.pem")
     if args.artifacts != "none":
         client = aws_client("s3")

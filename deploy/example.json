@@ -1,5 +1,6 @@
 {
   "example": true,
+  "dashboard_origin": "https://dashboard.example.invalid",
   "infrastructure": {
     "region": "us-east-1",
     "cluster_name": "pravah-weather-pilot",
@@ -18,7 +19,10 @@
       "ingest": "123456789012.dkr.ecr.us-east-1.amazonaws.com/pravah-weather-pilot/ingest",
       "bootstrap": "123456789012.dkr.ecr.us-east-1.amazonaws.com/pravah-weather-pilot/bootstrap"
     },
-    "gpu_nodes": 0
+    "gpu_nodes": 0,
+    "database_cidrs": ["10.42.10.0/24", "10.42.11.0/24"],
+    "s3_cidrs": ["198.51.100.0/24"],
+    "secrets_endpoint_cidrs": ["10.42.10.10/32", "10.42.11.10/32"]
   },
   "images": {
     "api": "123456789012.dkr.ecr.us-east-1.amazonaws.com/pravah-weather-pilot/api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",

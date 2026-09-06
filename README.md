@@ -9,6 +9,30 @@ The AWS pilot uses FastAPI, PostgreSQL, Kubernetes and a separate NVIDIA GPU wor
 [Deployment assets](deploy/README.md) |
 [Infrastructure](infra/README.md)
 
+## Dashboard
+
+The [Forecast Lab frontend](frontend/README.md) provides station/run selection,
+temperature comparisons, uncalibrated quantile ranges, CSV/JSON export, the
+retrospective benchmark, and all 99 scheduled cases including rejections.
+Historical views use verified saved artifacts; live views use server-side adapters
+and never substitute historical forecasts.
+The public dashboard is [live on Vercel](https://timesfms.vercel.app),
+with historical views and an AWS-connected, bring-your-own-key API playground.
+GitHub sign-in and self-service read-only API keys are enabled on the public API
+access page. Credentials remain on AWS; Vercel proxies the account routes.
+Anonymous live dashboard reads remain disabled until a dedicated read-only
+dashboard credential is provisioned. See the frontend README for local setup.
+
+```bash
+cd frontend
+pnpm install --frozen-lockfile
+pnpm dev
+```
+
+Open http://127.0.0.1:5178 for local development.
+See its README to enable authenticated live reads without putting a key in the
+browser bundle.
+
 ## What It Does
 
 - Forecasts hourly temperature for 48 hours at Guwahati, Hyderabad and Chennai.
@@ -73,15 +97,17 @@ NOAA observations + ECMWF guidance
 AWS uses EKS, private RDS, S3 artifacts and Secrets Manager. The September 5 deployment
 record verifies three real HTTPS/CUDA replays, idempotency and reference agreement.
 It does not establish live accuracy, high availability or production readiness.
-Unresolved container-image vulnerability findings remain; review current scans before
-external use. Running AWS resources continue to incur charges; no automatic shutdown
-is configured. This repository cleanup does not redeploy or stop them.
+The account release passed Trivy and ECR gates for its API/bootstrap images; it did
+not rebuild or rescan the unchanged worker/ingestion images. Review their current
+findings before external use. Running AWS resources continue to incur charges;
+no automatic shutdown is configured.
 
 ## Code Map
 
 | Location | Responsibility |
 | --- | --- |
 | `timesfm_serve/weather_api.py` | HTTP endpoints, authentication and request bounds |
+| `frontend/` | Weather dashboard, archived benchmarks and local live API adapter |
 | `timesfm_serve/weather_store.py` | Durable jobs, credits, leases and results |
 | `timesfm_serve/weather_worker.py` | GPU worker lifecycle and recovery |
 | `timesfm_serve/weather_engine.py` | Frozen-input validation and TimesFM inference |
@@ -149,7 +175,8 @@ configuration out of Git.
 | GET | `/health/live`, `/health/ready` |
 
 Weather routes require `x-api-key`; replay submission also requires `Idempotency-Key`.
-Accounts and keys are operator-managed. Replay costs 48 credits, reserved once per
+GitHub users can issue read-only keys; replay credits and replay-capable keys remain
+operator-managed. Replay costs 48 credits, reserved once per
 unique submission. This is metered demo access, not a payment integration.
 Identical replay submissions with the same idempotency key reuse the job; conflicting
 reuse returns 409. Job and forecast reads are owner-only. Live reads never fall back
@@ -181,6 +208,6 @@ The old demand demo remains at commit `14002b05619c7894e3b65bb19c1970a3d06bd32a`
 All applied SQL migrations are retained. Local operating notes in `docs/` are
 Git-ignored and are not required to run the project or its tests.
 
-This project demonstrates forecasting infrastructure and API engineering. A weather
-dashboard, self-service onboarding, prospective evaluation and operational hardening
-remain further work. Review the pinned TimesFM model's license before any commercial use.
+This project demonstrates forecasting infrastructure and API engineering.
+Public live dashboard reads, prospective evaluation and operational
+hardening remain further work. Review the pinned TimesFM model's license before any commercial use.

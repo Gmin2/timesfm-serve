@@ -1,6 +1,7 @@
 import hashlib
 import os
 import random
+import re
 import time
 
 from fastapi import Header, HTTPException, Request
@@ -8,6 +9,7 @@ from fastapi import Header, HTTPException, Request
 from timesfm_serve import db
 
 RATE_LIMIT_WINDOW_MS = int(os.environ.get("RATE_LIMIT_WINDOW_MS", "60000"))
+KEY_PATTERN = re.compile(r"tfm_[A-Za-z0-9_-]{32}")
 
 
 def hash_key(key: str) -> str:
@@ -21,13 +23,14 @@ def hash_key(key: str) -> str:
 
 
 class Account:
-    __slots__ = ("id", "name", "rate_limit_per_min", "key_hash")
+    __slots__ = ("id", "name", "rate_limit_per_min", "key_hash", "read_only")
 
-    def __init__(self, id: int, name: str, rate_limit_per_min: int, key_hash: str):
+    def __init__(self, id: int, name: str, rate_limit_per_min: int, key_hash: str, read_only: bool = False):
         self.id = id
         self.name = name
         self.rate_limit_per_min = rate_limit_per_min
         self.key_hash = key_hash
+        self.read_only = read_only
 
 
 def require_key(request: Request, x_api_key: str | None = Header(default=None)) -> Account:
@@ -38,13 +41,15 @@ def require_key(request: Request, x_api_key: str | None = Header(default=None)) 
     """
     if not x_api_key:
         raise HTTPException(401, "missing api key")
+    if not KEY_PATTERN.fullmatch(x_api_key):
+        raise HTTPException(401, "invalid api key")
 
     key_hash = hash_key(x_api_key)
     row = db.account_for_key_hash(key_hash)
     if row is None:
         raise HTTPException(401, "invalid api key")
 
-    account = Account(row[0], row[1], row[2], key_hash)
+    account = Account(row[0], row[1], row[2], key_hash, row[3])
 
     count, window_start = db.bump_rate_limit(key_hash, RATE_LIMIT_WINDOW_MS)
     window_end = window_start.timestamp() + RATE_LIMIT_WINDOW_MS / 1000

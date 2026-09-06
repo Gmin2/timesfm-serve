@@ -131,11 +131,11 @@ def create_key(account_id: int, label: str | None = None) -> str:
     return key
 
 
-def account_for_key_hash(key_hash: str) -> tuple[int, str, int] | None:
-    """(account id, name, rate limit) for a live key on a live account"""
+def account_for_key_hash(key_hash: str) -> tuple[int, str, int, bool] | None:
+    """(account id, name, rate limit, read only) for a live key on a live account"""
     with conn() as c:
         row = c.execute(
-            "select a.id, a.name, a.rate_limit_per_min"
+            "select a.id, a.name, a.rate_limit_per_min, k.read_only"
             " from api_keys k join accounts a on a.id = k.account_id"
             " where k.hash = %s and k.revoked_at is null and a.suspended_at is null",
             (key_hash,),

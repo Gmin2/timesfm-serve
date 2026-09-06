@@ -3,9 +3,11 @@
 import argparse
 import copy
 import hashlib
+import ipaddress
 import json
 import re
 from pathlib import Path
+from urllib.parse import urlsplit
 
 NAMESPACE = "weather"
 SECURITY = {"allowPrivilegeEscalation": False, "readOnlyRootFilesystem": True, "capabilities": {"drop": ["ALL"]}}
@@ -21,6 +23,11 @@ def resource(kind, name, spec=None, api_version="v1", **extra):
 def validate(config, example=False):
     if config.get("example") and not example:
         raise ValueError("Example configuration is for offline validation only; pass --example")
+    if "dashboard_origin" in config:
+        origin = urlsplit(config["dashboard_origin"])
+        if (origin.scheme != "https" or not origin.hostname or origin.username or origin.password
+                or origin.path not in ("", "/") or origin.query or origin.fragment):
+            raise ValueError("Dashboard origin must be an HTTPS origin without a path")
     infrastructure = config["infrastructure"]
     if infrastructure["region"] != "us-east-1":
         raise ValueError("Only the reviewed us-east-1 pilot is supported")
@@ -34,6 +41,25 @@ def validate(config, example=False):
             raise ValueError("Artifacts must be content-addressed and checksum-pinned")
     if infrastructure["gpu_nodes"] not in (0, 1):
         raise ValueError("Only zero or one GPU node is supported")
+    for key in ("database_cidrs", "s3_cidrs", "secrets_endpoint_cidrs"):
+        cidrs = infrastructure.get(key, [])
+        if not cidrs or any(ipaddress.ip_network(c).version != 4 or ipaddress.ip_network(c).prefixlen < 8 for c in cidrs):
+            raise ValueError(f"Missing or overly broad {key}; refresh Terraform deployment outputs")
+    if oauth := config.get("github_oauth"):
+        if set(oauth) != {"client_id", "secret_arn", "egress_cidrs"} or not config.get("dashboard_origin"):
+            raise ValueError("GitHub OAuth requires a dashboard origin and only client_id, secret_arn, egress_cidrs")
+        if not re.fullmatch(r"[A-Za-z0-9_.-]{1,100}", oauth["client_id"]):
+            raise ValueError("Invalid GitHub client ID")
+        account = infrastructure["runtime_secrets"]["api"].split(":")[4]
+        if not re.fullmatch(rf"arn:aws:secretsmanager:us-east-1:{account}:secret:[A-Za-z0-9/_+=.@-]+", oauth["secret_arn"]):
+            raise ValueError("GitHub secret ARN must belong to this account and region")
+        api_origin = urlsplit(infrastructure["api_url"])
+        if (api_origin.scheme != "https" or not api_origin.hostname or api_origin.username or api_origin.password
+                or api_origin.path not in ("", "/") or api_origin.query or api_origin.fragment):
+            raise ValueError("Public API origin must be HTTPS without a path")
+        networks = [ipaddress.ip_network(cidr) for cidr in oauth["egress_cidrs"]]
+        if not 1 <= len(networks) <= 100 or any(n.version != 4 or n.prefixlen < 20 or not n.is_global for n in networks):
+            raise ValueError("GitHub egress requires explicit public IPv4 ranges from GitHub metadata")
 
 
 def pod(config, workload, command=None):
@@ -57,6 +83,8 @@ def pod(config, workload, command=None):
         "volumeMounts": [{"name": "credentials", "mountPath": "/run/weather"}, {"name": "tmp", "mountPath": "/tmp"}],
         "resources": {"requests": {"cpu": "100m", "memory": "128Mi"}, "limits": {"cpu": "1", "memory": "512Mi"}},
     }
+    if workload == "api" and (oauth := config.get("github_oauth")):
+        init["env"].append({"name": "GITHUB_CLIENT_SECRET_ARN", "value": oauth["secret_arn"]})
     if artifacts != "none":
         init["volumeMounts"].append({"name": "assets", "mountPath": "/assets"})
         main["volumeMounts"].append({"name": "assets", "mountPath": "/assets", "readOnly": True})
@@ -98,15 +126,26 @@ def render(config, enable_worker=False, enable_live=False, example=False):
         "podSelector": {}, "policyTypes": ["Ingress", "Egress"], "ingress": [],
         "egress": [
             {"to": [{"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "kube-system"}}, "podSelector": {"matchLabels": {"k8s-app": "kube-dns"}}}], "ports": [{"protocol": p, "port": 53} for p in ("UDP", "TCP")]},
-            {"to": [{"ipBlock": {"cidr": "10.42.0.0/16"}}], "ports": [{"protocol": "TCP", "port": 5432}]},
+            {"to": [{"ipBlock": {"cidr": c}} for c in infrastructure["database_cidrs"]], "ports": [{"protocol": "TCP", "port": 5432}]},
             {"to": [{"ipBlock": {"cidr": "169.254.170.23/32"}}], "ports": [{"protocol": "TCP", "port": 80}]},
-            {"to": [{"ipBlock": {"cidr": "0.0.0.0/0", "except": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "169.254.0.0/16"]}}], "ports": [{"protocol": "TCP", "port": 443}]},
+            {"to": [{"ipBlock": {"cidr": c}} for c in infrastructure["s3_cidrs"] + infrastructure["secrets_endpoint_cidrs"]], "ports": [{"protocol": "TCP", "port": 443}]},
         ],
+    }, "networking.k8s.io/v1"))
+    bootstrap.append(resource("NetworkPolicy", "weather-ingest-sources", {
+        "podSelector": {"matchLabels": {"app": "weather-ingest"}}, "policyTypes": ["Egress"],
+        "egress": [{"to": [{"ipBlock": {"cidr": "0.0.0.0/0", "except": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "169.254.0.0/16"]}}],
+                    "ports": [{"protocol": "TCP", "port": 443}]}],
     }, "networking.k8s.io/v1"))
     bootstrap.append(resource("NetworkPolicy", "weather-api-ingress", {
         "podSelector": {"matchLabels": {"app": "weather-api"}}, "policyTypes": ["Ingress"],
         "ingress": [{"from": [{"ipBlock": {"cidr": "10.42.0.0/16"}}], "ports": [{"protocol": "TCP", "port": 8000}]}],
     }, "networking.k8s.io/v1"))
+    if oauth := config.get("github_oauth"):
+        bootstrap.append(resource("NetworkPolicy", "weather-api-github", {
+            "podSelector": {"matchLabels": {"app": "weather-api"}}, "policyTypes": ["Egress"],
+            "egress": [{"to": [{"ipBlock": {"cidr": cidr}} for cidr in oauth["egress_cidrs"]],
+                        "ports": [{"protocol": "TCP", "port": 443}]}],
+        }, "networking.k8s.io/v1"))
 
     migration = pod(config, "migrate", ["python", "-m", "scripts.weather_db_admin"])
     migration["restartPolicy"] = "Never"
@@ -117,6 +156,14 @@ def render(config, enable_worker=False, enable_live=False, example=False):
 
     api = pod(config, "api")
     container = api["containers"][0]
+    if "dashboard_origin" in config:
+        container["env"] = [{"name": "WEATHER_DASHBOARD_ORIGIN", "value": config["dashboard_origin"].rstrip("/")}]
+    if oauth := config.get("github_oauth"):
+        container["env"].extend([
+            {"name": "GITHUB_CLIENT_ID", "value": oauth["client_id"]},
+            {"name": "GITHUB_CLIENT_SECRET_FILE", "value": "/run/weather/github-client-secret"},
+            {"name": "WEATHER_PUBLIC_API_ORIGIN", "value": infrastructure["api_url"].rstrip("/")},
+        ])
     container["ports"] = [{"name": "http", "containerPort": 8000}]
     container["readinessProbe"] = {"httpGet": {"path": "/health/ready", "port": "http"}, "periodSeconds": 5, "timeoutSeconds": 2}
     container["livenessProbe"] = {"httpGet": {"path": "/health/live", "port": "http"}, "periodSeconds": 15, "timeoutSeconds": 2}
@@ -138,7 +185,9 @@ def render(config, enable_worker=False, enable_live=False, example=False):
         strategy = {"type": "Recreate"} if name == "worker" else {"type": "RollingUpdate", "rollingUpdate": {"maxSurge": 1, "maxUnavailable": 0}}
         deployments.append(resource("Deployment", f"weather-{name}", {
             "replicas": replicas, "strategy": strategy, "revisionHistoryLimit": 3, "progressDeadlineSeconds": 1200,
-            "selector": {"matchLabels": labels}, "template": {"metadata": {"labels": labels, "annotations": {"weather/release": release}}, "spec": spec},
+            "selector": {"matchLabels": labels}, "template": {"metadata": {"labels": labels, "annotations": {
+                "weather/release": release, "eks.amazonaws.com/skip-containers": name,
+            }}, "spec": spec},
         }, "apps/v1"))
     ingestion = pod(config, "ingest")
     ingestion["restartPolicy"] = "Never"
@@ -149,7 +198,9 @@ def render(config, enable_worker=False, enable_live=False, example=False):
             "schedule": "*/5 * * * *", "timeZone": "Etc/UTC", "suspend": not enable_live, "concurrencyPolicy": "Forbid", "startingDeadlineSeconds": 120,
             "successfulJobsHistoryLimit": 2, "failedJobsHistoryLimit": 3,
             "jobTemplate": {"spec": {"backoffLimit": 1, "activeDeadlineSeconds": 300, "ttlSecondsAfterFinished": 86400,
-                "template": {"metadata": {"labels": {"app": "weather-ingest"}}, "spec": ingestion}}},
+                "template": {"metadata": {"labels": {"app": "weather-ingest"}, "annotations": {
+                    "eks.amazonaws.com/skip-containers": "ingest",
+                }}, "spec": ingestion}}},
         }, "batch/v1"),
     ])
     operator = pod(config, "migrate", ["python", "-c", "import time; time.sleep(600)"])

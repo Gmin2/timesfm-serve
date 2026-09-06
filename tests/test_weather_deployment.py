@@ -11,11 +11,11 @@ import pytest
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict
 
-from scripts.weather_cloud_init import download, unpack_verified
+from scripts.weather_cloud_init import download, unpack_verified, write_private
 from scripts.weather_costs import estimate
 from scripts.weather_db_admin import provision_role
 from scripts.weather_render import render
-from timesfm_serve import db, weather_catalog, weather_live_store, weather_store
+from timesfm_serve import customer_store, db, weather_catalog, weather_live_store, weather_store
 from timesfm_serve.auth import hash_key
 
 
@@ -45,6 +45,18 @@ def test_artifact_hash_and_extraction(tmp_path):
     with pytest.raises(ValueError, match="SHA256"):
         unpack_verified(path, tmp_path / "other", "0" * 64)
     assert not (tmp_path / "other").exists()
+
+
+def test_private_secret_file_permissions_and_symlinks(tmp_path):
+    target = tmp_path / "secret"
+    write_private(target, "test-only-secret")
+    assert target.read_text() == "test-only-secret"
+    assert target.stat().st_mode & 0o777 == 0o600
+    link = tmp_path / "link"
+    link.symlink_to(target)
+    with pytest.raises(OSError):
+        write_private(link, "replacement")
+    assert target.read_text() == "test-only-secret"
 
 
 @pytest.mark.parametrize("valid_digest", [True, False])
@@ -90,6 +102,7 @@ def test_real_database_runtime_roles(monkeypatch):
     original_conn = db.conn
     roles = {w: f"weather_test_{w}_{uuid.uuid4().hex[:8]}" for w in ("api", "worker", "ingest")}
     account = db.find_or_create_account(f"deployment-test-{uuid.uuid4()}")
+    github_id = uuid.uuid4().int % 10**15 + 1
     key = db.create_key(account)
     with original_conn() as c:
         assert c.info.dbname.endswith("_test")
@@ -112,6 +125,14 @@ def test_real_database_runtime_roles(monkeypatch):
         monkeypatch.setenv("DATABASE_AUTO_MIGRATE", "0")
         db.initialize()
         assert db.account_for_key_hash(hash_key(key))[0] == account
+        customer_store.save_attempt("state", "browser", "verifier")
+        assert customer_store.consume_attempt("state", "browser") == "verifier"
+        token = customer_store.github_session(github_id, "example")
+        session = customer_store.session_account(token)
+        assert customer_store.github_session(github_id, "renamed", token)
+        customer_key = customer_store.create_customer_key(session["id"], "Runtime test")
+        assert len(customer_store.keys(session["id"])) == 1
+        assert db.revoke_key(customer_key["id"], session["id"])
         db.bump_rate_limit(hash_key(key), 60000)
         case = weather_catalog.catalog()[0]
         job_id, created = weather_store.submit(account, "deployment-test", case["case_id"], case["manifest_sha256"])
@@ -142,6 +163,7 @@ def test_real_database_runtime_roles(monkeypatch):
         with original_conn() as c:
             c.execute("delete from rate_limit_counters where key_hash = %s", (hash_key(key),))
             c.execute("delete from accounts where id = %s", (account,))
+            c.execute("delete from accounts where github_id = %s", (str(github_id),))
             for role in roles.values():
                 c.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(role)))
                 c.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(role)))
@@ -192,6 +214,69 @@ def test_render_requires_explicit_enabling():
     assert not workloads["weather-ingest"]["spec"]["suspend"]
 
 
+def test_render_dashboard_origin_is_api_only():
+    config = deployment_config()
+    config["dashboard_origin"] = "https://timesfms.vercel.app/"
+    documents = render(config, example=True)
+    for resource in documents["03-workloads.json"]:
+        if resource["kind"] != "Deployment":
+            continue
+        container = resource["spec"]["template"]["spec"]["containers"][0]
+        if container["name"] == "api":
+            assert container["env"] == [{"name": "WEATHER_DASHBOARD_ORIGIN", "value": "https://timesfms.vercel.app"}]
+        else:
+            assert "WEATHER_DASHBOARD_ORIGIN" not in {item["name"] for item in container.get("env", [])}
+    config["dashboard_origin"] = "https://timesfms.vercel.app/api/auth/github/callback"
+    with pytest.raises(ValueError, match="Dashboard origin"):
+        render(config, example=True)
+
+
+def test_render_github_oauth_secret_and_egress_are_api_only():
+    config = deployment_config()
+    config["infrastructure"]["api_url"] = "https://api.example.invalid"
+    config["github_oauth"] = {
+        "client_id": "test-client-id",
+        "secret_arn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:weather/github/oauth-ABCDEF",
+        "egress_cidrs": ["140.82.112.0/20"],
+    }
+    documents = render(config, example=True)
+    api = next(r for r in documents["03-workloads.json"] if r["kind"] == "Deployment" and r["metadata"]["name"] == "weather-api")
+    pod = api["spec"]["template"]["spec"]
+    env = {v["name"]: v["value"] for v in pod["containers"][0]["env"]}
+    assert env["GITHUB_CLIENT_SECRET_FILE"] == "/run/weather/github-client-secret"
+    assert env["WEATHER_PUBLIC_API_ORIGIN"] == "https://api.example.invalid"
+    assert "GITHUB_CLIENT_SECRET_ARN" not in env
+    assert {v["name"]: v["value"] for v in pod["initContainers"][0]["env"]}["GITHUB_CLIENT_SECRET_ARN"] == config["github_oauth"]["secret_arn"]
+    for r in documents["03-workloads.json"]:
+        if r["kind"] in ("Deployment", "CronJob") and r["metadata"]["name"] != "weather-api":
+            assert "GITHUB_CLIENT" not in json.dumps(r)
+    policy = next(r for r in documents["01-bootstrap.json"] if r["metadata"]["name"] == "weather-api-github")
+    assert policy["spec"]["podSelector"] == {"matchLabels": {"app": "weather-api"}}
+    assert policy["spec"]["egress"][0]["ports"] == [{"protocol": "TCP", "port": 443}]
+    config["github_oauth"]["egress_cidrs"] = ["0.0.0.0/0"]
+    with pytest.raises(ValueError, match="GitHub egress"):
+        render(config, example=True)
+
+
+def test_runtime_containers_opt_out_of_aws_identity_injection():
+    documents = render(deployment_config(), example=True)
+    for resource in documents["03-workloads.json"]:
+        if resource["kind"] == "Deployment":
+            template = resource["spec"]["template"]
+        elif resource["kind"] == "CronJob":
+            template = resource["spec"]["jobTemplate"]["spec"]["template"]
+        else:
+            continue
+        runtime = template["spec"]["containers"][0]["name"]
+        assert template["metadata"]["annotations"]["eks.amazonaws.com/skip-containers"] == runtime
+        assert runtime != template["spec"]["initContainers"][0]["name"]
+        assert not template["spec"].get("shareProcessNamespace", False)
+    migration = documents["02-migrate.json"][0]["spec"]["template"]
+    operator = documents["04-operator.json"][0]
+    for privileged in (migration, operator):
+        assert "eks.amazonaws.com/skip-containers" not in privileged["metadata"].get("annotations", {})
+
+
 def test_render_rejects_mutable_images_and_artifacts():
     config = deployment_config()
     config["images"]["worker"] = config["infrastructure"]["repositories"]["worker"] + ":latest"
@@ -200,6 +285,23 @@ def test_render_rejects_mutable_images_and_artifacts():
     config = deployment_config()
     config["artifacts"]["models"]["key"] = "models/latest.tar.gz"
     with pytest.raises(ValueError, match="content-addressed"):
+        render(config, example=True)
+
+
+def test_only_ingestion_has_public_https_egress():
+    config = deployment_config()
+    policies = [r for r in render(config, example=True)["01-bootstrap.json"] if r["kind"] == "NetworkPolicy"]
+    public = [p for p in policies if any(
+        target.get("ipBlock", {}).get("cidr") == "0.0.0.0/0"
+        for rule in p["spec"].get("egress", []) for target in rule.get("to", [])
+    )]
+    assert len(public) == 1
+    assert public[0]["spec"]["podSelector"] == {"matchLabels": {"app": "weather-ingest"}}
+    config["infrastructure"]["secrets_endpoint_cidrs"] = ["0.0.0.0/0"]
+    with pytest.raises(ValueError, match="overly broad"):
+        render(config, example=True)
+    config["infrastructure"].pop("secrets_endpoint_cidrs")
+    with pytest.raises(ValueError, match="refresh Terraform"):
         render(config, example=True)
 
 

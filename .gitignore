@@ -1,4 +1,5 @@
 .venv/
+.pnpm-store/
 /docs/
 ref/
 tmp/

@@ -1,5 +1,11 @@
 name: ci
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 5 * * 1'
+permissions:
+  contents: read
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -17,8 +23,8 @@ jobs:
           --health-timeout 5s
           --health-retries 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
       - run: uv sync --frozen --extra cpu
       - run: uv run ruff check .
       - run: uv run pytest -q
@@ -54,8 +60,8 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
         with:
           terraform_version: 1.16.1
       - run: terraform -chdir=infra/runtime init -backend=false -input=false
@@ -74,3 +80,31 @@ jobs:
           grep ' kubeconform-linux-amd64.tar.gz$' kubeconform-CHECKSUMS | sha256sum --check --strict
           tar -xzf kubeconform-linux-amd64.tar.gz kubeconform
           ./kubeconform -strict -summary -kubernetes-version 1.35.0 weather-rendered "$GITHUB_WORKSPACE/deploy/nvidia-device-plugin.yaml"
+
+  source-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - run: bash scripts/weather_security_tools.sh /tmp/weather-security-tools
+      - name: Scan reachable Git history for secrets
+        run: /tmp/weather-security-tools/gitleaks git . --log-opts='--all --full-history' --redact=100 --ignore-gitleaks-allow --gitleaks-ignore-path /dev/null
+      - name: Scan locked dependencies
+        run: /tmp/weather-security-tools/trivy fs --disable-telemetry --scanners vuln --include-dev-deps --severity HIGH,CRITICAL --ignore-unfixed=false --ignorefile /dev/null --exit-code 1 --skip-dirs .git .
+
+  image-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [api, ingest, bootstrap, worker]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - run: bash scripts/weather_security_tools.sh /tmp/weather-security-tools
+      - name: Build release image
+        run: docker build -f deploy/Dockerfile.${{ matrix.component }} -t weather-security:${{ matrix.component }} .
+      - name: Produce SBOM and reject vulnerable images
+        run: PATH="/tmp/weather-security-tools:$PATH" bash scripts/weather_image_scan.sh weather-security:${{ matrix.component }} /tmp/weather-security-reports

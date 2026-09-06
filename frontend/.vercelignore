@@ -1,0 +1,8 @@
+.env*
+!.env.example
+node_modules/
+e2e/
+test-results/
+playwright-report/
+**/*.test.ts
+**/*.test.tsx

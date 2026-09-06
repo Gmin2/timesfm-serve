@@ -106,7 +106,10 @@ resource "aws_apigatewayv2_integration" "weather" {
   connection_id          = aws_apigatewayv2_vpc_link.weather.id
   payload_format_version = "1.0"
   timeout_milliseconds   = 29000
-  request_parameters     = { "overwrite:path" = "$request.path" }
+  request_parameters = {
+    "overwrite:path"                       = "$request.path"
+    "overwrite:header.x-weather-client-ip" = "$context.identity.sourceIp"
+  }
 }
 
 resource "aws_apigatewayv2_route" "weather" {

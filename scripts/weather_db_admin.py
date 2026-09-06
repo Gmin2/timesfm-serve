@@ -11,9 +11,12 @@ from scripts.weather_cloud_init import aws_client
 GRANTS = {
     "api": {
         "SELECT": ["accounts", "api_keys", "weather_jobs", "weather_forecasts", "weather_live_inputs", "weather_ingestion_status", "schema_migrations"],
-        "INSERT": ["weather_jobs"],
+        "INSERT": ["weather_jobs", "api_keys"],
         "SELECT, INSERT, UPDATE, DELETE": ["rate_limit_counters"],
-        "UPDATE (credits_used)": ["accounts"],
+        "SELECT, INSERT, DELETE": ["dashboard_sessions", "github_oauth_attempts"],
+        "INSERT (name, github_id, github_login, credits_granted)": ["accounts"],
+        "UPDATE (credits_used, github_login)": ["accounts"],
+        "UPDATE (revoked_at)": ["api_keys"],
     },
     "worker": {
         "SELECT": ["accounts", "weather_jobs", "weather_forecasts", "weather_live_inputs", "schema_migrations"],
@@ -39,6 +42,8 @@ def provision_role(connection, role, password, workload):
         connection.execute(sql.SQL("GRANT {} ON {} TO {}").format(
             sql.SQL(privileges), sql.SQL(", ").join(sql.Identifier("public", t) for t in tables), sql.Identifier(role),
         ))
+    if workload == "api":
+        connection.execute(sql.SQL("GRANT USAGE ON SEQUENCE public.accounts_id_seq, public.api_keys_id_seq TO {}").format(sql.Identifier(role)))
 
 
 def main():

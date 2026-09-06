@@ -15,7 +15,7 @@ import psycopg
 import pytest
 from fastapi.testclient import TestClient
 
-from timesfm_serve import db, weather_api, weather_catalog, weather_store, weather_worker
+from timesfm_serve import auth, db, weather_api, weather_catalog, weather_store, weather_worker
 from timesfm_serve.auth import hash_key
 from timesfm_serve.weather_engine import WeatherEngine, read_inputs
 
@@ -153,6 +153,8 @@ def test_rate_limit_throttles_before_charging(client, customer, monkeypatch):
             return fixed
 
     monkeypatch.setattr(db, "datetime", FrozenDatetime)
+    # PostgreSQL's clock is not frozen; random cleanup would remove these old counters.
+    monkeypatch.setattr(auth.random, "random", lambda: 1.0)
     account, headers = customer
     with db.conn() as c:
         c.execute("update accounts set rate_limit_per_min = 2 where id = %s", (account,))

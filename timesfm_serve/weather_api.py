@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from psycopg_pool import PoolTimeout
 from pydantic import BaseModel, ConfigDict, Field
 
-from timesfm_serve import db, weather_catalog, weather_live_store, weather_metrics, weather_store
+from timesfm_serve import customer_auth, db, weather_catalog, weather_live_store, weather_metrics, weather_store
 from timesfm_serve.auth import Account, require_key
 from timesfm_serve.weather_contract import ForecastDocument, ReplaySubmission, WeatherJob
 from timesfm_serve.weather_live_contract import LiveForecastResponse
@@ -29,6 +29,7 @@ STATIONS = [
 
 @asynccontextmanager
 async def lifespan(app):
+    customer_auth.settings()
     db.initialize()
     yield
     db.pool.close()
@@ -65,6 +66,7 @@ class BodyLimit:
 
 app = FastAPI(title="Weather Forecast API", version="0.2.0", lifespan=lifespan)
 app.add_middleware(BodyLimit)
+app.include_router(customer_auth.router)
 app.add_api_route("/metrics", weather_metrics.metrics, methods=["GET"], include_in_schema=False)
 
 
@@ -161,6 +163,8 @@ def submit_replay(
     idempotency_key: Annotated[str, Header(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9._:-]+$")],
     account: Account = Depends(require_key),
 ):
+    if account.read_only:
+        raise HTTPException(403, "read_only_api_key")
     try:
         _, _, digest = weather_catalog.case_manifest(body.case_id)
     except (OSError, ValueError):

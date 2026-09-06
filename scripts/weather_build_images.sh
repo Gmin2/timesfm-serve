@@ -7,6 +7,8 @@ set -euo pipefail
 : "${RELEASE_TAG:?}"
 [[ "$RELEASE_TAG" =~ ^[a-f0-9]{64}$ ]]
 [[ "$(uname -m)" == "x86_64" ]]
+bash scripts/weather_security_tools.sh /tmp/weather-security-tools
+export PATH="/tmp/weather-security-tools:$PATH"
 if (( $# == 0 )); then
   set -- api ingest bootstrap worker
 fi
@@ -37,7 +39,20 @@ for component in "$@"; do
     docker run --rm --read-only --tmpfs /tmp "$image" python -c \
       'import importlib.util; assert importlib.util.find_spec("torch") is None'
   fi
+  bash scripts/weather_image_scan.sh "$image" "/tmp/weather-security/${component}"
   docker push "$image"
-  aws ecr describe-images --repository-name "${PROJECT_NAME}/${component}" \
-    --image-ids "imageTag=${RELEASE_TAG}" --query 'imageDetails[0].imageDigest' --output text
+  digest="$(aws ecr describe-images --repository-name "${PROJECT_NAME}/${component}" \
+    --image-ids "imageTag=${RELEASE_TAG}" --query 'imageDetails[0].imageDigest' --output text)"
+  # Scan-on-push registration can lag the push; never promote without a completed scan.
+  for attempt in 1 2 3; do
+    if aws ecr wait image-scan-complete --repository-name "${PROJECT_NAME}/${component}" --image-id "imageDigest=${digest}"; then
+      break
+    fi
+    (( attempt < 3 )) || exit 1
+    sleep 10
+  done
+  aws ecr describe-image-scan-findings --repository-name "${PROJECT_NAME}/${component}" \
+    --image-id "imageDigest=${digest}" > "/tmp/weather-security/${component}/ecr.json"
+  python -m scripts.weather_ecr_gate "/tmp/weather-security/${component}/ecr.json" "$digest"
+  printf '%s\n' "$digest"
 done

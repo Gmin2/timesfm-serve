@@ -1,0 +1,35 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "pnpm build",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "outputDirectory": "dist",
+  "regions": ["iad1"],
+  "public": false,
+  "functions": {
+    "api/**/*.ts": { "maxDuration": 20 }
+  },
+  "rewrites": [
+    { "source": "/api/:__path(.*)", "destination": "/api/gateway" },
+    { "source": "/forecasts", "destination": "/index.html" },
+    { "source": "/benchmarks", "destination": "/index.html" },
+    { "source": "/runs", "destination": "/index.html" },
+    { "source": "/api-keys", "destination": "/index.html" },
+    { "source": "/playground", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
+    }
+  ]
+}
