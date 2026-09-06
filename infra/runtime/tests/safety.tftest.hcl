@@ -1,7 +1,7 @@
 mock_provider "aws" {
   mock_resource "aws_s3_bucket" {
     override_during = plan
-    defaults = { arn = "arn:aws:s3:::example-artifacts" }
+    defaults        = { arn = "arn:aws:s3:::example-artifacts" }
   }
   mock_resource "aws_vpc_endpoint" {
     defaults = { network_interface_ids = ["eni-example-a", "eni-example-b"], cidr_blocks = ["198.51.100.0/24"] }

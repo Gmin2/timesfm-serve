@@ -23,6 +23,7 @@ GRANTS = {
         "UPDATE": ["weather_jobs"],
         "INSERT": ["weather_forecasts"],
         "UPDATE (credits_used)": ["accounts"],
+        "SELECT, INSERT, UPDATE": ["weather_evaluations", "weather_training_runs"],
     },
     "ingest": {
         "SELECT": ["weather_jobs", "weather_live_inputs", "schema_migrations"],

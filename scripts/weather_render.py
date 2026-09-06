@@ -41,6 +41,13 @@ def validate(config, example=False):
             raise ValueError("Artifacts must be content-addressed and checksum-pinned")
     if infrastructure["gpu_nodes"] not in (0, 1):
         raise ValueError("Only zero or one GPU node is supported")
+    if learning := config.get("learning"):
+        if set(learning) != {"training_mode", "max_seconds", "max_steps"} or learning["training_mode"] not in ("off", "research"):
+            raise ValueError("Learning requires an explicit off/research mode and bounded time/steps")
+        if not 30 <= learning["max_seconds"] <= 900 or not 1 <= learning["max_steps"] <= 256:
+            raise ValueError("Learning exceeds the single-GPU budget")
+        if not infrastructure.get("learning_enabled"):
+            raise ValueError("Apply the reviewed training artifact permissions first")
     for key in ("database_cidrs", "s3_cidrs", "secrets_endpoint_cidrs"):
         cidrs = infrastructure.get(key, [])
         if not cidrs or any(ipaddress.ip_network(c).version != 4 or ipaddress.ip_network(c).prefixlen < 8 for c in cidrs):
@@ -106,6 +113,8 @@ def render(config, enable_worker=False, enable_live=False, example=False):
         raise ValueError("GPU worker requires an explicitly provisioned GPU node")
     if enable_live and not enable_worker:
         raise ValueError("Do not schedule live jobs without an enabled worker")
+    if config.get("learning") and not (enable_worker and enable_live):
+        raise ValueError("Learning requires the existing live, single-GPU worker")
     release = hashlib.sha256(json.dumps(config, sort_keys=True).encode()).hexdigest()[:12]
     namespace = resource("Namespace", NAMESPACE)
     namespace["metadata"] = {"name": NAMESPACE, "labels": {"pod-security.kubernetes.io/enforce": "restricted", "pod-security.kubernetes.io/enforce-version": "v1.35"}}
@@ -178,16 +187,23 @@ def render(config, enable_worker=False, enable_live=False, example=False):
     container["startupProbe"] = {**copy.deepcopy(check), "failureThreshold": 40}
     container["readinessProbe"] = {**copy.deepcopy(check), "failureThreshold": 1}
     container["livenessProbe"] = {**copy.deepcopy(check), "failureThreshold": 2}
+    if learning := config.get("learning"):
+        container["command"] = ["python", "-m", "timesfm_serve.weather_gpu", "--max-seconds", str(learning["max_seconds"]),
+                                "--max-steps", str(learning["max_steps"])]
+        container["env"] = [{"name": "WEATHER_TRAINING_MODE", "value": learning["training_mode"]}]
+        container["volumeMounts"].append({"name": "learning", "mountPath": "/learning"})
+        worker["volumes"].append({"name": "learning", "emptyDir": {"sizeLimit": "128Mi"}})
 
     deployments = []
     for name, spec, replicas in (("api", api, 2), ("worker", worker, int(enable_worker))):
         labels = {"app": f"weather-{name}"}
         strategy = {"type": "Recreate"} if name == "worker" else {"type": "RollingUpdate", "rollingUpdate": {"maxSurge": 1, "maxUnavailable": 0}}
+        annotations = {"weather/release": release}
+        if name != "worker" or not config.get("learning"):
+            annotations["eks.amazonaws.com/skip-containers"] = name
         deployments.append(resource("Deployment", f"weather-{name}", {
             "replicas": replicas, "strategy": strategy, "revisionHistoryLimit": 3, "progressDeadlineSeconds": 1200,
-            "selector": {"matchLabels": labels}, "template": {"metadata": {"labels": labels, "annotations": {
-                "weather/release": release, "eks.amazonaws.com/skip-containers": name,
-            }}, "spec": spec},
+            "selector": {"matchLabels": labels}, "template": {"metadata": {"labels": labels, "annotations": annotations}, "spec": spec},
         }, "apps/v1"))
     ingestion = pod(config, "ingest")
     ingestion["restartPolicy"] = "Never"

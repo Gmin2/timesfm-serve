@@ -78,6 +78,12 @@ variable "gpu_nodes" {
   }
 }
 
+variable "enable_learning" {
+  type        = bool
+  default     = false
+  description = "Allow the existing single GPU worker to save bounded research fine-tuning artifacts. Does not add compute."
+}
+
 variable "protect_data" {
   type        = bool
   default     = true

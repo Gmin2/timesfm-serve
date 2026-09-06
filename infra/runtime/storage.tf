@@ -23,6 +23,19 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "artifacts" {
   }
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "learning" {
+  count  = var.enable_learning ? 1 : 0
+  bucket = aws_s3_bucket.artifacts.id
+  rule {
+    id     = "expire-research-training-artifacts"
+    status = "Enabled"
+    filter { prefix = "training/" }
+    expiration { days = 30 }
+    noncurrent_version_expiration { noncurrent_days = 7 }
+    abort_incomplete_multipart_upload { days_after_initiation = 1 }
+  }
+}
+
 resource "aws_s3_bucket_policy" "artifacts" {
   bucket = aws_s3_bucket.artifacts.id
   policy = jsonencode({

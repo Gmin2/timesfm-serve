@@ -81,10 +81,14 @@ resource "aws_vpc_endpoint" "s3" {
   route_table_ids   = [aws_route_table.private.id]
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
+    Statement = concat([{
       Effect   = "Allow", Principal = "*", Action = ["s3:GetObject"]
       Resource = ["${aws_s3_bucket.artifacts.arn}/*", "arn:aws:s3:::prod-${var.region}-starport-layer-bucket/*"]
-    }]
+      }], var.enable_learning ? [{
+      Effect    = "Allow", Principal = "*", Action = ["s3:PutObject"]
+      Resource  = "${aws_s3_bucket.artifacts.arn}/training/*"
+      Condition = { ArnEquals = { "aws:PrincipalArn" = aws_iam_role.workloads["worker"].arn } }
+    }] : [])
   })
 }
 

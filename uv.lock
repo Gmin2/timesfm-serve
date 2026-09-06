@@ -1631,6 +1631,7 @@ dependencies = [
     { name = "requests" },
     { name = "scikit-learn" },
     { name = "timesfm", extra = ["torch"] },
+    { name = "tzdata" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -1696,6 +1697,7 @@ requires-dist = [
     { name = "timesfm", extras = ["torch"], specifier = ">=3.0.1" },
     { name = "torch", marker = "extra == 'cpu'", specifier = ">=2.14", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "timesfm-serve", extra = "cpu" } },
     { name = "torch", marker = "extra == 'gpu'", specifier = ">=2.14", index = "https://download.pytorch.org/whl/cu130", conflict = { package = "timesfm-serve", extra = "gpu" } },
+    { name = "tzdata", specifier = ">=2026.3" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
 ]
 provides-extras = ["cpu", "gpu"]

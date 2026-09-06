@@ -34,7 +34,7 @@ for component in "$@"; do
     'import os, platform; assert os.getuid() == 10001; assert platform.machine() == "x86_64"'
   if [[ "$component" == "worker" ]]; then
     docker run --rm --read-only --tmpfs /tmp "$image" python -c \
-      'import torch; from timesfm_serve.weather_engine import WeatherEngine; assert torch.version.cuda is not None; print({"torch": torch.__version__, "cuda_build": torch.version.cuda, "gpu_execution_tested": False})'
+      'import torch; from zoneinfo import ZoneInfo; from timesfm_serve.weather_engine import WeatherEngine; assert torch.version.cuda is not None; assert ZoneInfo("Asia/Kolkata").key == "Asia/Kolkata"; print({"torch": torch.__version__, "cuda_build": torch.version.cuda, "gpu_execution_tested": False})'
   else
     docker run --rm --read-only --tmpfs /tmp "$image" python -c \
       'import importlib.util; assert importlib.util.find_spec("torch") is None'

@@ -36,6 +36,19 @@ resource "aws_iam_role_policy" "runtime" {
   })
 }
 
+resource "aws_iam_role_policy" "learning" {
+  count = var.enable_learning ? 1 : 0
+  name  = "research-training-artifacts"
+  role  = aws_iam_role.workloads["worker"].id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow", Action = ["s3:PutObject"]
+      Resource = "${aws_s3_bucket.artifacts.arn}/training/*"
+    }]
+  })
+}
+
 resource "aws_iam_role_policy" "migrate" {
   role = aws_iam_role.workloads["migrate"].id
   policy = jsonencode({

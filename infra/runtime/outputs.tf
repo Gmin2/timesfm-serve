@@ -13,6 +13,7 @@ output "deployment" {
     api_url                 = aws_apigatewayv2_api.weather.api_endpoint
     budget_email_configured = var.budget_email != null
     gpu_nodes               = var.gpu_nodes
+    learning_enabled        = var.enable_learning
     database_cidrs          = aws_subnet.private[*].cidr_block
     s3_cidrs                = aws_vpc_endpoint.s3.cidr_blocks
     secrets_endpoint_cidrs  = [for eni in data.aws_network_interface.secrets : "${eni.private_ip}/32"]
