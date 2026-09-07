@@ -85,25 +85,7 @@ records scores, coverage and provenance. Earlier experiments remain in
 
 ## System Design
 
-```text
-NOAA observations + ECMWF guidance
-                 |
-          Scheduled ingestor
-                 |
-                 v
-        PostgreSQL database <----> TimesFM GPU worker
-        inputs / queue / results      claim job, infer, publish
-                 ^
-                 | read stored results / enqueue replays
-                 v
-           FastAPI backend
-                 ^
-                 |
-        HTTPS gateway + load balancer
-                 ^
-                 |
-          Customer / API client
-```
+![Forecast Lab system architecture showing the dashboard, API Gateway, private load balancer, Kubernetes API and ingestion workloads, TimesFM GPU worker, PostgreSQL, S3, GitHub, Secrets Manager, and CloudWatch](assets/system-design.png)
 
 AWS uses EKS, private RDS, S3 artifacts and Secrets Manager. The September 5 deployment
 record verifies three real HTTPS/CUDA replays, idempotency and reference agreement.
