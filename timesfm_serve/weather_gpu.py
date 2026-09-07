@@ -97,12 +97,11 @@ def forecast_capacity_available(now, budget):
 
 
 def prepare_run(directory, now):
+    """Build a training dataset. Scoring belongs to the weather-score CronJob."""
     from psycopg.types.json import Jsonb
 
-    from timesfm_serve.weather_learning import dataset, digest, load_live_examples, refresh_scores
+    from timesfm_serve.weather_learning import dataset, digest, load_live_examples
 
-    examples = load_live_examples(now)
-    logger.info(json.dumps({"event": "weather_live_scored", **refresh_scores(examples, now)}))
     if os.environ.get("WEATHER_TRAINING_MODE", "off") != "research":
         return None
     with db.conn() as connection:
@@ -110,7 +109,7 @@ def prepare_run(directory, now):
     if recent:
         return None
     try:
-        document = dataset(examples, now)
+        document = dataset(load_live_examples(now), now)
     except ValueError as error:
         logger.info(json.dumps({"event": "weather_training_deferred", "reason": str(error)}))
         return None
@@ -207,13 +206,10 @@ def main():
                     if time.monotonic() >= next_check:
                         next_check = time.monotonic() + 3600
                         try:
-                            # Score hourly, but claim training only when inference can safely pause.
-                            if maintenance_window(now, args.max_seconds) and forecast_capacity_available(now, args.max_seconds):
-                                run = prepare_run(args.directory, now)
-                            else:
-                                from timesfm_serve.weather_learning import load_live_examples, refresh_scores
-                                logger.info(json.dumps({"event": "weather_live_scored", **refresh_scores(load_live_examples(now), now)}))
-                                run = None
+                            # Claim training only when inference can safely pause.
+                            run = (prepare_run(args.directory, now)
+                                   if maintenance_window(now, args.max_seconds) and forecast_capacity_available(now, args.max_seconds)
+                                   else None)
                             if run:
                                 run_id, dataset_path, output = run
                                 command = [sys.executable, "-m", "timesfm_serve.weather_training", "--dataset", str(dataset_path),

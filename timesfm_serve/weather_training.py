@@ -16,6 +16,8 @@ from scripts.weather_model import MODEL_ID, MODEL_REVISION
 from timesfm_serve.weather_learning import digest, metrics, validate_dataset
 from timesfm_serve.weather_live_policy import STATIONS
 
+RIDGE_MAX_STANDARDIZED_FEATURE = 6.0
+
 
 def evaluate(examples, predictions):
     def score(selected):
@@ -36,7 +38,7 @@ def evaluate(examples, predictions):
     return report
 
 
-def review_gate(report, engineering_smoke=False):
+def review_gate(report, engineering_smoke=False, ridge=None):
     overall = report["overall"]
     enough = all(group["candidate"]["hours"] >= 120 for group in report["stations"].values())
     comparable = all(overall[name]["hours"] == overall["candidate"]["hours"] for name in ("current", "ecmwf", "ridge"))
@@ -46,17 +48,31 @@ def review_gate(report, engineering_smoke=False):
     groups = [*report["stations"].values(), *report["lead_bands"].values()]
     stable = all(group["candidate"]["rmse_c"] is not None and group["current"]["rmse_c"] is not None
                  and group["candidate"]["rmse_c"] <= group["current"]["rmse_c"] * 1.05 for group in groups)
-    return {"status": "review_required" if enough and comparable and improved and stable and not engineering_smoke else "rejected",
+    # A residual correction scoring worse than the guidance it corrects is not a
+    # comparator, it is a free bar. Refuse to grade a candidate against one.
+    usable = (ridge is not None and ridge["in_distribution"]
+              and overall["ridge"]["rmse_c"] is not None and overall["ecmwf"]["rmse_c"] is not None
+              and overall["ridge"]["rmse_c"] <= overall["ecmwf"]["rmse_c"])
+    return {"status": "review_required" if enough and comparable and improved and stable and usable and not engineering_smoke else "rejected",
             "checks": {"enough_observations": enough, "common_mask": comparable, "rmse_improvement_2_percent": improved,
-                       "station_and_lead_regression_below_5_percent": stable, "not_engineering_smoke": not engineering_smoke},
+                       "station_and_lead_regression_below_5_percent": stable, "ridge_comparator_valid": usable,
+                       "not_engineering_smoke": not engineering_smoke},
             "automatic_promotion": False, "statistical_superiority_established": False,
             "license_scope": "non-commercial non-production research only"}
 
 
 def ridge_baseline(examples, cutoff):
+    """Fit the train-only Ridge comparator and report whether it can be trusted.
+
+    A standardized linear model extrapolates badly when the validation origins sit
+    far from the training origins in time. Seasonal features barely move across a
+    short training span, so their scaler deviation is tiny and a validation row
+    lands tens of deviations out. Measure that distance rather than trusting the
+    resulting number; weather_correction.py is frozen and cannot be clamped.
+    """
     import pandas as pd
 
-    from scripts.weather_correction import apply_correction, fit_correction, prepare_case
+    from scripts.weather_correction import FEATURES, apply_correction, fit_correction, prepare_case
 
     frames = []
     for example in examples:
@@ -69,9 +85,22 @@ def ridge_baseline(examples, cutoff):
         frame["valid_time"] = frame.index
         frames.append(frame)
     trained = fit_correction(pd.concat([f for e, f in zip(examples, frames, strict=True) if e["split"] == "train"]), pd.Timestamp(cutoff))
+    mean, scale = np.asarray(trained["mean"]), np.asarray(trained["scale"])
+    distance = 0.0
     for example, frame in zip(examples, frames, strict=True):
-        if example["split"] == "validation":
-            example["ridge"] = apply_correction(frame, trained)["ridge_corrected_c"].tolist()
+        if example["split"] != "validation":
+            continue
+        example["ridge"] = apply_correction(frame, trained)["ridge_corrected_c"].tolist()
+        standardized = (frame[FEATURES].to_numpy(dtype=float) - mean) / scale
+        distance = max(distance, float(np.abs(standardized).max()))
+    origins = sorted(pd.Timestamp(e["origin"]) for e in examples if e["split"] == "train")
+    return {
+        "training_windows": len(origins),
+        "training_origin_span_days": (origins[-1] - origins[0]).total_seconds() / 86400,
+        "max_standardized_feature": distance,
+        "max_standardized_feature_limit": RIDGE_MAX_STANDARDIZED_FEATURE,
+        "in_distribution": distance <= RIDGE_MAX_STANDARDIZED_FEATURE,
+    }
 
 
 def train(document, output, max_steps=64, max_seconds=600):
@@ -106,7 +135,7 @@ def train(document, output, max_steps=64, max_seconds=600):
             raise TimeoutError("Training wall-time budget exhausted")
 
     examples = document["examples"]
-    ridge_baseline(examples, document["validation_start"])
+    ridge = ridge_baseline(examples, document["validation_start"])
     session = TimesFMSession("cuda", cache_dir=os.environ.get("HF_HUB_CACHE"), local_files_only=True)
     model = session.model.model
     # Keep upstream covariate preparation, masking, and forecast extraction intact.
@@ -202,8 +231,9 @@ def train(document, output, max_steps=64, max_seconds=600):
                      "seconds": time.monotonic() - started, "peak_gpu_bytes": torch.cuda.max_memory_allocated(),
                      "checkpoint_reload_verified": True, "learning_rate": 1e-5},
         "scores": scores, "candidate_p10_p90_coverage": float(np.mean(coverage)),
+        "ridge_comparator": ridge,
         "packages": session.metadata["packages"],
-        "decision": review_gate(scores, document.get("engineering_smoke", False)),
+        "decision": review_gate(scores, document.get("engineering_smoke", False), ridge),
         "dataset_sha256": dataset_sha256, "checkpoint_sha256": hashlib.sha256(checkpoint.read_bytes()).hexdigest(),
         "validation_scope": "rolling chronological validation, not an untouched final benchmark",
     }

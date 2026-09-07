@@ -114,6 +114,64 @@ non-promotable engineering smoke run using `scripts.weather_training_dataset`;
 they are not a fresh benchmark. The five focused tests cover data splits, evaluation
 gates, sequential process handoff, timeout and single-GPU deployment constraints.
 
+## Scoring, Autoscaling And Alerts
+
+Hourly scoring runs as the `weather-score` CronJob on a standard node. It is SQL and
+numpy, needs no model and no GPU, and reuses the ingest ServiceAccount so it adds no
+IAM. The GPU supervisor no longer scores; it only builds training datasets. Scoring
+therefore keeps running when the worker is scaled to zero, which is the point.
+
+Optional worker autoscaling adds a KEDA `ScaledObject` that scales the GPU Deployment
+between zero and one on queue depth:
+
+```json
+"autoscaling": {"cooldown_seconds": 900, "trigger_authentication": "weather-keda-db"}
+```
+
+The renderer refuses `autoscaling` together with `learning`: a worker scaled to zero
+has no supervisor, so the weekly training window would silently never open again.
+Choose one, and reapply the worker Deployment to switch.
+
+Two things this does **not** do, and both matter:
+
+- **It does not stop the GPU bill on its own.** The `g6.xlarge` is a managed node
+  group with `desired_size = var.gpu_nodes`. Removing the Pod leaves the node
+  running. Reaching zero cost needs cluster-autoscaler or Karpenter to take the node
+  group to zero; `min_size` is already zero, so the group supports it.
+- **It does not carry the database password.** KEDA reads the queue itself, so create
+  its credential out of band and never in rendered JSON:
+
+```bash
+kubectl -n weather create secret generic weather-keda-db --from-file=password=<private-file>
+kubectl -n weather apply -f <your TriggerAuthentication referencing that secret>
+```
+
+Cooldown must be 300-3600 seconds. Below that the worker reloads the model more often
+than it serves, because each wake re-downloads and re-verifies the checksum-pinned
+model artifact from S3.
+
+Observability is opt-in the same way. `/metrics` is token-gated and returns 404 when
+no token is configured, so nothing is exposed by default:
+
+```json
+"metrics": {"secret_arn": "arn:aws:secretsmanager:...", "scrape_secret": "weather-metrics"}
+```
+
+The init container writes the token to `/run/weather/metrics-token` from Secrets
+Manager, exactly like the GitHub client secret; the API reads it through
+`WEATHER_METRICS_TOKEN_FILE`. The rendered `ServiceMonitor` references a Kubernetes
+Secret by name for the same value, which the operator creates out of band:
+
+```bash
+kubectl -n weather create secret generic weather-metrics --from-file=token=<private-file>
+```
+
+Rendering also emits a `PrometheusRule` with six alerts, each reading a metric the API
+already exports, so nothing needs an agent on the GPU node: scrape absence, queue age
+over fifteen minutes, terminal job failures in the last hour, an hour of rejected
+ingestion per station, 5xx rate, and p99 latency over one second. `ServiceMonitor` and
+`PrometheusRule` need the Prometheus Operator CRDs installed in the cluster first.
+
 `rds-global-bundle.pem` is the public AWS RDS certificate bundle downloaded from
 https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem on 2026-09-05.
 It contains public trust certificates, not private keys or credentials. Review CA

@@ -75,6 +75,11 @@ def main():
     directory = Path("/run/weather")
     directory.mkdir(parents=True, exist_ok=True)
     write_private(directory / "database.json", json.dumps({k: payload[k] for k in ("username", "password")}))
+    if metrics_arn := os.environ.get("WEATHER_METRICS_TOKEN_ARN"):
+        metrics_token = secrets_client.get_secret_value(SecretId=metrics_arn)["SecretString"].strip()
+        if not metrics_token or len(metrics_token) > 256 or not metrics_token.isascii() or any(c.isspace() for c in metrics_token):
+            raise ValueError("Invalid metrics token payload")
+        write_private(directory / "metrics-token", metrics_token)
     if github_arn := os.environ.get("GITHUB_CLIENT_SECRET_ARN"):
         github_secret = secrets_client.get_secret_value(SecretId=github_arn)["SecretString"].strip()
         if not github_secret or len(github_secret) > 1024 or "\n" in github_secret or "\r" in github_secret:

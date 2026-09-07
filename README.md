@@ -43,10 +43,17 @@ browser bundle.
   protect replay submissions. PostgreSQL holds the queue, worker leases and forecasts.
 - A separate GPU worker validates provenance, runs the pinned model and publishes results.
   Retries, fenced leases and terminal-failure refunds handle interrupted jobs.
-- An opt-in research loop scores later observations and fine-tunes the output head
-  on the same GPU between forecast windows, at most weekly with a ten-minute budget.
-  Training and inference never run together; candidates require review and never
-  automatically replace the serving checkpoint. See [operation](deploy/README.md#single-gpu-research-learning).
+- Hourly scoring compares published live forecasts against later observations. It runs
+  as a CronJob on ordinary compute, never on the GPU, so it survives a scaled-down worker.
+- An opt-in research loop fine-tunes the output head on the same GPU between forecast
+  windows, at most weekly with a ten-minute budget. Training and inference never run
+  together; candidates require review and never automatically replace the serving
+  checkpoint, and a candidate is rejected outright when its Ridge comparator is
+  extrapolating rather than comparing.
+  See [operation](deploy/README.md#single-gpu-research-learning).
+- Optional KEDA autoscaling takes the GPU worker to zero replicas on an empty queue.
+  It is mutually exclusive with the research loop, and reaching zero *cost* also needs
+  a node autoscaler. See [scoring, autoscaling and alerts](deploy/README.md#scoring-autoscaling-and-alerts).
 - Ordinary compute runs the API and ingestion. **Model inference requires CUDA on AWS**
   (or native MPS for local Mac development); there is no CPU inference fallback.
 
@@ -116,6 +123,7 @@ AWS resources continue to incur charges; no automatic shutdown is configured.
 | `timesfm_serve/weather_worker.py` | GPU worker lifecycle and recovery |
 | `timesfm_serve/weather_gpu.py` | Single-GPU inference/training handoff and recovery |
 | `timesfm_serve/weather_learning.py`, `weather_training.py` | Delayed labels, chronological datasets, fine-tuning and evaluation gates |
+| `timesfm_serve/weather_metrics.py`, `scripts/weather_score.py` | Exported metrics and off-GPU hourly scoring |
 | `timesfm_serve/weather_engine.py` | Frozen-input validation and TimesFM inference |
 | `timesfm_serve/weather_ingest.py`, `weather_live_*.py` | Live input policy, capture and publication |
 | `timesfm_serve/auth.py`, `db.py`, `database_config.py` | Shared identities, database connections and migrations |

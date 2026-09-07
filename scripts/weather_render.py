@@ -11,6 +11,30 @@ from urllib.parse import urlsplit
 
 NAMESPACE = "weather"
 SECURITY = {"allowPrivilegeEscalation": False, "readOnlyRootFilesystem": True, "capabilities": {"drop": ["ALL"]}}
+# Every alert reads a metric the API already exports, so nothing here needs an agent
+# on the GPU node. Queue age covers a dead or descheduled worker; scrape absence
+# covers being blind, which is the failure nobody notices on their own.
+ALERTS = [
+    {"alert": "WeatherMetricsAbsent", "expr": "absent(weather_jobs)", "for": "10m",
+     "labels": {"severity": "critical"},
+     "annotations": {"summary": "The weather API is not being scraped; every other alert here is silent."}},
+    {"alert": "WeatherQueueStalled", "expr": "weather_oldest_pending_seconds > 900", "for": "10m",
+     "labels": {"severity": "critical"},
+     "annotations": {"summary": "A job has been queued or running for over 15 minutes; the GPU worker is likely gone or wedged."}},
+    {"alert": "WeatherJobFailures", "expr": "delta(weather_jobs{status=\"failed\"}[1h]) > 0", "for": "5m",
+     "labels": {"severity": "warning"},
+     "annotations": {"summary": "A job reached terminal failure in the last hour; check for repeated lease expiry."}},
+    {"alert": "WeatherIngestionRejected", "expr": "min_over_time(weather_ingestion_ok[1h]) == 0", "for": "15m",
+     "labels": {"severity": "warning"},
+     "annotations": {"summary": "Live ingestion for {{ $labels.station_id }} has been rejected for an hour; live reads will expire."}},
+    {"alert": "WeatherApiServerErrors", "expr": "sum(rate(weather_http_requests_total{status=~\"5..\"}[5m])) > 0", "for": "5m",
+     "labels": {"severity": "warning"},
+     "annotations": {"summary": "The weather API is returning 5xx responses."}},
+    {"alert": "WeatherApiLatencyHigh",
+     "expr": "histogram_quantile(0.99, sum by (le) (rate(weather_http_request_seconds_bucket[5m]))) > 1", "for": "10m",
+     "labels": {"severity": "warning"},
+     "annotations": {"summary": "API p99 latency is over one second."}},
+]
 
 
 def resource(kind, name, spec=None, api_version="v1", **extra):
@@ -48,6 +72,25 @@ def validate(config, example=False):
             raise ValueError("Learning exceeds the single-GPU budget")
         if not infrastructure.get("learning_enabled"):
             raise ValueError("Apply the reviewed training artifact permissions first")
+    if autoscaling := config.get("autoscaling"):
+        if set(autoscaling) != {"cooldown_seconds", "trigger_authentication"}:
+            raise ValueError("Autoscaling requires a cooldown and an out-of-band KEDA TriggerAuthentication name")
+        if not 300 <= autoscaling["cooldown_seconds"] <= 3600:
+            raise ValueError("A GPU cooldown below five minutes reloads the model faster than it serves")
+        if not re.fullmatch(r"[a-z0-9][a-z0-9.-]{0,61}[a-z0-9]", autoscaling["trigger_authentication"]):
+            raise ValueError("Invalid TriggerAuthentication name")
+        # Scaling the worker to zero deletes the supervisor that owns the training
+        # window, so the weekly run would silently never happen again.
+        if config.get("learning"):
+            raise ValueError("Enable autoscaling or learning, not both; a scaled-to-zero worker has no training supervisor")
+    if metrics := config.get("metrics"):
+        if set(metrics) != {"secret_arn", "scrape_secret"}:
+            raise ValueError("Metrics requires only a token secret ARN and the scrape secret name")
+        account = infrastructure["runtime_secrets"]["api"].split(":")[4]
+        if not re.fullmatch(rf"arn:aws:secretsmanager:us-east-1:{account}:secret:[A-Za-z0-9/_+=.@-]+", metrics["secret_arn"]):
+            raise ValueError("Metrics token secret must belong to this account and region")
+        if not re.fullmatch(r"[a-z0-9][a-z0-9.-]{0,61}[a-z0-9]", metrics["scrape_secret"]):
+            raise ValueError("Invalid scrape secret name")
     for key in ("database_cidrs", "s3_cidrs", "secrets_endpoint_cidrs"):
         cidrs = infrastructure.get(key, [])
         if not cidrs or any(ipaddress.ip_network(c).version != 4 or ipaddress.ip_network(c).prefixlen < 8 for c in cidrs):
@@ -92,6 +135,8 @@ def pod(config, workload, command=None):
     }
     if workload == "api" and (oauth := config.get("github_oauth")):
         init["env"].append({"name": "GITHUB_CLIENT_SECRET_ARN", "value": oauth["secret_arn"]})
+    if workload == "api" and (observability := config.get("metrics")):
+        init["env"].append({"name": "WEATHER_METRICS_TOKEN_ARN", "value": observability["secret_arn"]})
     if artifacts != "none":
         init["volumeMounts"].append({"name": "assets", "mountPath": "/assets"})
         main["volumeMounts"].append({"name": "assets", "mountPath": "/assets", "readOnly": True})
@@ -115,6 +160,8 @@ def render(config, enable_worker=False, enable_live=False, example=False):
         raise ValueError("Do not schedule live jobs without an enabled worker")
     if config.get("learning") and not (enable_worker and enable_live):
         raise ValueError("Learning requires the existing live, single-GPU worker")
+    if config.get("autoscaling") and not enable_worker:
+        raise ValueError("Autoscaling scales the existing GPU worker; enable it first")
     release = hashlib.sha256(json.dumps(config, sort_keys=True).encode()).hexdigest()[:12]
     namespace = resource("Namespace", NAMESPACE)
     namespace["metadata"] = {"name": NAMESPACE, "labels": {"pod-security.kubernetes.io/enforce": "restricted", "pod-security.kubernetes.io/enforce-version": "v1.35"}}
@@ -173,6 +220,8 @@ def render(config, enable_worker=False, enable_live=False, example=False):
             {"name": "GITHUB_CLIENT_SECRET_FILE", "value": "/run/weather/github-client-secret"},
             {"name": "WEATHER_PUBLIC_API_ORIGIN", "value": infrastructure["api_url"].rstrip("/")},
         ])
+    if config.get("metrics"):
+        container.setdefault("env", []).append({"name": "WEATHER_METRICS_TOKEN_FILE", "value": "/run/weather/metrics-token"})
     container["ports"] = [{"name": "http", "containerPort": 8000}]
     container["readinessProbe"] = {"httpGet": {"path": "/health/ready", "port": "http"}, "periodSeconds": 5, "timeoutSeconds": 2}
     container["livenessProbe"] = {"httpGet": {"path": "/health/live", "port": "http"}, "periodSeconds": 15, "timeoutSeconds": 2}
@@ -207,8 +256,14 @@ def render(config, enable_worker=False, enable_live=False, example=False):
         }, "apps/v1"))
     ingestion = pod(config, "ingest")
     ingestion["restartPolicy"] = "Never"
+    # Scoring is SQL and numpy. It reuses the ingest identity so it needs no new IAM,
+    # and it runs on a standard node so the GPU is never held open for it.
+    scoring = pod(config, "ingest", ["python", "-m", "scripts.weather_score"])
+    scoring["restartPolicy"] = "Never"
+    service = resource("Service", "weather-api", {"type": "NodePort", "externalTrafficPolicy": "Cluster", "selector": {"app": "weather-api"}, "ports": [{"name": "http", "port": 80, "targetPort": "http", "nodePort": 30080}]})
+    service["metadata"]["labels"] = {"app": "weather-api"}
     deployments.extend([
-        resource("Service", "weather-api", {"type": "NodePort", "externalTrafficPolicy": "Cluster", "selector": {"app": "weather-api"}, "ports": [{"port": 80, "targetPort": "http", "nodePort": 30080}]}),
+        service,
         resource("PodDisruptionBudget", "weather-api", {"minAvailable": 1, "selector": {"matchLabels": {"app": "weather-api"}}}, "policy/v1"),
         resource("CronJob", "weather-ingest", {
             "schedule": "*/5 * * * *", "timeZone": "Etc/UTC", "suspend": not enable_live, "concurrencyPolicy": "Forbid", "startingDeadlineSeconds": 120,
@@ -218,7 +273,34 @@ def render(config, enable_worker=False, enable_live=False, example=False):
                     "eks.amazonaws.com/skip-containers": "ingest",
                 }}, "spec": ingestion}}},
         }, "batch/v1"),
+        resource("CronJob", "weather-score", {
+            "schedule": "17 * * * *", "timeZone": "Etc/UTC", "suspend": not enable_live, "concurrencyPolicy": "Forbid", "startingDeadlineSeconds": 300,
+            "successfulJobsHistoryLimit": 2, "failedJobsHistoryLimit": 3,
+            "jobTemplate": {"spec": {"backoffLimit": 1, "activeDeadlineSeconds": 900, "ttlSecondsAfterFinished": 86400,
+                "template": {"metadata": {"labels": {"app": "weather-score"}, "annotations": {
+                    "eks.amazonaws.com/skip-containers": "ingest",
+                }}, "spec": scoring}}},
+        }, "batch/v1"),
     ])
+    if autoscaling := config.get("autoscaling"):
+        deployments.append(resource("ScaledObject", "weather-worker", {
+            "scaleTargetRef": {"name": "weather-worker"},
+            "pollingInterval": 30, "cooldownPeriod": autoscaling["cooldown_seconds"],
+            "idleReplicaCount": 0, "minReplicaCount": 1, "maxReplicaCount": 1,
+            "advanced": {"restoreToOriginalReplicaCount": False},
+            "triggers": [{"type": "postgresql", "metadata": {
+                "query": "select count(*) from weather_jobs where status in ('queued','running')",
+                "targetQueryValue": "1", "activationTargetQueryValue": "0",
+            }, "authenticationRef": {"name": autoscaling["trigger_authentication"]}}],
+        }, "keda.sh/v1alpha1"))
+    if observability := config.get("metrics"):
+        deployments.append(resource("ServiceMonitor", "weather-api", {
+            "selector": {"matchLabels": {"app": "weather-api"}},
+            "namespaceSelector": {"matchNames": [NAMESPACE]},
+            "endpoints": [{"port": "http", "path": "/metrics", "interval": "30s", "scrapeTimeout": "10s", "scheme": "http",
+                           "authorization": {"type": "Bearer", "credentials": {"name": observability["scrape_secret"], "key": "token"}}}],
+        }, "monitoring.coreos.com/v1"))
+        deployments.append(resource("PrometheusRule", "weather", {"groups": [{"name": "weather", "rules": ALERTS}]}, "monitoring.coreos.com/v1"))
     operator = pod(config, "migrate", ["python", "-c", "import time; time.sleep(600)"])
     operator.update({"restartPolicy": "Never", "activeDeadlineSeconds": 600})
     return {
