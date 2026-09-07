@@ -47,7 +47,7 @@ jobs:
           docker build -f deploy/Dockerfile.ingest -t weather-ingest-ci .
           docker run --rm --read-only --tmpfs /tmp:rw,noexec,nosuid,size=32m \
             --cap-drop ALL --security-opt no-new-privileges weather-ingest-ci \
-            python -c "import importlib.util, os; from scripts import weather_live_ingest; assert os.getuid() == 10001; assert importlib.util.find_spec('torch') is None"
+            python -c "import importlib.util, os; from scripts import weather_live_ingest, weather_score; assert os.getuid() == 10001; assert importlib.util.find_spec('torch') is None"
       - name: Build and check credential/artifact bootstrap
         run: |
           docker build -f deploy/Dockerfile.bootstrap -t weather-bootstrap-ci .
