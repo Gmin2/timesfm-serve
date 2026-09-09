@@ -7,7 +7,8 @@ mkdir -p "$directory"
 
 install_tool() {
   local repository="$1" version="$2" archive="$3" checksum="$4" binary="$5"
-  curl --fail --silent --show-error --location --retry 3 \
+  curl --fail --silent --show-error --location \
+    --retry 5 --retry-all-errors --retry-delay 3 --connect-timeout 15 \
     "https://github.com/${repository}/releases/download/${version}/${archive}" -o "${directory}/${archive}"
   printf '%s  %s\n' "$checksum" "${directory}/${archive}" | sha256sum --check --strict
   tar -xzf "${directory}/${archive}" -C "$directory" "$binary"
