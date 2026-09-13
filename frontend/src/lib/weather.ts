@@ -29,10 +29,10 @@ export interface Catalog {
   runs: { station: string; origin: string; run: string; status: string; reason: string; scored_hours: string }[]
 }
 export const SERIES: Record<Series, { label: string; color: string }> = {
-  forecast: { label: 'TimesFM + ECMWF', color: '#168273' },
-  ecmwf: { label: 'ECMWF IFS', color: '#c78236' },
-  observed: { label: 'NOAA observations', color: '#343c43' },
-  ridge: { label: 'Ridge correction', color: '#7b72ac' },
+  forecast: { label: 'TimesFM + ECMWF', color: '#386aff' },
+  ecmwf: { label: 'ECMWF IFS', color: '#f08a24' },
+  observed: { label: 'NOAA observations', color: '#16151b' },
+  ridge: { label: 'Ridge correction', color: '#8b5cf6' },
 }
 export function dateLabel(value: string | number, zone: Zone, options: Intl.DateTimeFormatOptions = {}) {
   return new Intl.DateTimeFormat('en-GB', { timeZone: zone, day: '2-digit', month: 'short', ...options }).format(new Date(value))

@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowDownToLine, ArrowUpRight, Braces, Eye, EyeOff, KeyRound, Play, RefreshCw, ShieldCheck, Terminal, TriangleAlert, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CopyButton } from '@/components/copy-button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTab } from '@/components/ui/tabs'
+import * as Icon from './icons'
 import { requestExample } from '@/lib/account'
 import { downloadJson, getJson } from '@/lib/weather'
 
@@ -63,12 +63,11 @@ export function Playground() {
     }
   }
   return <section id="playground" className="playground" aria-labelledby="playground-title">
-    <div className="section-heading playground-heading"><h2 id="playground-title"><Terminal size={17} />API playground</h2>
-      <span className="playground-scope"><ShieldCheck size={14} />Read-only</span></div>
-    <div className="playground-origin"><span>Base URL</span><code>{connection.data?.origin || 'Connecting...'}</code>
-      {connection.data && <a href={connection.data.origin + '/docs'} target="_blank" rel="noreferrer">API reference<ArrowUpRight size={13} /></a>}</div>
-    {connection.isError && <div className="account-message account-error" role="alert"><TriangleAlert size={16} />Playground connection unavailable<Button size="sm" variant="outline" onClick={() => void connection.refetch()}><RefreshCw />Retry</Button></div>}
-    <div className="playground-workspace">
+    <div className="section-title-row"><h2 id="playground-title" className="section-title">Playground</h2><span className="badge">Read-only</span>
+      {connection.data && <a className="row-link" href={connection.data.origin + '/docs'} target="_blank" rel="noreferrer">API reference<Icon.ArrowUpRight size={12} /></a>}</div>
+    <div className="id-box playground-origin"><span>base url</span><code>{connection.data?.origin || 'Connecting...'}</code>{connection.data && <CopyButton value={connection.data.origin} label="Copy base URL" />}</div>
+    {connection.isError && <div className="account-message account-error" role="alert"><Icon.Warning />Playground connection unavailable<Button size="sm" variant="outline" onClick={() => void connection.refetch()}><Icon.Refresh />Retry</Button></div>}
+    <div className="card playground-workspace">
       <form className="playground-request" onSubmit={event => { event.preventDefault(); void send() }}>
         <h3>Request</h3>
         <label htmlFor="playground-endpoint">Endpoint</label>
@@ -78,25 +77,25 @@ export function Playground() {
         {stationEndpoint && <><label htmlFor="playground-station">Station</label><Select value={station} onValueChange={setStation} disabled={busy}><SelectTrigger id="playground-station" aria-label="Station"><SelectValue /></SelectTrigger><SelectContent>
           {STATIONS.map(item => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}
         </SelectContent></Select></>}
-        <div className="playground-auth-heading"><label htmlFor="playground-key">API key</label><a href="#api-account"><KeyRound size={12} />Manage keys</a></div>
-        <div className="playground-key"><input id="playground-key" type={visible ? 'text' : 'password'} value={key} onChange={event => setKey(event.target.value)} placeholder="tfm_..." autoComplete="off" spellCheck={false} maxLength={128} disabled={busy} aria-describedby="key-privacy" />
-          <Button type="button" size="icon" variant="ghost" title={visible ? 'Hide API key' : 'Show API key'} aria-label={visible ? 'Hide API key' : 'Show API key'} onClick={() => setVisible(!visible)}>{visible ? <EyeOff /> : <Eye />}</Button>
-          {key && <Button type="button" size="icon" variant="ghost" title="Clear API key" aria-label="Clear API key" disabled={busy} onClick={() => { setKey(''); setVisible(false) }}><X /></Button>}</div>
+        <div className="playground-auth-heading"><label htmlFor="playground-key">API key</label><a href="#api-account"><Icon.Key size={12} />Manage keys</a></div>
+        <div className="playground-key"><input id="playground-key" className="bare" type={visible ? 'text' : 'password'} value={key} onChange={event => setKey(event.target.value)} placeholder="tfm_..." autoComplete="off" spellCheck={false} maxLength={128} disabled={busy} aria-describedby="key-privacy" />
+          <Button type="button" size="icon" variant="ghost" title={visible ? 'Hide API key' : 'Show API key'} aria-label={visible ? 'Hide API key' : 'Show API key'} onClick={() => setVisible(!visible)}>{visible ? <Icon.EyeOff /> : <Icon.Eye />}</Button>
+          {key && <Button type="button" size="icon" variant="ghost" title="Clear API key" aria-label="Clear API key" disabled={busy} onClick={() => { setKey(''); setVisible(false) }}><Icon.Close /></Button>}</div>
         <p id="key-privacy" className="playground-privacy">Kept only while this page is open.</p>
         {key && !validKey && <p className="account-error">Enter a valid Forecast Lab API key.</p>}
-        <div className="playground-send">{busy ? <Button type="button" variant="outline" onClick={() => active.current?.abort()}><X />Cancel request</Button>
-          : <Button type="submit" disabled={!validKey || !connection.data}><Play />Send request</Button>}</div>
+        <div className="playground-send">{busy ? <Button type="button" variant="outline" onClick={() => active.current?.abort()}><Icon.Close />Cancel request</Button>
+          : <Button type="submit" disabled={!validKey || !connection.data}><Icon.Send />Send request</Button>}</div>
         <dl className="playground-request-headers"><dt>Request headers</dt><dd><span>Accept</span><code>application/json</code></dd><dd><span>x-api-key</span><code>{key ? '********' : 'Not set'}</code></dd></dl>
       </form>
       <section className="playground-response" aria-label="API response">
         <div className="playground-request-line"><span>GET</span><code>{result?.path || path}</code></div>
-        <div className="playground-response-toolbar"><Tabs value={tab} onValueChange={value => setTab(value as string)}><TabsList variant="underline"><TabsTab value="body">Response</TabsTab><TabsTab value="headers">Headers</TabsTab></TabsList></Tabs>
+        <div className="playground-response-toolbar"><Tabs value={tab} onValueChange={value => setTab(value as string)}><TabsList variant="underline" indicatorClassName="bg-foreground! h-0.5!"><TabsTab value="body">Response</TabsTab><TabsTab value="headers">Headers</TabsTab></TabsList></Tabs>
           {result && <div><CopyButton value={tab === 'headers' ? result.headers.map(([key, value]) => key + ': ' + value).join('\n') : result.text} label="Copy response" />
-            <Button size="icon" variant="ghost" title="Download response" aria-label="Download response" onClick={() => downloadJson(result.body, 'weather-response.json')}><ArrowDownToLine /></Button>
-            <Button size="icon" variant="ghost" title="Clear response" aria-label="Clear response" onClick={() => setResult(null)}><X /></Button></div>}</div>
-        {busy ? <div className="playground-empty" role="status"><RefreshCw size={22} className="spin" /><span>Waiting for the API...</span></div> : error ?
-          <div className="playground-empty" role="status"><TriangleAlert size={23} /><span>{error}</span></div> : !result ?
-            <div className="playground-empty"><Braces size={28} /><span>No request sent</span></div> : <>
+            <Button size="icon" variant="ghost" title="Download response" aria-label="Download response" onClick={() => downloadJson(result.body, 'weather-response.json')}><Icon.Download /></Button>
+            <Button size="icon" variant="ghost" title="Clear response" aria-label="Clear response" onClick={() => setResult(null)}><Icon.Close /></Button></div>}</div>
+        {busy ? <div className="playground-empty" role="status"><Icon.Refresh size={20} className="spin" /><span>Waiting for the API...</span></div> : error ?
+          <div className="playground-empty" role="status"><Icon.Warning size={20} /><span>{error}</span></div> : !result ?
+            <div className="playground-empty"><Icon.Braces size={22} /><span>No request sent</span></div> : <>
               <div className="playground-response-meta" role="status"><span className={result.status < 400 ? 'response-ok' : 'response-error'}>{result.status} {result.statusText}</span><span>{result.elapsed.toLocaleString()} ms</span><span>{result.bytes.toLocaleString()} bytes</span>
                 {result.headers.some(([name]) => name === 'x-ratelimit-remaining') && <span>{result.headers.find(([name]) => name === 'x-ratelimit-remaining')?.[1]} requests left</span>}</div>
               {tab === 'body' ? <pre className="playground-response-body" tabIndex={0}><code>{result.text}</code></pre> :
@@ -104,9 +103,12 @@ export function Playground() {
             </>}
       </section>
     </div>
-    {connection.data && <section className="playground-example"><div className="section-heading"><h3>Request code</h3><div className="playground-code-actions"><div className="segmented" role="group" aria-label="Code language">
-      <button aria-pressed={language === 'curl'} onClick={() => setLanguage('curl')}>cURL</button><button aria-pressed={language === 'python'} onClick={() => setLanguage('python')}>Python</button></div><CopyButton value={example} label="Copy request code" /></div></div>
-      <pre className="request-code"><code>{example}</code></pre></section>}
+    {connection.data && <section className="playground-example"><h3 className="section-title">Quickstart</h3>
+      <div className="code-card"><div className="code-tabs" role="group" aria-label="Code language">
+        <button aria-pressed={language === 'curl'} onClick={() => setLanguage('curl')}><Icon.Terminal size={13} />cURL</button>
+        <button aria-pressed={language === 'python'} onClick={() => setLanguage('python')}><Icon.FileJson size={13} />Python</button>
+        <CopyButton value={example} label="Copy request code" /></div>
+      <pre className="request-code"><code>{example}</code></pre></div></section>}
     <dl className="api-contract"><div><dt>Authentication</dt><dd><code>x-api-key</code></dd></div><div><dt>Temperature</dt><dd>Celsius</dd></div><div><dt>Freshness</dt><dd>503 when unavailable or stale</dd></div></dl>
   </section>
 }
