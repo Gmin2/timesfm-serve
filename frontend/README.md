@@ -1,8 +1,9 @@
 # Forecast Lab
 
 A React/TypeScript weather dashboard for the existing FastAPI service.
-Uses selected Evilcharts components, Recharts, Tailark Quartz button/theme styling,
-and Interface Craft's restrained, reduced-motion-aware transitions.
+Uses selected Evilcharts components, Recharts, and restrained, reduced-motion-aware
+transitions. The visual system (warm neutrals, one blue accent, hairline cards, status
+pills) is documented in `design/README.md` with the reference screenshots in `design/inspo/`.
 
 ## Run
 
@@ -31,8 +32,10 @@ are triggered by browsing this dashboard.
 ## GitHub Login And API Keys
 
 `/api-keys` provides GitHub sign-in, named API keys, one-time secret display,
-revocation, sign-out, and the inline API playground with cURL/Python examples. The GitHub mark comes from the
-local Nucleo social collection; interface controls use the existing Lucide set.
+revocation, sign-out, and the inline API playground with cURL/Python examples. Keys are
+created in a side sheet (detail, review, secret key); the secret lives only in that
+sheet's state and is dropped when it closes. All icons come from the local Nucleo
+library, generated into `src/components/icons.tsx`.
 
 Register a GitHub OAuth app with homepage `http://127.0.0.1:5178` and callback
 `http://127.0.0.1:5178/api/auth/github/callback` for local development. Use a
@@ -149,7 +152,10 @@ recalculates the exported TimesFM RMSE and checks missing-observation coverage.
 
 ## Files
 
-- `src/App.tsx`: navigation, station/run selection and query lifecycle.
+- `design/`: design system notes and inspiration screenshots.
+- `src/App.tsx`: app shell, navigation, station/run selection and query lifecycle.
+- `src/components/icons.tsx`: Nucleo icons as React components.
+- `src/components/run-archive.tsx`: scheduled run table with coverage meters.
 - `src/components/forecast-panel.tsx`: forecast controls, table and downloads.
 - `src/components/forecast-chart.tsx`: time-scaled curves and p10-p90 range.
 - `src/components/benchmarks.tsx`: measured model/station/lead comparisons.

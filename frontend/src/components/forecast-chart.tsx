@@ -14,20 +14,20 @@ export function ForecastChart({ points, zone, visible, showRange }: {
   const ticks = data.filter((_, i) => i % 6 === 0).map(p => p.timestamp)
   return <ChartContainer config={config} className="forecast-chart" aria-label="48-hour temperature forecast comparison">
     <ComposedChart data={data} accessibilityLayer margin={{ top: 16, right: 20, left: -14, bottom: 12 }}>
-      <CartesianGrid vertical={false} stroke="#e8eceb" strokeDasharray="3 4" />
+      <CartesianGrid vertical={false} stroke="#efeeeb" strokeDasharray="3 4" />
       <XAxis dataKey="timestamp" type="number" scale="time" domain={['dataMin', 'dataMax']} ticks={ticks}
         tickFormatter={v => dateLabel(v, zone) + ' / ' + timeLabel(v, zone)} axisLine={false} tickLine={false} tickMargin={14} minTickGap={35} />
       <YAxis domain={[min, max]} tickCount={5} axisLine={false} tickLine={false} tickMargin={10} width={50} />
       {data.filter(p => timeLabel(p.timestamp, zone) === '00:00').map(p =>
-        <ReferenceLine key={p.time} x={p.timestamp} stroke="#d5dcd9" strokeDasharray="4 4" />)}
-      {showRange && <Area dataKey="interval" type="linear" fill={SERIES.forecast.color} fillOpacity={0.09}
+        <ReferenceLine key={p.time} x={p.timestamp} stroke="#e3e2de" strokeDasharray="4 4" />)}
+      {showRange && <Area dataKey="interval" type="linear" fill={SERIES.forecast.color} fillOpacity={0.08}
         stroke="none" isAnimationActive={false} connectNulls={false} tooltipType="none" />}
       {([...visible] as Series[]).map(key => <Line key={key} dataKey={key} name={SERIES[key].label}
-        stroke={SERIES[key].color} strokeWidth={key === 'forecast' ? 2.5 : 1.7}
+        stroke={SERIES[key].color} strokeWidth={key === 'forecast' ? 2 : 1.5}
         strokeDasharray={key === 'ecmwf' ? '6 4' : key === 'ridge' ? '3 3' : undefined}
         type="linear" dot={false} activeDot={{ r: 4, stroke: '#fff', strokeWidth: 2 }}
         connectNulls={false} isAnimationActive={false} />)}
-      <Tooltip cursor={{ stroke: '#9ea9a4', strokeDasharray: '3 3' }}
+      <Tooltip cursor={{ stroke: '#c9c8c4', strokeDasharray: '3 3' }}
         content={({ active, payload }) => {
           const point = payload?.[0]?.payload as (typeof data)[number] | undefined
           if (!active || !point) return null

@@ -6,7 +6,7 @@ test('real archive renders, station/run controls and timezone work', async ({ pa
   await page.goto('/')
   await expect(page.locator('.recharts-line-curve')).toHaveCount(3)
   await expect(page.locator('.recharts-area-area')).toHaveCount(1)
-  await expect(page.getByRole('heading', { name: 'GuwahatiStation forecast' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Guwahati', exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Previous forecast run', exact: true }).click()
   await expect(page.getByRole('combobox', { name: 'Forecast run' })).toContainText('10 Aug 2026')
   await page.getByRole('button', { name: 'UTC', exact: true }).click()

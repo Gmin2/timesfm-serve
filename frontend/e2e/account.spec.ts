@@ -31,6 +31,14 @@ async function fixture(page: Page, signedIn = true) {
   })
 }
 
+async function createKey(page: Page) {
+  await page.getByRole('button', { name: 'Create key', exact: true }).click()
+  await page.getByLabel('Key name', { exact: true }).fill('My weather app')
+  await page.getByRole('button', { name: 'Continue', exact: true }).click()
+  await expect(page.getByRole('dialog')).toContainText('@forecast-developer')
+  await page.getByRole('button', { name: 'Generate key', exact: true }).click()
+}
+
 test('signed-out access uses the local Nucleo GitHub asset', async ({ page }) => {
   await fixture(page, false)
   await page.goto('/api-keys')
@@ -45,11 +53,10 @@ test('create, dismiss, revoke and logout work without retaining the raw key', as
   await fixture(page)
   await page.goto('/api-keys')
   await expect(page.getByText('No API keys yet.', { exact: true })).toBeVisible()
-  await page.getByLabel('Key name', { exact: true }).fill('My weather app')
-  await page.getByRole('button', { name: 'Create key', exact: true }).click()
+  await createKey(page)
   await expect(page.locator('.secret-value')).toContainText(secret)
   expect(await page.evaluate(() => JSON.stringify({ local: localStorage, session: sessionStorage }))).not.toContain(secret)
-  await page.getByRole('button', { name: 'Dismiss secret' }).click()
+  await page.getByRole('button', { name: 'Done', exact: true }).click()
   await expect(page.getByText(secret, { exact: true })).toHaveCount(0)
   await page.getByRole('button', { name: 'Python', exact: true }).click()
   await expect(page.locator('.request-code')).toContainText('os.environ["WEATHER_API_KEY"]')
@@ -70,8 +77,7 @@ test('expired session cannot leave an API key management screen active', async (
   await page.goto('/api-keys')
   await expect(page.getByText('No API keys yet.', { exact: true })).toBeVisible()
   await page.route('**/api/v1/account/keys', route => route.fulfill({ status: 401, json: { detail: 'session_expired' } }))
-  await page.getByLabel('Key name', { exact: true }).fill('My weather app')
-  await page.getByRole('button', { name: 'Create key', exact: true }).click()
+  await createKey(page)
   await expect(page.getByRole('link', { name: 'Continue with GitHub', exact: true })).toBeVisible()
 })
 
@@ -91,8 +97,7 @@ for (const width of [375, 768, 1440]) {
     await fixture(page)
     await page.goto('/api-keys')
     await expect(page.getByText('No API keys yet.', { exact: true })).toBeVisible()
-    await page.getByLabel('Key name', { exact: true }).fill('My weather app')
-    await page.getByRole('button', { name: 'Create key', exact: true }).click()
+    await createKey(page)
     await expect(page.locator('.secret-value')).toContainText(secret)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
     await page.screenshot({ path: '../tmp/account-' + width + '.png', fullPage: true, animations: 'disabled' })

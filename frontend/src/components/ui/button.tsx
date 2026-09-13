@@ -3,21 +3,22 @@ import { Slot } from '@radix-ui/react-slot'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
-const buttonVariants = cva('cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0', {
+const buttonVariants = cva('cursor-pointer inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-3.5 [&_svg]:shrink-0', {
     variants: {
         variant: {
-            default: 'shadow-md border-[0.5px] border-white/10 shadow-black/15 [&_svg]:drop-shadow-sm text-shadow-sm bg-primary ring-1 ring-(--ring-color) [--ring-color:color-mix(in_oklab,black_15%,var(--color-primary))] dark:border-transparent dark:[--ring-color:color-mix(in_oklab,white_15%,var(--color-primary))] text-primary-foreground hover:bg-primary/90',
-            destructive: 'shadow-md border-[0.5px] border-white/10 shadow-black/25 [&_svg]:drop-shadow-sm text-shadow-sm bg-destructive ring-1 ring-(--ring-color) [--ring-color:color-mix(in_oklab,black_15%,var(--color-destructive))] text-destructive-foreground hover:bg-destructive/90',
-            outline: 'shadow-sm shadow-black/15 border border-transparent bg-card ring-1 ring-foreground/10 duration-200 hover:bg-muted/50 dark:ring-foreground/15 dark:hover:bg-muted/50',
-            secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-            ghost: 'hover:bg-foreground/5 hover:text-foreground',
+            default: 'bg-primary text-primary-foreground shadow-[inset_0_1px_0_rgb(255_255_255/0.14)] hover:bg-primary-hover',
+            dark: 'bg-foreground text-white hover:bg-foreground/85',
+            destructive: 'bg-destructive text-white hover:bg-destructive/90',
+            outline: 'border border-border-strong bg-background text-text shadow-[0_1px_2px_rgb(0_0_0/0.03)] hover:bg-muted',
+            secondary: 'bg-muted text-foreground hover:bg-track/60',
+            ghost: 'text-text hover:bg-muted hover:text-foreground',
             link: 'text-primary underline-offset-4 hover:underline',
         },
         size: {
-            default: 'h-9 px-4 py-2',
-            sm: 'h-8 rounded-md px-3 text-xs',
-            lg: 'h-10 rounded-md px-8',
-            icon: 'h-9 w-9',
+            default: 'h-8 px-3',
+            sm: 'h-7 px-2.5 text-[12.5px]',
+            lg: 'h-9 px-4',
+            icon: 'size-8',
         },
     },
     defaultVariants: {
