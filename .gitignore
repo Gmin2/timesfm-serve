@@ -19,3 +19,4 @@ data/weather/raw/
 deploy/rendered/
 infra/runtime/backend.s3.hcl
 infra/bootstrap/backend.s3.hcl
+data/iex/
