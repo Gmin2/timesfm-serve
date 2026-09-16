@@ -4,7 +4,7 @@ from datetime import date
 import pandas as pd
 import pytest
 
-from scripts.iex_data import audit, block_of, cap_for, months, normalise
+from iex.data import audit, block_of, cap_for, months, normalise
 
 
 def snapshot(market, rows):

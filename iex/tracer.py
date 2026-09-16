@@ -16,9 +16,9 @@ from urllib.request import Request, urlopen
 
 import numpy as np
 
-from scripts.weather_model import MODEL_REVISION
-
 API = "https://www.iexindia.com/api/v1/dam/market-snapshot"
+MODEL = "google/timesfm-3.0-pytorch"
+MODEL_REVISION = "43046b85ec22d584a13f8098c2ed39c889e129c2"
 RAW = Path("data/iex/raw")
 BLOCKS = 96
 CAP = 10000.0
@@ -55,7 +55,7 @@ def load_model(cache_dir):
     from huggingface_hub import snapshot_download
 
     device = "mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu"
-    path = snapshot_download("google/timesfm-3.0-pytorch", revision=MODEL_REVISION, cache_dir=cache_dir, local_files_only=True)
+    path = snapshot_download(MODEL, revision=MODEL_REVISION, cache_dir=cache_dir, local_files_only=True)
     return timesfm.TimesFM3Forecaster.from_pretrained(path, device=device, local_files_only=True), device
 
 
