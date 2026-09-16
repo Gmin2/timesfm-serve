@@ -17,7 +17,7 @@ import pandas as pd
 import requests
 from cryptography.hazmat.primitives import serialization
 
-from scripts.iex_data import ROOT
+from iex.data import ROOT
 
 GRID_API = "https://webapi.grid-india.in/api/v1/file"
 GRID_CDN = "https://webcdn.grid-india.in/"
