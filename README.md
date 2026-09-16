@@ -146,6 +146,43 @@ a tie, and their figures are rounded to a tenth of a point so nobody wins. the
 interesting part is the handicap: theirs is issued with live telemetry, ours is
 issued a day further out from their own published actuals, with nothing trained.
 
+### served, and kept honest
+
+the forecast is published through the same api as the weather service. one app,
+one database, one cluster, two applications.
+
+```
+/v1/iex/forecast/latest      /v1/weather/stations
+/v1/iex/forecast/{date}      /v1/weather/replays
+/v1/iex/scorecard            /health/ready
+```
+
+a forecast is written at 09:30 IST the day before delivery and **never
+updated**. re-issuing a day is refused, not merged, so the record cannot be
+quietly improved once the answer is known. scores land in a separate table after
+the day settles, and only when all 96 blocks have cleared.
+
+89 days on record so far, MAE 663.8. the backtest independently says 671.8 for
+the slightly weaker variant over the same window, so the live scorecard and the
+offline evaluation agree.
+
+the p10-p90 band is corrected against how far past days actually fell from it,
+fitted only on days that had already settled:
+
+| band | holds |
+| --- | --- |
+| as the model publishes it | 72.2% |
+| after the correction | 78.7% |
+| what it claims | 80% |
+
+forecasts written after the fact are marked. they use the same information
+cutoff and leak nothing, but they were never standing predictions, so the
+scorecard reports them separately from days issued live and a backfill can never
+pad the record.
+
+no exchange prices are served, only our own forecasts and our own error. the IEX
+terms are personal and non-commercial.
+
 ## weather (prior work)
 
 [dashboard](https://timesfms.vercel.app) ·
