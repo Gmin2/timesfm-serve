@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 BLOCKS = 96
+QUANTILE_LEVELS = tuple(level / 10 for level in range(1, 10))
 # Evaluation periods are fixed before any model runs. Tuning happens on
 # development only; test is scored once, and the September 2026 scarcity regime
 # is reported separately rather than tuned on.
@@ -97,11 +98,17 @@ def run(table, forecasters, period="development", markets=("dam",), cap=10_000.0
             forecast = np.clip(np.asarray(forecaster(history), dtype=float), 0, cap)
             if forecast.shape != (BLOCKS,):
                 raise ValueError(f"{name} returned {forecast.shape}, expected ({BLOCKS},)")
-            rows.append(pd.DataFrame({
+            frame = pd.DataFrame({
                 "delivery_date": pd.Timestamp(day), "block": range(1, BLOCKS + 1),
                 "model": name, "forecast": forecast, "actual": actual,
                 "at_cap": actual >= cap - 0.01,
-            }))
+            })
+            # Models that expose quantiles get them recorded, for calibration later.
+            quantiles = getattr(forecaster, "quantiles", None)
+            if quantiles is not None and np.shape(quantiles) == (BLOCKS, len(QUANTILE_LEVELS)):
+                for position, level in enumerate(QUANTILE_LEVELS):
+                    frame[f"q{int(level * 100)}"] = np.clip(np.asarray(quantiles)[:, position], 0, cap)
+            rows.append(frame)
     if not rows:
         raise RuntimeError(f"no scorable days in {period}")
     return pd.concat(rows, ignore_index=True)
