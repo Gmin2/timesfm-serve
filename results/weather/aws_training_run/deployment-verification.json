@@ -1,0 +1,122 @@
+{
+  "verified_at": "2026-09-05T17:14:00Z",
+  "api_url": "https://88novucbtj.execute-api.us-east-1.amazonaws.com",
+  "region": "us-east-1",
+  "gpu": "NVIDIA L4",
+  "driver": "580.178.04",
+  "idle_gpu_memory_mib": 1598,
+  "images": {
+    "api": "533267199502.dkr.ecr.us-east-1.amazonaws.com/pravah-weather-pilot/api@sha256:f2ffa8eee0d212638669bb2fbdf33960b06975cda5c03c73c086997368670ace",
+    "bootstrap": "533267199502.dkr.ecr.us-east-1.amazonaws.com/pravah-weather-pilot/bootstrap@sha256:80f07badb671c5746be43371d5b9dfe8ce967e048713a5fb3417f1e23503567b",
+    "ingest": "533267199502.dkr.ecr.us-east-1.amazonaws.com/pravah-weather-pilot/ingest@sha256:0566d19dd035e680fa02d1e72acd03ec0508d570c7aef339455fac776a12863e",
+    "worker": "533267199502.dkr.ecr.us-east-1.amazonaws.com/pravah-weather-pilot/worker@sha256:5b99cb5f24f390557c3372402cbaf5227467b99aae3696f9366fabc54fbf7e75"
+  },
+  "artifacts": {
+    "replays": {
+      "key": "replays/03edabe236d0f39bd3c77975f631349ca281a322c43ab964a8c82b939a9c39dc.tar.gz",
+      "sha256": "03edabe236d0f39bd3c77975f631349ca281a322c43ab964a8c82b939a9c39dc",
+      "bytes": 15521
+    },
+    "models": {
+      "key": "models/9baa78390ec936521545d4e60fbd61be0e12fff238c613a9889874bf4310239d.tar.gz",
+      "sha256": "9baa78390ec936521545d4e60fbd61be0e12fff238c613a9889874bf4310239d",
+      "bytes": 1227874918
+    }
+  },
+  "replays": [
+    {
+      "job_id": "bc10a61b-2ade-4c0e-a05f-361b7c21970b",
+      "case_id": "42410099999_20260818T0600Z",
+      "status": "succeeded",
+      "mode": "historical_replay",
+      "device": "cuda",
+      "points": 48,
+      "attempts": 1,
+      "credits_reserved": 48,
+      "idempotency_verified": true,
+      "stable_reads_verified": true,
+      "reference_max_absolute_difference_c": 0.00000762939453125
+    },
+    {
+      "job_id": "cb2aa845-018c-459b-8676-c1834bd884d2",
+      "case_id": "43128599999_20260818T0600Z",
+      "status": "succeeded",
+      "mode": "historical_replay",
+      "device": "cuda",
+      "points": 48,
+      "attempts": 1,
+      "credits_reserved": 48,
+      "idempotency_verified": true,
+      "stable_reads_verified": true,
+      "reference_max_absolute_difference_c": 0.000011444091796875
+    },
+    {
+      "job_id": "c2e3205d-31e1-4bda-be14-551effce6c84",
+      "case_id": "43279099999_20260818T0600Z",
+      "status": "succeeded",
+      "mode": "historical_replay",
+      "device": "cuda",
+      "points": 48,
+      "attempts": 1,
+      "credits_reserved": 48,
+      "idempotency_verified": true,
+      "stable_reads_verified": true,
+      "reference_max_absolute_difference_c": 0.0000152587890625
+    }
+  ],
+  "runtime": {
+    "model_provenance": {
+      "device": "cuda",
+      "model_id": "google/timesfm-3.0-pytorch",
+      "packages": {
+        "numpy": "2.5.2",
+        "torch": "2.14.0+cu130",
+        "pandas": "3.0.5",
+        "timesfm": "3.0.1"
+      },
+      "revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+      "fine_tuned": false,
+      "load_seconds": 2.521079941999915,
+      "point_estimate": "p50",
+      "predict_options": {
+        "horizon": 48,
+        "use_znorm": false,
+        "padding_mode": "none",
+        "make_positive": false,
+        "sort_quantiles": true,
+        "return_quantiles": true,
+        "use_symmetric_averaging": false
+      },
+      "checkpoint_sha256": {
+        "config.json": "ff17bbc07b792c5a904cca265b8468579d736a4fe84981da25eb871b0a125bc6",
+        "model.safetensors": "a7592b0a8432baee54483254e5647856911ce69e09d09a9bb65904b2d98f17da"
+      }
+    },
+    "predict_seconds": {
+      "nwp": 0.15057101500019598,
+      "history": 0.14632728999981737
+    }
+  },
+  "database": {
+    "runtime_role": "weather_api",
+    "sslmode": "verify-full",
+    "tls": "TLSv1.3",
+    "plaintext_rejected": true,
+    "runtime_ddl": false,
+    "forecast_delete": false
+  },
+  "accounting": {
+    "jobs": 4,
+    "credits_used": 192,
+    "points_reserved": 192
+  },
+  "live": {
+    "cron_enabled": true,
+    "initial_check": "waiting_for_issue_window",
+    "fresh_forecast_verified": false
+  },
+  "python_tests_passed": 280,
+  "terraform_mock_tests_passed": 6,
+  "terraform_final_plan": "no changes",
+  "production_ready": false
+}
