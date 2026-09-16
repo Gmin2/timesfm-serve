@@ -68,9 +68,16 @@ def climatology(history, days=28):
     return history.prices(days=days).to_numpy().mean(axis=0)
 
 
-def run(table, forecasters, period="development", markets=("dam",), cap=10_000.0, limit=None):
-    """Replay every delivery day in a period, one forecast per day per model."""
+def run(table, forecasters, period="development", markets=("dam",), cap=10_000.0, limit=None,
+        first_day=None):
+    """Replay every delivery day in a period, one forecast per day per model.
+
+    `first_day` starts later than the period normally would, for comparisons whose
+    inputs do not reach back far enough. Every model is scored on the same days.
+    """
     first, last = PERIODS[period]
+    if first_day is not None:
+        first = max(first, pd.Timestamp(first_day))
     table = table[table["market"].isin(markets)]
     days = sorted(d for d in table["delivery_date"].unique() if first <= pd.Timestamp(d) <= last)
     if limit:

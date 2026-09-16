@@ -40,7 +40,7 @@ class TimesFM:
     """
 
     def __init__(self, context_days=28, log=False, symmetric=False, market="dam",
-                 cache_dir=None, use_calendar=False, use_bids=False):
+                 cache_dir=None, use_calendar=False, use_bids=False, weather=None):
         self.context_blocks = min(context_days * BLOCKS, MAX_CONTEXT)
         self.context_days = min(context_days, MAX_CONTEXT // BLOCKS)
         self.log = log
@@ -49,16 +49,21 @@ class TimesFM:
         self.cache_dir = cache_dir
         self.use_calendar = use_calendar
         self.use_bids = use_bids
+        self.weather = weather
         self.quantiles = None
 
     def _covariates(self, history):
         """Future covariates span context plus horizon; past-only stop at the cutoff."""
         from iex.covariates import future_calendar, past_bid_ratio
 
-        future = past = None
+        rows, past = {}, None
         if self.use_calendar:
-            values = future_calendar(history, self.context_days)
-            future = np.vstack([values[name] for name in sorted(values)])
+            rows |= future_calendar(history, self.context_days)
+        if self.weather is not None:
+            rows |= self.weather(history, self.context_days)
+        future = None
+        if rows:
+            future = np.vstack([rows[name] for name in sorted(rows)])
             expected = self.context_blocks + BLOCKS
             if future.shape[1] != expected:
                 raise ValueError(f"future covariates are {future.shape[1]} long, expected {expected}")
@@ -99,10 +104,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--period", default="development", choices=sorted(PERIODS))
     parser.add_argument("--limit", type=int)
+    parser.add_argument("--first-day", help="start the period later, for inputs with a short history")
     parser.add_argument("--context-days", default="7,28,90,160")
     parser.add_argument("--log", action="store_true", help="forecast log1p prices")
     parser.add_argument("--calendar", action="store_true", help="add calendar future covariates")
     parser.add_argument("--bids", action="store_true", help="add the lagged bid ratio as a past covariate")
+    parser.add_argument("--weather", action="store_true", help="add weather forecasts issued two days ahead")
+    parser.add_argument("--perfect-weather", action="store_true",
+                        help="also run observed weather, a ceiling no forecaster could reach")
     parser.add_argument("--baselines", action="store_true", help="include the naive baselines")
     parser.add_argument("--out", default="results/iex")
     args = parser.parse_args()
@@ -117,9 +126,18 @@ def main():
             models[f"timesfm_{days}d_bid"] = TimesFM(**common, use_bids=True)
         if args.calendar and args.bids:
             models[f"timesfm_{days}d_cal_bid"] = TimesFM(**common, use_calendar=True, use_bids=True)
+        if args.weather:
+            from iex.weather import Weather
+
+            models[f"timesfm_{days}d_wx"] = TimesFM(**common, weather=Weather())
+            models[f"timesfm_{days}d_cal_wx"] = TimesFM(**common, use_calendar=True, weather=Weather())
+            if args.perfect_weather:
+                # Deliberately impossible: observed weather, to measure a ceiling only.
+                models[f"timesfm_{days}d_cal_wx_PERFECT"] = TimesFM(
+                    **common, use_calendar=True, weather=Weather(actual=True))
 
     started = time.perf_counter()
-    results = run(load(), models, period=args.period, limit=args.limit)
+    results = run(load(), models, period=args.period, limit=args.limit, first_day=args.first_day)
     elapsed = time.perf_counter() - started
 
     board = score(results)
