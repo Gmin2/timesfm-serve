@@ -29,6 +29,8 @@ def _present(record):
         "issued_at": record["issued_at"].isoformat(),
         "cutoff_at": record["cutoff_at"].isoformat(),
         "model_revision": record["revision"],
+        # true only when this was written at its own cutoff rather than backfilled
+        "issued_live": record["issued_live"],
         "blocks": record["blocks"],
         "notice": ATTRIBUTION,
     }
@@ -62,6 +64,11 @@ def scorecard(days: int = Query(30, ge=1, le=365)):
         card = store.scorecard(connection, days)
     return {
         "summary": card["summary"],
+        "live_only": card["live_only"],
         "days": [dict(row, delivery_date=row["delivery_date"].isoformat()) for row in card["days"]],
         "notice": ATTRIBUTION,
+        "how_to_read": ("summary covers every scored day. live_only covers the days whose "
+                        "forecast was written at its own 09:30 cutoff rather than backfilled "
+                        "later. Backfilled days use the same information cutoff and leak "
+                        "nothing, but they were not standing predictions."),
     }

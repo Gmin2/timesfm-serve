@@ -56,21 +56,39 @@ def issue(table, delivery_date, model=None, name=MODEL):
             "quantiles": quantiles, "revision": REVISION}
 
 
-def calibrated_quantiles(issued, results=None):
-    """Apply the rolling conformal correction if a settled history is available."""
-    if issued["quantiles"] is None or results is None or results.empty:
-        return issued["quantiles"]
-    rows = pd.DataFrame({
-        "delivery_date": issued["delivery_date"], "block": range(1, len(issued["forecast"]) + 1),
+def calibrate_against(issued, history, table):
+    """Widen the published band using how far past days actually fell from it.
+
+    TimesFM's own quantiles are systematically narrow on this market, so the
+    p10-p90 band holds less than the 80% it claims. The correction is fitted only
+    on days that had already settled before this one, which is exactly what the
+    backtest does; there is no separate production shortcut.
+    """
+    if issued["quantiles"] is None or history is None or history.empty:
+        return issued["quantiles"], False
+    truth = table[table["market"] == "dam"].set_index(["delivery_date", "block"])["price"]
+    history = history.copy()
+    history["actual"] = pd.MultiIndex.from_arrays(
+        [history["delivery_date"], history["block"]]).map(truth)
+    history = history.dropna(subset=["actual"])
+    if history.empty:
+        return issued["quantiles"], False
+    history["at_cap"] = history["actual"] >= CAP - 0.01
+
+    today = pd.DataFrame({
+        "delivery_date": pd.Timestamp(issued["delivery_date"]),
+        "block": range(1, len(issued["forecast"]) + 1),
         "model": issued["model"], "forecast": issued["forecast"],
         "actual": float("nan"), "at_cap": False,
     })
     for position, column in enumerate(COLUMNS):
-        rows[column] = [q[position] for q in issued["quantiles"]]
-    combined = pd.concat([results, rows], ignore_index=True)
-    adjusted = calibrate(combined)
-    today = adjusted[adjusted["delivery_date"] == pd.Timestamp(issued["delivery_date"])]
-    return today[COLUMNS].to_numpy() if len(today) else issued["quantiles"]
+        today[column] = issued["quantiles"][:, position]
+
+    adjusted = calibrate(pd.concat([history, today], ignore_index=True), cap=CAP)
+    mine = adjusted[adjusted["delivery_date"] == pd.Timestamp(issued["delivery_date"])]
+    if not len(mine) or not bool(mine["calibrated"].iloc[0]):
+        return issued["quantiles"], False
+    return mine.sort_values("block")[COLUMNS].to_numpy(), True
 
 
 def main():
@@ -97,8 +115,12 @@ def main():
     db.open_pool()
     try:
         with db.conn() as connection:
+            history = store.settled_results(connection, issued["delivery_date"], issued["model"])
+            quantiles, corrected = calibrate_against(issued, history, table)
+            print("band calibrated on settled days" if corrected
+                  else "band published raw; not enough settled history yet")
             identifier = store.record(connection, issued["delivery_date"], issued["model"],
-                                      issued["cutoff_at"], blocks, issued["quantiles"],
+                                      issued["cutoff_at"], blocks, quantiles,
                                       issued["revision"])
     finally:
         # A CronJob's exit is a health signal, so the pool is closed here rather

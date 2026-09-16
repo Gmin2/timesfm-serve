@@ -141,3 +141,92 @@ def test_the_licence_notice_travels_with_the_data(client, customer, issued):
     assert "non-commercial" in body["notice"]
     # our forecasts are published; the exchange's own prices are not
     assert not any("actual" in key for block in body["blocks"] for key in block)
+
+
+def test_a_backfilled_forecast_is_not_counted_as_live(client, customer):
+    """A forecast written long after its cutoff is marked, so the record stays honest."""
+    day = date(2031, 5, 20)
+    late = datetime.now(IST) - timedelta(days=1)
+    with db.conn() as c:
+        c.execute("delete from iex_forecasts where delivery_date = %s", (day,))
+        identifier = store.record(c, day, "backfill_model", late, np.full(BLOCKS, 3000.0))
+        c.execute("update iex_forecasts set cutoff_at = %s where id = %s",
+                  (late - timedelta(days=400), identifier))
+        record = store.for_day(c, day, "backfill_model")
+    assert record["issued_live"] is False
+    body = client.get(f"/v1/iex/forecast/{day.isoformat()}", headers=customer).json()
+    assert body["issued_live"] is False
+    with db.conn() as c:
+        c.execute("delete from iex_forecasts where delivery_date = %s", (day,))
+
+
+def test_a_forecast_written_at_its_cutoff_counts_as_live(client, customer):
+    day = date(2031, 5, 21)
+    with db.conn() as c:
+        c.execute("delete from iex_forecasts where delivery_date = %s", (day,))
+        store.record(c, day, "live_model", datetime.now(IST), np.full(BLOCKS, 3000.0))
+        record = store.for_day(c, day, "live_model")
+        c.execute("delete from iex_forecasts where delivery_date = %s", (day,))
+    assert record["issued_live"] is True
+
+
+def test_the_scorecard_separates_live_days_from_backfill(client, customer, issued):
+    day, identifier, _ = issued
+    with db.conn() as c:
+        store.record_score(c, identifier, {"blocks_scored": BLOCKS, "mae": 300.0,
+                                           "rmse": 400.0, "bias": 0.0,
+                                           "coverage_p10_p90": 0.8})
+    body = client.get("/v1/iex/scorecard", headers=customer).json()
+    assert "live_only" in body and "how_to_read" in body
+    # the fixture day was written at its own cutoff, so it counts both ways
+    assert body["summary"]["days"] >= 1
+
+
+def test_settling_refuses_a_day_the_exchange_has_not_finished():
+    import pandas as pd
+
+    from iex.settle import actuals_for
+
+    partial = pd.DataFrame({"market": "dam", "delivery_date": pd.Timestamp("2031-01-01"),
+                            "block": range(1, 50), "price": 1000.0, "usable": True})
+    assert actuals_for(partial, date(2031, 1, 1)) is None
+
+
+def test_settling_refuses_a_day_marked_unusable():
+    import pandas as pd
+
+    from iex.settle import actuals_for
+
+    whole = pd.DataFrame({"market": "dam", "delivery_date": pd.Timestamp("2031-01-01"),
+                          "block": range(1, BLOCKS + 1), "price": 1000.0, "usable": True})
+    assert actuals_for(whole, date(2031, 1, 1)) is not None
+    whole.loc[5, "usable"] = False
+    assert actuals_for(whole, date(2031, 1, 1)) is None
+
+
+def test_scoring_arithmetic_matches_doing_it_by_hand():
+    from iex.settle import score_one
+
+    actual = np.linspace(1000, 5000, BLOCKS)
+    blocks = [{"block": i + 1, "forecast": actual[i] + 100} for i in range(BLOCKS)]
+    scores = score_one(blocks, actual)
+    assert scores["mae"] == pytest.approx(100.0)
+    assert scores["bias"] == pytest.approx(100.0)
+    assert scores["rmse"] == pytest.approx(100.0)
+    assert scores["coverage_p10_p90"] is None
+
+
+def test_band_coverage_is_measured_when_quantiles_are_there():
+    from iex.calibrate import COLUMNS
+    from iex.settle import score_one
+
+    actual = np.full(BLOCKS, 3000.0)
+    blocks = []
+    for index in range(BLOCKS):
+        # first half brackets the truth, second half sits entirely above it
+        low, high = (2000, 4000) if index < BLOCKS // 2 else (5000, 6000)
+        row = {"block": index + 1, "forecast": (low + high) / 2}
+        row |= {name: low + (high - low) * position / 8
+                for position, name in enumerate(COLUMNS)}
+        blocks.append(row)
+    assert score_one(blocks, actual)["coverage_p10_p90"] == pytest.approx(0.5)

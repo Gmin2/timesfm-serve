@@ -9,9 +9,16 @@ non-commercial, so what gets published is our own forecast and our own error.
 """
 
 import json
+from datetime import timedelta
 
 from iex.backtest import BLOCKS
 from iex.calibrate import COLUMNS
+
+# A forecast written within a few hours of its own cutoff was issued live. One
+# written long afterwards is a backfill: still leakage-free, because it is built
+# through the same History object, but it was not a standing prediction and must
+# never be counted as one.
+LIVE_WINDOW = timedelta(hours=6)
 
 
 def record(connection, delivery_date, model, cutoff_at, forecast, quantiles=None, revision=""):
@@ -63,6 +70,7 @@ def _shape(row):
     identifier, delivery_date, model, issued_at, cutoff_at, blocks, revision = row
     return {"id": identifier, "delivery_date": delivery_date, "model": model,
             "issued_at": issued_at, "cutoff_at": cutoff_at,
+            "issued_live": issued_at <= cutoff_at + LIVE_WINDOW,
             "blocks": blocks if isinstance(blocks, list) else json.loads(blocks),
             "revision": revision}
 
@@ -79,13 +87,48 @@ def scorecard(connection, days=30):
     """Every scored day, newest first, plus the running average."""
     rows = connection.execute(
         "select f.delivery_date, f.model, s.blocks_scored, s.mae, s.rmse, s.bias,"
-        " s.coverage_p10_p90 from iex_scores s join iex_forecasts f on f.id = s.forecast_id"
+        " s.coverage_p10_p90, f.issued_at, f.cutoff_at"
+        " from iex_scores s join iex_forecasts f on f.id = s.forecast_id"
         " order by f.delivery_date desc limit %s", (days,)).fetchall()
     scored = [{"delivery_date": r[0], "model": r[1], "blocks_scored": r[2], "mae": r[3],
-               "rmse": r[4], "bias": r[5], "coverage_p10_p90": r[6]} for r in rows]
-    summary = None
-    if scored:
-        summary = {"days": len(scored),
-                   "mae": sum(r["mae"] for r in scored) / len(scored),
-                   "rmse": sum(r["rmse"] for r in scored) / len(scored)}
-    return {"days": scored, "summary": summary}
+               "rmse": r[4], "bias": r[5], "coverage_p10_p90": r[6],
+               "issued_live": r[7] <= r[8] + LIVE_WINDOW} for r in rows]
+    return {"days": scored, "summary": _summary(scored),
+            "live_only": _summary([r for r in scored if r["issued_live"]])}
+
+
+def _summary(scored):
+    """Averages, kept separate for live days so a backfill cannot pad the record."""
+    if not scored:
+        return None
+    return {"days": len(scored),
+            "mae": sum(r["mae"] for r in scored) / len(scored),
+            "rmse": sum(r["rmse"] for r in scored) / len(scored),
+            "coverage_p10_p90": (
+                sum(r["coverage_p10_p90"] for r in scored if r["coverage_p10_p90"] is not None)
+                / max(sum(1 for r in scored if r["coverage_p10_p90"] is not None), 1))}
+
+
+def settled_results(connection, before, model):
+    """Past forecasts next to what actually cleared, for calibrating the next one.
+
+    Only days strictly before the one being forecast, and only days that have
+    already been scored, so the correction is fitted on settled history alone.
+    """
+    import pandas as pd
+
+    rows = connection.execute(
+        "select f.delivery_date, f.blocks from iex_forecasts f"
+        " join iex_scores s on s.forecast_id = f.id"
+        " where f.model = %s and f.delivery_date < %s"
+        " order by f.delivery_date desc limit 180", (model, before)).fetchall()
+    if not rows:
+        return None
+    frames = []
+    for delivery_date, blocks in rows:
+        blocks = blocks if isinstance(blocks, list) else json.loads(blocks)
+        frame = pd.DataFrame(sorted(blocks, key=lambda r: r["block"]))
+        frame["delivery_date"] = pd.Timestamp(delivery_date)
+        frame["model"] = model
+        frames.append(frame)
+    return pd.concat(frames, ignore_index=True)
