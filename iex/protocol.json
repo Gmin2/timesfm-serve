@@ -1,0 +1,39 @@
+{
+  "frozen_at": "2026-09-16",
+  "note": "Written before the sealed test period was run. Every choice below was made on the development period only, and none may change after test results are seen.",
+  "target": "IEX day-ahead market clearing price, 96 blocks of 15 minutes",
+  "issued_at": "09:30 IST on the day before delivery, before bidding opens at 10:00",
+  "periods": {
+    "development": "2024-04-01 to 2025-03-31, used for every choice",
+    "test": "2025-04-01 to 2026-08-31, scored once",
+    "stress": "2026-09-01 to 2026-09-15, reported separately, a scarcity regime"
+  },
+  "headline_model": {
+    "name": "timesfm_90d_cal_wx",
+    "model": "google/timesfm-3.0-pytorch",
+    "revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+    "training": "none, zero-shot",
+    "context_days": 90,
+    "transform": "log1p",
+    "covariates": {
+      "past_future": ["block_sin", "block_cos", "weekend", "holiday", "temperature_2m", "shortwave_radiation"],
+      "past_only": []
+    },
+    "chosen_because": "best on development at 508.8 MAE over 287 days"
+  },
+  "also_reported": ["timesfm_90d", "lear", "naive_yesterday", "naive_last_week", "climatology_28d"],
+  "calibration": {"method": "rolling conformal", "window_days": 90, "minimum_days": 30},
+  "weather": {
+    "source": "Open-Meteo previous-runs, ECMWF IFS 0.25, _previous_day2 fields",
+    "why_day2": "issued two days before the valid time, so always before the 09:30 cutoff; _previous_day1 would include runs published after it",
+    "cities": 8,
+    "weighting": "regional share of national demand"
+  },
+  "metrics": ["MAE", "RMSE", "bias", "MAE on normal blocks", "MAE on capped blocks", "Diebold-Mariano against naive_yesterday"],
+  "rules": [
+    "forecasts clipped to the Rs 0 to 10000 cap",
+    "only complete, usable delivery days scored",
+    "every model scored on the same days",
+    "no retuning after the test period is run"
+  ]
+}
