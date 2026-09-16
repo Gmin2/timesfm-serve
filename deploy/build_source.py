@@ -15,7 +15,7 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     names = {"pyproject.toml", "uv.lock", ".dockerignore", "deploy/rds-global-bundle.pem"}
-    for pattern in ("timesfm_serve/*.py", "scripts/*.py", "scripts/*.sh", "migrations/*.sql", "deploy/Dockerfile.*"):
+    for pattern in ("timesfm_serve/*.py", "iex/*.py", "iex/*.json", "scripts/*.py", "scripts/*.sh", "migrations/*.sql", "deploy/Dockerfile.*"):
         names.update(str(p.relative_to(ROOT)) for p in ROOT.glob(pattern))
     output = io.BytesIO()
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:

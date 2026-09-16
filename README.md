@@ -195,13 +195,16 @@ gpu, cuda on AWS or mps on a mac:
 
 | path | what |
 | --- | --- |
-| `iex/` | power price forecasting |
+| `iex/` | power price forecasting, and its half of the API |
 | `timesfm_serve/`, `scripts/weather_*` | the weather platform and its experiments |
-| `infra/`, `deploy/` | AWS and Kubernetes for the weather service |
+| `timesfm_serve/api.py` | the gateway both are served behind |
+| `infra/`, `deploy/` | AWS and Kubernetes |
 | `tests/iex/`, `tests/` | tests for each |
 
-the two applications share the repo and the python environment, nothing else.
-neither imports from the other.
+one app, one database, one cluster, two applications. `/v1/weather` and `/v1/iex`
+share authentication, api keys, rate limiting and health probes, and nothing else.
+the forecasting code on each side never imports the other; they meet in
+`timesfm_serve/api.py` and nowhere else, which is the only place sharing pays.
 
 ## tests
 
@@ -210,7 +213,8 @@ docker compose exec db createdb -U tfm tfm_test
 DATABASE_URL=postgresql://tfm:tfm@localhost:15432/tfm_test uv run --no-sync pytest -q
 ```
 
-sql and concurrency tests need real postgres. the IEX tests do not.
+sql and concurrency tests need real postgres, and so do the serving tests for
+both applications. the IEX forecasting and backtest tests do not.
 
 ## limits
 
