@@ -111,20 +111,20 @@ function Workspace({ view }: { view: Page | 'not-found' }) {
   return <div className="app-frame">
     <a className="skip-link" href="#main">Skip to content</a>
     <aside className="sidebar">
-      <Link to="/forecasts" className="brand" aria-label="Forecast Lab home"><span className="brand-mark"><Icon.Cloud size={14} /></span><span>Forecast Lab</span></Link>
-      <nav className="nav" aria-label="Workspace">
-        {NAV.map(item => <Link key={item.id} to={PAGE_PATHS[item.id]} aria-current={view === item.id ? 'page' : undefined}>
-          <item.icon /><span>{item.label}</span></Link>)}
-      </nav>
-      {catalog && <div className="nav-group station-nav"><span className="nav-label">Stations</span>
-        {catalog.stations.map((s, i) => <Link key={s.id} to={forecastHref(s.id, zone, mode)} aria-current={view === 'forecasts' && station?.id === s.id ? 'page' : undefined}>
-          <span className="station-tile" style={{ background: STATION_TINTS[i % STATION_TINTS.length] }}>{s.name[0]}</span><span>{s.name}</span><small>{s.icao}</small>
-        </Link>)}
-      </div>}
-      <div className="nav-group"><span className="nav-label">Power prices</span>
+      <Link to="/prices" className="brand" aria-label="Forecast Lab home"><span className="brand-mark"><Icon.Layers size={14} /></span><span>Forecast Lab</span></Link>
+      <nav className="nav-group" aria-label="Power prices"><span className="nav-label">Power prices</span>
         {PRICE_NAV.map(item => <Link key={item.id} to={PAGE_PATHS[item.id]} aria-current={view === item.id ? 'page' : undefined}>
           <item.icon /><span>{item.label}</span></Link>)}
-      </div>
+      </nav>
+      <nav className="nav-group" aria-label="Weather"><span className="nav-label">Weather</span>
+        {NAV.map(item => <Link key={item.id} to={PAGE_PATHS[item.id]} aria-current={view === item.id ? 'page' : undefined}>
+          <item.icon /><span>{item.label}</span></Link>)}
+        {catalog && <div className="station-nav">
+          {catalog.stations.map((s, i) => <Link key={s.id} to={forecastHref(s.id, zone, mode)} aria-current={view === 'forecasts' && station?.id === s.id ? 'page' : undefined}>
+            <span className="station-tile" style={{ background: STATION_TINTS[i % STATION_TINTS.length] }}>{s.name[0]}</span><span>{s.name}</span><small>{s.icao}</small>
+          </Link>)}
+        </div>}
+      </nav>
       <div className="nav-group"><span className="nav-label">Developer</span>
         <Link to="/api-keys" aria-current={view === 'access' && hash !== '#playground' ? 'page' : undefined}><Icon.Key /><span>API keys</span></Link>
         <Link to="/api-keys#playground" aria-current={view === 'access' && hash === '#playground' ? 'page' : undefined}><Icon.Terminal /><span>Playground</span></Link>
@@ -132,7 +132,8 @@ function Workspace({ view }: { view: Page | 'not-found' }) {
         <a href="https://github.com/Gmin2/timesfm-serve" target="_blank" rel="noreferrer"><Icon.Github /><span>Source</span><Icon.ArrowUpRight size={12} className="nav-external" /></a>
       </div>
       <div className="sidebar-foot">
-        <div className="model-card"><Icon.Satellite /><div><strong>TimesFM 3.0</strong><small>Zero-shot on ECMWF IFS</small></div></div>
+        <div className="model-card"><Icon.Satellite /><div><strong>TimesFM 3.0</strong>
+          <small>{section === 'power' ? 'Zero-shot on IEX and grid data' : 'Zero-shot on ECMWF IFS'}</small></div></div>
         <Link to="/api-keys" className="account-row"><GithubLogo /><span>{user ? '@' + user.login : 'Sign in with GitHub'}</span><Icon.ChevronRight size={12} /></Link>
       </div>
     </aside>
