@@ -1,3 +1,5 @@
+from datetime import date
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -95,3 +97,61 @@ def test_weather_forecast_is_unaffected_by_scrambling_prices(stub_weather, fake)
     later = scrambled["delivery_date"] >= day
     scrambled.loc[later, "price"] = scrambled.loc[later, "price"] * 3 + 500
     assert np.allclose(before, model(History(scrambled, day)))
+
+
+def test_wind_sites_are_weighted_and_sum_to_one():
+    from iex.weather import WIND_SITES
+
+    weights = [weight for _, _, weight in WIND_SITES.values()]
+    assert sum(weights) == pytest.approx(1.0, abs=0.01)
+    assert all(0 < weight < 0.5 for weight in weights)
+    # Nothing in the east, where Grid-India records no wind generation at all.
+    assert all(longitude < 82 for _, (_, longitude, _) in
+               [(name, site) for name, site in WIND_SITES.items()])
+
+
+def test_wind_and_demand_sample_different_places():
+    from iex.weather import CITIES, WIND_SITES
+
+    assert not set(CITIES) & set(WIND_SITES)
+
+
+def test_the_demand_group_keeps_its_original_cache_filenames(monkeypatch, tmp_path):
+    from iex import weather
+
+    monkeypatch.setattr(weather, "STORE", tmp_path)
+    (tmp_path / "forecast").mkdir()
+    (tmp_path / "forecast" / "delhi_20240101_20240102.json").write_text('{"hourly": {}}')
+
+    def explode(*args, **kwargs):
+        raise AssertionError("a cached demand file was re-downloaded")
+
+    monkeypatch.setattr(weather.requests, "get", explode)
+    assert weather.fetch("delhi", date(2024, 1, 1), date(2024, 1, 2)) == {"hourly": {}}
+
+
+def test_a_new_group_gets_its_own_cache_filenames(monkeypatch, tmp_path):
+    from iex import weather
+
+    monkeypatch.setattr(weather, "STORE", tmp_path)
+    (tmp_path / "forecast").mkdir()
+    (tmp_path / "forecast" / "wind_kutch_20240101_20240102.json").write_text('{"hourly": {"ok": 1}}')
+    got = weather.fetch("kutch", date(2024, 1, 1), date(2024, 1, 2), group="wind")
+    assert got == {"hourly": {"ok": 1}}
+
+
+def test_wind_speed_is_cubed_before_weighting(monkeypatch):
+    from iex import weather
+
+    times = pd.date_range("2025-01-01", periods=24, freq="h")
+    speeds = {"kutch": 10.0, "muppandal": 20.0, "chitradurga": 0.0, "satara": 0.0,
+              "anantapur": 0.0, "jaisalmer": 0.0, "dewas": 0.0}
+    monkeypatch.setattr(weather, "fetch", lambda city, *a, **k: {
+        "hourly": {"time": [t.isoformat() for t in times],
+                   "wind_speed_100m_previous_day2": [speeds[city]] * 24}})
+
+    got = weather.national(date(2025, 1, 1), date(2025, 1, 1), group="wind")
+    expected = 0.281 * 10.0 ** 3 + 0.227 * 20.0 ** 3
+    assert got["wind_speed_100m"].iloc[0] == pytest.approx(expected, rel=1e-6)
+    # The cube of the weighted mean would be far smaller, which is the whole point.
+    assert got["wind_speed_100m"].iloc[0] > (0.281 * 10 + 0.227 * 20) ** 3

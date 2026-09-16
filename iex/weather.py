@@ -38,16 +38,41 @@ CITIES = {
     "lucknow": (26.85, 80.95, 0.09),
 }
 VARIABLES = ("temperature_2m", "shortwave_radiation")
+# Wind generation happens where the wind is, not where the demand is. Regional
+# shares are measured from 678 days of Grid-India's own regional wind generation
+# (WR 46.9%, SR 44.7%, NR 8.4%, and nothing at all in the east); within a region
+# the split follows state installed capacity.
+WIND_SITES = {
+    "kutch": (23.25, 69.67, 0.281),
+    "muppandal": (8.25, 77.55, 0.227),
+    "chitradurga": (14.22, 76.40, 0.135),
+    "satara": (17.30, 74.20, 0.120),
+    "anantapur": (14.68, 77.60, 0.085),
+    "jaisalmer": (26.91, 70.92, 0.084),
+    "dewas": (22.97, 76.06, 0.068),
+}
+WIND_VARIABLES = ("wind_speed_100m",)
+# Turbine power goes as the cube of wind speed, so the cube is what carries the
+# signal. Cubing happens per site before weighting, because the mean of cubes and
+# the cube of the mean are not the same thing across a spread-out fleet.
+GROUPS = {
+    "demand": (CITIES, VARIABLES, False),
+    "wind": (WIND_SITES, WIND_VARIABLES, True),
+}
 
 
-def fetch(city, first, last, actual=False):
-    """One city, one date range, cached on disk as the raw response."""
-    latitude, longitude, _ = CITIES[city]
+def fetch(city, first, last, actual=False, group="demand"):
+    """One site, one date range, cached on disk as the raw response."""
+    sites, variables, _ = GROUPS[group]
+    latitude, longitude, _ = sites[city]
     kind = "actual" if actual else "forecast"
-    path = STORE / kind / f"{city}_{first:%Y%m%d}_{last:%Y%m%d}.json"
+    # The demand group keeps its original filenames so the frozen headline never
+    # re-downloads and never silently moves if the archive is revised.
+    stem = city if group == "demand" else f"{group}_{city}"
+    path = STORE / kind / f"{stem}_{first:%Y%m%d}_{last:%Y%m%d}.json"
     if path.exists():
         return json.loads(path.read_text())
-    fields = VARIABLES if actual else tuple(f"{v}_previous_day2" for v in VARIABLES)
+    fields = variables if actual else tuple(f"{v}_previous_day2" for v in variables)
     query = urlencode({
         "latitude": latitude, "longitude": longitude,
         "start_date": first.isoformat(), "end_date": last.isoformat(),
@@ -66,39 +91,46 @@ def fetch(city, first, last, actual=False):
     return payload
 
 
-def national(first, last, actual=False):
-    """Demand-weighted national temperature and radiation, hourly, IST."""
+def national(first, last, actual=False, group="demand"):
+    """One weighted national series per variable, hourly, IST."""
+    sites, variables, cube = GROUPS[group]
     frames = []
-    for city, (_, _, weight) in CITIES.items():
-        hourly = fetch(city, first, last, actual)["hourly"]
+    for city, (_, _, weight) in sites.items():
+        hourly = fetch(city, first, last, actual, group)["hourly"]
         suffix = "" if actual else "_previous_day2"
         frame = pd.DataFrame({
             "time": pd.to_datetime(hourly["time"]),
-            **{v: pd.Series(hourly[f"{v}{suffix}"], dtype="float64") for v in VARIABLES},
+            **{v: pd.Series(hourly[f"{v}{suffix}"], dtype="float64") for v in variables},
         }).set_index("time")
-        frames.append(frame * weight)
-    total = sum(weight for _, _, weight in CITIES.values())
+        frames.append((frame ** 3 if cube else frame) * weight)
+    total = sum(weight for _, _, weight in sites.values())
     return sum(frames) / total
 
 
-def to_blocks(hourly):
+def to_blocks(hourly, variables=VARIABLES):
     """Hourly values repeated to 15-minute blocks, indexed by (date, block)."""
     repeated = hourly.reindex(hourly.index.repeat(BLOCKS // 24))
     repeated["delivery_date"] = repeated.index.normalize()
     repeated["block"] = np.tile(np.arange(1, BLOCKS + 1), len(hourly) // 24)
-    return repeated.set_index(["delivery_date", "block"])[list(VARIABLES)]
+    return repeated.set_index(["delivery_date", "block"])[list(variables)]
 
 
-def build(first, last, actual=False):
-    table = to_blocks(national(first, last, actual))
+def store_path(actual=False, group="demand"):
+    stem = "actual" if actual else "forecast"
+    return STORE / (f"{stem}.parquet" if group == "demand" else f"{group}_{stem}.parquet")
+
+
+def build(first, last, actual=False, group="demand"):
+    _, variables, _ = GROUPS[group]
+    table = to_blocks(national(first, last, actual, group), variables)
     STORE.mkdir(parents=True, exist_ok=True)
-    path = STORE / ("actual.parquet" if actual else "forecast.parquet")
+    path = store_path(actual, group)
     table.to_parquet(path)
     return table, path
 
 
-def load(actual=False):
-    path = STORE / ("actual.parquet" if actual else "forecast.parquet")
+def load(actual=False, group="demand"):
+    path = store_path(actual, group)
     if not path.exists():
         raise FileNotFoundError(f"{path} missing; run python -m iex.weather --from ... --to ...")
     return pd.read_parquet(path)
@@ -133,9 +165,11 @@ def main():
     parser.add_argument("--from", dest="first", type=date.fromisoformat, default=date(2024, 4, 1))
     parser.add_argument("--to", dest="last", type=date.fromisoformat, default=date.today() - timedelta(days=2))
     parser.add_argument("--actual", action="store_true", help="fetch observed weather for the ceiling run")
+    parser.add_argument("--group", default="demand", choices=sorted(GROUPS),
+                        help="which set of sites and variables to pull")
     args = parser.parse_args()
 
-    table, path = build(args.first, args.last, args.actual)
+    table, path = build(args.first, args.last, args.actual, args.group)
     kind = "observed" if args.actual else "forecast issued two days ahead"
     days = table.index.get_level_values(0).nunique()
     print(f"{kind}: {len(table):,} blocks over {days} days, {args.first} to {args.last}")

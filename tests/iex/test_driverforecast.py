@@ -27,7 +27,7 @@ def stub_drivers(monkeypatch):
     actuals = driver_table(first="2023-06-01", days=600)
     forecasts = forecast_table(first="2023-06-01", days=600)
     monkeypatch.setattr("iex.driverforecast.load", lambda: actuals)
-    monkeypatch.setattr("iex.driverforecast.load_forecasts", lambda: forecasts)
+    monkeypatch.setattr("iex.driverforecast.load_forecasts", lambda variant="": forecasts)
     return actuals, forecasts
 
 
@@ -171,3 +171,75 @@ def test_perfect_drivers_refuse_an_unusable_delivery_day(stub_drivers):
     model.usable = {d: d != day for d in actuals.index.get_level_values("delivery_date").unique()}
     with pytest.raises(ValueError, match="observed drivers unavailable"):
         model(History(table, day), context_days=7)
+
+
+def weather_table(first="2023-06-01", days=900, name="wind_speed_100m"):
+    index = pd.MultiIndex.from_product(
+        [pd.date_range(first, periods=days, freq="D"), range(1, BLOCKS + 1)],
+        names=["delivery_date", "block"])
+    generator = np.random.default_rng(11)
+    return pd.DataFrame({name: generator.uniform(100, 40_000, len(index))}, index=index)
+
+
+@pytest.fixture
+def stub_driver_weather(monkeypatch):
+    table = weather_table()
+    monkeypatch.setattr("iex.weather.load", lambda actual=False, group="demand": table)
+    return table
+
+
+def test_driver_weather_spans_the_context_and_both_leads(stub_driver_weather):
+    from iex.driverforecast import DriverWeather
+
+    weather = DriverWeather()
+    days = list(pd.date_range("2024-05-01", periods=7, freq="D"))
+    rows = weather("wind", days)
+    assert rows.shape == (1, 7 * BLOCKS)
+
+
+def test_driver_weather_is_none_for_a_driver_with_no_group(stub_driver_weather):
+    from iex.driverforecast import DriverWeather
+
+    assert DriverWeather()("demand", list(pd.date_range("2024-05-01", periods=3))) is None
+
+
+def test_driver_weather_refuses_a_missing_day(stub_driver_weather):
+    from iex.driverforecast import DriverWeather
+
+    weather = DriverWeather()
+    weather.tables["wind"] = stub_driver_weather.drop(
+        index=pd.Timestamp("2024-05-03"), level="delivery_date")
+    with pytest.raises(ValueError, match="weather missing"):
+        weather("wind", list(pd.date_range("2024-05-01", periods=7, freq="D")))
+
+
+def test_driver_weather_is_scaled_down(stub_driver_weather):
+    from iex.driverforecast import WEATHER_SCALE, DriverWeather
+
+    days = list(pd.date_range("2024-05-01", periods=3, freq="D"))
+    rows = DriverWeather()("wind", days)
+    raw = stub_driver_weather.loc[pd.Timestamp("2024-05-01")]["wind_speed_100m"].to_numpy()
+    assert np.allclose(rows[0, :BLOCKS], raw / WEATHER_SCALE)
+
+
+def test_forecast_day_hands_the_covariates_to_the_model(stub_driver_weather, fake):  # noqa: F811
+    from iex.driverforecast import HORIZON, DriverWeather, forecast_day
+    from iex.drivers import DriverHistory
+    from iex.timesfm import session
+
+    model, _ = session()
+    history = DriverHistory(driver_table(first="2023-06-01", days=600), pd.Timestamp("2024-06-01"))
+    forecast_day(model, history, fields=("wind",), context_days=7, weather=DriverWeather())
+    call = fake.calls[0]
+    assert call["past_future_covariates"].shape == (1, 7 * BLOCKS + HORIZON)
+
+
+def test_forecast_day_sends_none_when_there_is_no_weather(fake):  # noqa: F811
+    from iex.driverforecast import forecast_day
+    from iex.drivers import DriverHistory
+    from iex.timesfm import session
+
+    model, _ = session()
+    history = DriverHistory(driver_table(first="2023-06-01", days=600), pd.Timestamp("2024-06-01"))
+    forecast_day(model, history, fields=("wind",), context_days=7)
+    assert fake.calls[0]["past_future_covariates"] is None

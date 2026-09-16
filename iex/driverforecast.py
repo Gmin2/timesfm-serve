@@ -23,21 +23,68 @@ from iex.drivers import STORE, DriverHistory, load, usable_days
 from iex.timesfm import MAX_CONTEXT, session
 
 FIELDS = ("demand", "wind", "solar", "net_demand")
+# Which weather group carries signal for which driver. Wind generation follows the
+# cube of wind speed at the places the turbines actually are, which is a different
+# set of places from the demand centres the price model samples.
+DRIVER_WEATHER = {"wind": "wind"}
+# Weather values are scaled so they sit in the same range as the drivers in GW,
+# rather than dwarfing them.
+WEATHER_SCALE = 1000.0
 LEADS = (1, 2)
 HORIZON = len(LEADS) * BLOCKS
 
 
-def forecast_day(model, history, fields=FIELDS, context_days=90):
+class DriverWeather:
+    """Weather covariates for forecasting a driver, over context plus both leads.
+
+    Only forecasts issued two days before the valid time are used, the same rule
+    the price model follows, so nothing here could have been unavailable at the
+    cutoff. A driver with no weather group gets no covariates at all.
+    """
+
+    def __init__(self, groups=DRIVER_WEATHER):
+        from iex.weather import GROUPS
+        from iex.weather import load as load_weather
+
+        self.groups = dict(groups)
+        self.tables = {name: load_weather(group=name) for name in set(self.groups.values())}
+        self.variables = {name: GROUPS[name][1] for name in self.tables}
+
+    def __call__(self, field, days):
+        group = self.groups.get(field)
+        if group is None:
+            return None
+        table, variables = self.tables[group], self.variables[group]
+        wanted = pd.MultiIndex.from_product(
+            [pd.DatetimeIndex(days).normalize(), range(1, BLOCKS + 1)],
+            names=["delivery_date", "block"])
+        frame = table.reindex(wanted)
+        if frame.isna().any().any():
+            gaps = frame[frame.isna().any(axis=1)].index.get_level_values(0).unique()
+            raise ValueError(f"{group} weather missing for {len(gaps)} days, first {gaps[0].date()}")
+        return np.vstack([frame[name].to_numpy() / WEATHER_SCALE for name in variables])
+
+
+def forecast_day(model, history, fields=FIELDS, context_days=90, weather=None):
     """One 192-block run per driver, all issued at the same cutoff."""
-    context_blocks = min(context_days * BLOCKS, MAX_CONTEXT)
     rows = []
     for field in fields:
-        series = history.series(field).to_numpy().reshape(-1)
-        series = series[~np.isnan(series)]
-        if len(series) < 8 * BLOCKS:
+        published = history.series(field)
+        # Eight days is the minimum history worth forecasting from, whatever
+        # context length was asked for.
+        if len(published) < 8:
             return None
-        output = model.predict(series[-context_blocks:], horizon=HORIZON,
-                               return_quantiles=False, make_positive=True)
+        frame = published.tail(min(context_days, MAX_CONTEXT // BLOCKS))
+        series = frame.to_numpy().reshape(-1)
+        if np.isnan(series).any():
+            return None
+        ahead = [history.cutoff + pd.Timedelta(days=lead) for lead in LEADS]
+        future = weather(field, list(frame.index) + ahead) if weather is not None else None
+        if future is not None and future.shape[1] != len(series) + HORIZON:
+            raise ValueError(f"{field} covariates are {future.shape[1]} long, "
+                             f"expected {len(series) + HORIZON}")
+        output = model.predict(series, horizon=HORIZON, return_quantiles=False,
+                               past_future_covariates=future, make_positive=True)
         values = np.asarray(output.forecast, dtype=float).reshape(len(LEADS), BLOCKS)
         for position, lead in enumerate(LEADS):
             rows.append(pd.DataFrame({
@@ -47,7 +94,7 @@ def forecast_day(model, history, fields=FIELDS, context_days=90):
     return pd.concat(rows, ignore_index=True)
 
 
-def build(first, last, context_days=90, fields=FIELDS, limit=None):
+def build(first, last, context_days=90, fields=FIELDS, limit=None, weather=None, variant=""):
     table = load()
     usable = usable_days(table)
     model, device = session()
@@ -57,7 +104,7 @@ def build(first, last, context_days=90, fields=FIELDS, limit=None):
 
     started, pieces, skipped = time.perf_counter(), [], []
     for day in days:
-        frame = forecast_day(model, DriverHistory(table, day, usable), fields, context_days)
+        frame = forecast_day(model, DriverHistory(table, day, usable), fields, context_days, weather)
         if frame is None:
             skipped.append(day)
             continue
@@ -67,13 +114,13 @@ def build(first, last, context_days=90, fields=FIELDS, limit=None):
 
     out = pd.concat(pieces, ignore_index=True)
     STORE.mkdir(parents=True, exist_ok=True)
-    path = STORE / "forecast.parquet"
+    path = STORE / f"forecast{variant}.parquet"
     out.to_parquet(path, index=False)
     return out, skipped, path, device, time.perf_counter() - started
 
 
-def load_forecasts():
-    path = STORE / "forecast.parquet"
+def load_forecasts(variant=""):
+    path = STORE / f"forecast{variant}.parquet"
     if not path.exists():
         raise FileNotFoundError(f"{path} missing; run python -m iex.driverforecast")
     return pd.read_parquet(path)
@@ -132,10 +179,15 @@ def main():
     parser.add_argument("--to", dest="last", type=date.fromisoformat, default=date(2026, 9, 15))
     parser.add_argument("--context-days", type=int, default=90)
     parser.add_argument("--limit", type=int)
+    parser.add_argument("--weather", action="store_true",
+                        help="give wind the cube of forecast wind speed at the wind sites")
     args = parser.parse_args()
 
+    weather = DriverWeather() if args.weather else None
+    variant = "_wx" if args.weather else ""
     forecasts, skipped, path, device, elapsed = build(
-        pd.Timestamp(args.first), pd.Timestamp(args.last), args.context_days, limit=args.limit)
+        pd.Timestamp(args.first), pd.Timestamp(args.last), args.context_days, limit=args.limit,
+        weather=weather, variant=variant)
     days = forecasts["delivery_date"].nunique()
     print(f"{days} delivery days forecast on {device}, {len(skipped)} skipped, {elapsed / 60:.1f} min\n")
 
@@ -145,9 +197,24 @@ def main():
     board = ours.merge(theirs, on=["field", "lead_days"], suffixes=("", "_persist"))
     board["beats_persistence"] = (1 - board["mae"] / board["mae_persist"]) * 100
 
+    # When a plain run already exists, show what the weather covariates changed.
+    try:
+        earlier = load_forecasts()
+        # Score the plain run on exactly the days the new run covers, or the
+        # comparison measures the calendar rather than the covariates.
+        same_days = earlier[earlier["delivery_date"].isin(forecasts["delivery_date"].unique())]
+        plain = score(same_days, actuals).set_index(["field", "lead_days"])["mae"]
+    except FileNotFoundError:
+        plain = None
+    if plain is not None and variant:
+        board["mae_plain"] = board.set_index(["field", "lead_days"]).index.map(plain)
+        board["weather_helps"] = (1 - board["mae"] / board["mae_plain"]) * 100
+
     print("driver forecast error in MW, against copying the last known day")
-    print(board[["field", "lead_days", "days", "mean_level", "mae", "rmse", "bias", "nmae",
-                 "mae_persist", "beats_persistence"]].round(1).to_string(index=False))
+    columns = ["field", "lead_days", "days", "mean_level", "mae", "rmse", "bias", "nmae",
+               "mae_persist", "beats_persistence"]
+    columns += [c for c in ("mae_plain", "weather_helps") if c in board.columns]
+    print(board[columns].round(1).to_string(index=False))
     print(f"\nwrote {path}")
 
 
@@ -167,12 +234,12 @@ class Drivers:
     always labelled as one.
     """
 
-    def __init__(self, fields=("demand", "wind", "solar"), actual=False):
+    def __init__(self, fields=("demand", "wind", "solar"), actual=False, variant=""):
         self.fields = tuple(fields)
         self.actual = actual
         self.actuals = load()
         self.usable = usable_days(self.actuals)
-        self.forecasts = None if actual else load_forecasts()
+        self.forecasts = None if actual else load_forecasts(variant)
         missing = set(self.fields) - set(self.actuals.columns)
         if missing:
             raise ValueError(f"drivers carry no {sorted(missing)}")
