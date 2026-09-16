@@ -26,7 +26,9 @@ const LABELS: Record<Page, string> = { forecasts: 'Forecasts', benchmarks: 'Benc
   prices: 'Day ahead', scorecard: 'Track record', access: 'API keys' }
 const SECTION_LABEL = { weather: 'Weather', power: 'Power prices', developer: 'Developer' } as const
 const STATION_TINTS = ['#386aff', '#ff6802', '#16a34a']
-const DOCS_URL = 'https://88novucbtj.execute-api.us-east-1.amazonaws.com/docs'
+// The docs live wherever the API is deployed, so the link follows the running
+// origin rather than a hostname that dies with the next teardown.
+function docsUrl(origin?: string) { return origin ? origin + '/docs' : undefined }
 
 export default function App() {
   return <Routes><Route path="/" element={<LegacyRedirect />} />
@@ -104,6 +106,7 @@ function Workspace({ view }: { view: Page | 'not-found' }) {
   const document = !error && forecast.data && (!live || forecast.data.id !== expiredId) ? forecast.data : undefined
   const user = session.data?.user
   const section = view === 'not-found' ? 'weather' : SECTION[view]
+  const docs = docsUrl(connection.data?.origin)
   const modeTabs = <Tabs value={mode} onValueChange={value => filter('mode', value === 'experimental_live' ? 'live' : undefined)} className="mode-tabs">
     <TabsList><TabsTab value="historical_replay"><Icon.Database size={13} />Historical</TabsTab><TabsTab value="experimental_live"><Icon.Signal size={13} />Live</TabsTab></TabsList>
   </Tabs>
@@ -128,7 +131,10 @@ function Workspace({ view }: { view: Page | 'not-found' }) {
       <div className="nav-group"><span className="nav-label">Developer</span>
         <Link to="/api-keys" aria-current={view === 'access' && hash !== '#playground' ? 'page' : undefined}><Icon.Key /><span>API keys</span></Link>
         <Link to="/api-keys#playground" aria-current={view === 'access' && hash === '#playground' ? 'page' : undefined}><Icon.Terminal /><span>Playground</span></Link>
-        <a href={DOCS_URL} target="_blank" rel="noreferrer"><Icon.Book /><span>API reference</span><Icon.ArrowUpRight size={12} className="nav-external" /></a>
+        {docs
+          ? <a href={docs} target="_blank" rel="noreferrer"><Icon.Book /><span>API reference</span><Icon.ArrowUpRight size={12} className="nav-external" /></a>
+          : <span className="nav-disabled"><Icon.Book /><span>API reference</span><small>offline</small></span>}
+        <Link to="/api-keys#playground" aria-current={undefined}><Icon.Braces /><span>OpenAPI schema</span></Link>
         <a href="https://github.com/Gmin2/timesfm-serve" target="_blank" rel="noreferrer"><Icon.Github /><span>Source</span><Icon.ArrowUpRight size={12} className="nav-external" /></a>
       </div>
       <div className="sidebar-foot">

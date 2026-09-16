@@ -513,3 +513,6 @@ td.num, th.num { text-align: right; }
 /* bias is an error with a direction, not a gain, so it is not coloured */
 .table-card table { width: 100%; }
 .playground-day { height: 32px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: 6px; background: #fff; font-size: 13px; color: var(--text); width: 100%; }
+.nav-disabled { display: flex; align-items: center; gap: 10px; height: 32px; padding: 0 8px; border-radius: 7px; color: var(--muted-foreground); cursor: default; }
+.nav-disabled > svg:first-child { color: #c9c8c4; }
+.nav-disabled small { margin-left: auto; font-size: 11px; color: #b3b2ae; }

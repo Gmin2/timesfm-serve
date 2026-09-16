@@ -7,9 +7,9 @@ import { Playground } from '@/components/playground'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import * as Icon from './icons'
 import { accessError, accountRequest, requestExample, useSession, type AccountSession, type ApiKey } from '@/lib/account'
-import { ApiError, dateLabel } from '@/lib/weather'
+import { ApiError, dateLabel, getJson } from '@/lib/weather'
 
-const DOCS_URL = 'https://88novucbtj.execute-api.us-east-1.amazonaws.com/docs'
+
 
 export function GithubLogo() { return <img className="github-logo" src={githubLogo} width="18" height="18" alt="" aria-hidden="true" /> }
 
@@ -36,11 +36,14 @@ export function ApiAccess({ loginError }: { loginError: string | null }) {
 }
 
 function AccessHead({ children }: { children?: React.ReactNode }) {
+  const connection = useQuery({ queryKey: ['connection'], queryFn: ({ signal }) => getJson<{ origin: string }>('/api/connection', signal) })
+  const docs = connection.data?.origin ? connection.data.origin + '/docs' : undefined
   return <div className="page-head">
     <span className="page-tile"><Icon.Key size={18} /></span>
     <div className="page-title"><h1>API keys</h1><span className="badge">weather:read</span></div>
     <p>Weather forecasts for your applications.</p>
-    <div className="page-actions"><Button variant="outline" size="sm" asChild><a href={DOCS_URL} target="_blank" rel="noreferrer"><Icon.Book />Docs</a></Button>{children}</div>
+    <div className="page-actions">{docs && <Button variant="outline" size="sm" asChild>
+      <a href={docs} target="_blank" rel="noreferrer"><Icon.Book />Docs</a></Button>}{children}</div>
   </div>
 }
 
