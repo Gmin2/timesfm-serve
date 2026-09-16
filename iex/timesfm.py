@@ -116,6 +116,8 @@ def main():
     parser.add_argument("--drivers", action="store_true",
                         help="add demand, wind and solar forecast two days ahead from the PSP report")
     parser.add_argument("--driver-fields", default="demand,wind,solar")
+    parser.add_argument("--drivers-wx", action="store_true",
+                        help="also run drivers whose wind came from wind-site wind speed")
     parser.add_argument("--perfect-drivers", action="store_true",
                         help="also run observed drivers, a ceiling no forecaster could reach")
     parser.add_argument("--baselines", action="store_true", help="include the naive baselines")
@@ -154,6 +156,9 @@ def main():
 
                 models[f"timesfm_{days}d_cal_wx_drv"] = TimesFM(
                     **common, use_calendar=True, weather=Weather(), drivers=Drivers(fields))
+            if args.drivers_wx:
+                models[f"timesfm_{days}d_cal_drvwx"] = TimesFM(
+                    **common, use_calendar=True, drivers=Drivers(fields, variant="_wx"))
             if args.perfect_drivers:
                 # Deliberately impossible: observed drivers, to measure a ceiling only.
                 models[f"timesfm_{days}d_cal_drv_PERFECT"] = TimesFM(
