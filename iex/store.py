@@ -11,8 +11,7 @@ non-commercial, so what gets published is our own forecast and our own error.
 import json
 from datetime import timedelta
 
-from iex.backtest import BLOCKS
-from iex.calibrate import COLUMNS
+from iex.constants import BLOCKS, COLUMNS
 
 # A forecast written within a few hours of its own cutoff was issued live. One
 # written long afterwards is a backfill: still leakage-free, because it is built

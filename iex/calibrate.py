@@ -9,9 +9,8 @@ from that quantile on days whose outcome was already known at the cutoff.
 import numpy as np
 import pandas as pd
 
-from iex.backtest import QUANTILE_LEVELS
+from iex.constants import COLUMNS, QUANTILE_LEVELS  # noqa: F401
 
-COLUMNS = [f"q{int(level * 100)}" for level in QUANTILE_LEVELS]
 MIN_CALIBRATION_DAYS = 30
 
 

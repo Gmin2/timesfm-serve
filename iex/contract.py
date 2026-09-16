@@ -8,9 +8,7 @@ from datetime import date
 
 from pydantic import AwareDatetime, BaseModel, Field, FiniteFloat
 
-from iex.backtest import BLOCKS
-
-CAP = 10_000.0
+from iex.constants import BLOCKS, CAP
 
 
 class PriceBlock(BaseModel):

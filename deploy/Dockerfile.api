@@ -10,6 +10,9 @@ FROM cgr.dev/chainguard/python@sha256:5a673ff2d9917725286c8ca258977b476638f74f15
 WORKDIR /app
 COPY --from=build /app/.venv /app/.venv
 COPY timesfm_serve ./timesfm_serve
+# The price half of the API. It reads stored forecasts only, so it brings no
+# numpy or pandas with it.
+COPY iex ./iex
 COPY migrations ./migrations
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:$PATH" PYTHONPATH=/app WEATHER_REPLAY_ROOT=/replays \

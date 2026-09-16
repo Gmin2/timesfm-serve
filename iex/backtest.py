@@ -9,8 +9,8 @@ is a raised exception rather than a silently better score.
 import numpy as np
 import pandas as pd
 
-BLOCKS = 96
-QUANTILE_LEVELS = tuple(level / 10 for level in range(1, 10))
+from iex.constants import BLOCKS, QUANTILE_LEVELS  # noqa: F401
+
 # Evaluation periods are fixed before any model runs. Tuning happens on
 # development only; test is scored once, and the September 2026 scarcity regime
 # is reported separately rather than tuned on.
