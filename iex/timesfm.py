@@ -39,14 +39,35 @@ class TimesFM:
     measuring rather than assuming either way.
     """
 
-    def __init__(self, context_days=28, log=False, symmetric=False, market="dam", cache_dir=None):
+    def __init__(self, context_days=28, log=False, symmetric=False, market="dam",
+                 cache_dir=None, use_calendar=False, use_bids=False):
         self.context_blocks = min(context_days * BLOCKS, MAX_CONTEXT)
-        self.context_days = context_days
+        self.context_days = min(context_days, MAX_CONTEXT // BLOCKS)
         self.log = log
         self.symmetric = symmetric
         self.market = market
         self.cache_dir = cache_dir
+        self.use_calendar = use_calendar
+        self.use_bids = use_bids
         self.quantiles = None
+
+    def _covariates(self, history):
+        """Future covariates span context plus horizon; past-only stop at the cutoff."""
+        from iex.covariates import future_calendar, past_bid_ratio
+
+        future = past = None
+        if self.use_calendar:
+            values = future_calendar(history, self.context_days)
+            future = np.vstack([values[name] for name in sorted(values)])
+            expected = self.context_blocks + BLOCKS
+            if future.shape[1] != expected:
+                raise ValueError(f"future covariates are {future.shape[1]} long, expected {expected}")
+        if self.use_bids:
+            ratio = past_bid_ratio(history, self.context_days, self.market)
+            if ratio.shape[0] != self.context_blocks:
+                raise ValueError(f"past covariates are {ratio.shape[0]} long, expected {self.context_blocks}")
+            past = ratio[None, :]
+        return future, past
 
     def __call__(self, history):
         model, _ = session(self.cache_dir)
@@ -54,8 +75,10 @@ class TimesFM:
         context = series[-self.context_blocks:]
         if self.log:
             context = np.log1p(context)
+        future, past = self._covariates(history)
         output = model.predict(
             context, horizon=BLOCKS, return_quantiles=True,
+            past_future_covariates=future, past_only_covariates=past,
             use_symmetric_averaging=self.symmetric, make_positive=not self.log,
         )
         forecast = np.asarray(output.forecast, dtype=float)
@@ -77,16 +100,23 @@ def main():
     parser.add_argument("--period", default="development", choices=sorted(PERIODS))
     parser.add_argument("--limit", type=int)
     parser.add_argument("--context-days", default="7,28,90,160")
-    parser.add_argument("--log", action="store_true", help="also run each context on log1p prices")
+    parser.add_argument("--log", action="store_true", help="forecast log1p prices")
+    parser.add_argument("--calendar", action="store_true", help="add calendar future covariates")
+    parser.add_argument("--bids", action="store_true", help="add the lagged bid ratio as a past covariate")
     parser.add_argument("--baselines", action="store_true", help="include the naive baselines")
     parser.add_argument("--out", default="results/iex")
     args = parser.parse_args()
 
     models = dict(BASELINES) if args.baselines else {"naive_yesterday": BASELINES["naive_yesterday"]}
     for days in (int(d) for d in args.context_days.split(",")):
-        models[f"timesfm_{days}d"] = TimesFM(context_days=days)
-        if args.log:
-            models[f"timesfm_{days}d_log"] = TimesFM(context_days=days, log=True)
+        common = {"context_days": days, "log": args.log}
+        models[f"timesfm_{days}d"] = TimesFM(**common)
+        if args.calendar:
+            models[f"timesfm_{days}d_cal"] = TimesFM(**common, use_calendar=True)
+        if args.bids:
+            models[f"timesfm_{days}d_bid"] = TimesFM(**common, use_bids=True)
+        if args.calendar and args.bids:
+            models[f"timesfm_{days}d_cal_bid"] = TimesFM(**common, use_calendar=True, use_bids=True)
 
     started = time.perf_counter()
     results = run(load(), models, period=args.period, limit=args.limit)
