@@ -71,7 +71,8 @@ run:
 | model | mae | vs headline |
 | --- | --- | --- |
 | calendar + perfect drivers, a ceiling nobody can reach | 535.9 | -6.4% |
-| calendar + drivers | 552.9 | **-3.4%** |
+| calendar + drivers, wind from wind-site wind speed | 548.6 | **-4.2%** |
+| calendar + drivers | 552.9 | -3.4% |
 | calendar + weather + drivers | 554.1 | -3.2% |
 | calendar + weather, the frozen headline | 572.4 | - |
 | copy yesterday | 668.0 | +16.7% |
@@ -83,8 +84,35 @@ better than drivers alone. demand, wind and solar are the channel weather uses t
 reach the price, so once you forecast them the temperature has nothing left to
 say. that also explains why the perfect-weather ceiling was worth nothing.
 
-**we get about half the ceiling.** perfect drivers are worth 6.4%, ours deliver
-3.4%. the missing half is wind, our weakest forecast at 22% error.
+**we got about half the ceiling, then went after the other half.** the gap was
+wind, at 22% error and barely better than copying yesterday. the cause was not the
+model, it was where we were measuring: the weather covariates sample eight demand
+centres, and we were giving east india 11% weight for wind, where wind generation
+is zero.
+
+weighting instead by grid-indias own regional wind generation over 678 days, and
+cubing wind speed per site because turbine power goes as v cubed, wind speed at
+the real wind sites correlates 0.956 with national wind generation against 0.370
+for the demand cities.
+
+```bash
+# wind speed at seven wind sites, weighted by where the generation actually is
+.venv/bin/python -m iex.weather --group wind --from 2024-11-01
+.venv/bin/python -m iex.driverforecast --from 2025-02-01 --weather
+```
+
+| wind forecast, two days ahead | mae | vs persistence |
+| --- | --- | --- |
+| from its own history | 2633.6 | 10.5% better |
+| with wind-site wind speed | **1665.2** | **43.4% better** |
+
+demand, solar and net demand come out bit identical, which is the control that the
+comparison is like for like.
+
+that 36.8% better wind forecast is worth **0.78%** on the price, p = 0.015, and it
+closes 25% of the remaining distance to the ceiling. the ratio is about 47 to 1,
+because wind is 12 GW in a 200 GW system. the driver channel is now nearly spent:
+12.7 mae of headroom left, and that is the impossible version.
 
 **it does not explain the gap to the best commercial forecast.** run on the exact
 88 day window pravah report a 498 mae over, drivers take us from 715.9 to 671.8,
@@ -96,6 +124,7 @@ thirds of the difference is neither weather nor generation nor demand.
 | --- | --- | --- |
 | better weather | perfect-weather ceiling | worth 0%, p = 0.21 |
 | generation and demand | perfect-driver ceiling | worth 6.4%, a third of the gap |
+| a better wind forecast | 37% better wind, measured | worth 0.78%, p = 0.015 |
 | the bid stack | not tested yet | where the rest has to be |
 
 the ceilings are the point. a negative result from a forecast you built could just
