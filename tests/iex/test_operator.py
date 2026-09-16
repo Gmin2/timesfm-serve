@@ -43,14 +43,26 @@ def test_refuses_a_letter_with_no_date():
 
 
 def test_refuses_a_letter_with_no_demand_row():
-    with pytest.raises(ValueError, match="no demand met row"):
+    with pytest.raises(ValueError, match="no demand row"):
         parse(LETTER.replace("Demand Met                3.3%            0.8%", ""),
               pd.Timestamp("2026-09-08"))
 
 
 def test_row_pattern_survives_a_tighter_layout():
-    assert ROW.search("Demand Met 12.5% 1.0%").groups() == ("12.5", "1.0")
+    assert ROW.search("Demand Met 12.5% 1.0%").groups() == ("Demand Met", "12.5", "1.0")
 
 
 def test_financial_years_cover_the_range():
     assert _years(pd.Timestamp("2025-02-01"), pd.Timestamp("2026-09-15")) == ["2024-25", "2025-26", "2026-27"]
+
+
+def test_reads_the_older_peak_demand_letter_and_says_so():
+    older = LETTER.replace("Demand Met                3.3%            0.8%",
+                           "Peak demand               0.8%            0.7%")
+    row = parse(older, pd.Timestamp("2026-09-08"))
+    assert row["measure"] == "peak_demand"
+    assert row["day_ahead_mape"] == 0.8
+
+
+def test_demand_met_is_labelled_as_the_comparable_measure():
+    assert parse(LETTER, pd.Timestamp("2026-09-08"))["measure"] == "demand_met"
