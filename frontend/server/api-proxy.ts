@@ -18,7 +18,10 @@ export function weatherApiProxy(): Plugin {
     if (req.method !== 'GET') return reply(405, { detail: 'method_not_allowed' })
     if (req.url === '/api/connection') return reply(200, { configured: !!key, origin: upstream.origin })
     const path = req.url.slice(4)
-    if (!/^\/v1\/weather\/stations(?:\/(42410099999|43128599999|43279099999)\/(latest|status))?$/.test(path)) {
+    const weather = /^\/v1\/weather\/stations(?:\/(42410099999|43128599999|43279099999)\/(latest|status))?$/
+    // read-only price routes: the latest issued day, one dated day, and the scorecard
+    const prices = /^\/v1\/iex\/(forecast\/(latest|\d{4}-\d{2}-\d{2})|scorecard(\?days=\d{1,3})?)$/
+    if (!weather.test(path) && !prices.test(path)) {
       return reply(404, { detail: 'route_not_found' })
     }
     if (!key) return reply(503, { detail: 'api_not_configured' })

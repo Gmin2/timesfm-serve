@@ -1,6 +1,10 @@
 import type { Mode, Zone } from './weather'
 
-export const PAGE_PATHS = { forecasts: '/forecasts', benchmarks: '/benchmarks', runs: '/runs', access: '/api-keys' } as const
+export const PAGE_PATHS = { forecasts: '/forecasts', benchmarks: '/benchmarks', runs: '/runs',
+  prices: '/prices', scorecard: '/prices/scorecard', access: '/api-keys' } as const
+// which top level section a page belongs to, for the breadcrumb and the sidebar
+export const SECTION = { forecasts: 'weather', benchmarks: 'weather', runs: 'weather',
+  prices: 'power', scorecard: 'power', access: 'developer' } as const
 export type Page = keyof typeof PAGE_PATHS
 
 export function legacyDestination(search: string): string {

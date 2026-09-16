@@ -67,8 +67,9 @@ def scorecard(days: int = Query(30, ge=1, le=365)):
         "live_only": card["live_only"],
         "days": [dict(row, delivery_date=row["delivery_date"].isoformat()) for row in card["days"]],
         "notice": ATTRIBUTION,
-        "how_to_read": ("summary covers every scored day. live_only covers the days whose "
-                        "forecast was written at its own 09:30 cutoff rather than backfilled "
-                        "later. Backfilled days use the same information cutoff and leak "
-                        "nothing, but they were not standing predictions."),
+        "how_to_read": ("The summary covers every scored day. The live figures cover only days "
+                        "whose forecast was written at its own 09:30 cutoff rather than filled in "
+                        "later. Backfilled days were built under the same information cutoff and "
+                        "leak nothing, but they were never standing predictions, so they are "
+                        "reported apart."),
     }

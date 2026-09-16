@@ -10,14 +10,21 @@ import { RunArchive } from '@/components/run-archive'
 import { ApiAccess, GithubLogo } from '@/components/api-access'
 import * as Icon from '@/components/icons'
 import { useSession } from '@/lib/account'
-import { forecastHref, legacyDestination, PAGE_PATHS, type Page } from '@/lib/navigation'
+import { forecastHref, legacyDestination, PAGE_PATHS, SECTION, type Page } from '@/lib/navigation'
+import { PricePanel } from '@/components/price-panel'
+import { PriceScorecard } from '@/components/price-scorecard'
+import type { PriceForecast, Scorecard } from '@/lib/prices'
 import { adaptLive, ApiError, dateLabel, getJson, timeLabel, type Catalog, type Forecast, type LiveStatus, type Mode, type Zone } from '@/lib/weather'
 
 // Storyboard: navigation changes fade the new view in over 180ms; plotted values never animate.
 const VIEW_MOTION = { offset: 4, duration: 0.18, ease: [0.2, 0, 0, 1] as const }
 const NAV = [{ id: 'forecasts', label: 'Forecasts', icon: Icon.ChartLine }, { id: 'benchmarks', label: 'Benchmarks', icon: Icon.Flask },
   { id: 'runs', label: 'Run archive', icon: Icon.Clock }] as const
-const LABELS: Record<Page, string> = { forecasts: 'Forecasts', benchmarks: 'Benchmarks', runs: 'Run archive', access: 'API keys' }
+const PRICE_NAV = [{ id: 'prices', label: 'Day ahead', icon: Icon.Bolt },
+  { id: 'scorecard', label: 'Track record', icon: Icon.Gauge }] as const
+const LABELS: Record<Page, string> = { forecasts: 'Forecasts', benchmarks: 'Benchmarks', runs: 'Run archive',
+  prices: 'Day ahead', scorecard: 'Track record', access: 'API keys' }
+const SECTION_LABEL = { weather: 'Weather', power: 'Power prices', developer: 'Developer' } as const
 const STATION_TINTS = ['#386aff', '#ff6802', '#16a34a']
 const DOCS_URL = 'https://88novucbtj.execute-api.us-east-1.amazonaws.com/docs'
 
@@ -68,6 +75,15 @@ function Workspace({ view }: { view: Page | 'not-found' }) {
     const timer = window.setTimeout(() => setExpiredId(data.id), Math.max(0, Date.parse(data.freshUntil!) - Date.now()) + 1)
     return () => window.clearTimeout(timer)
   }, [live, forecast.data])
+  const priceDay = params.get('day') || ''
+  const priceQuery = useQuery({
+    queryKey: ['price', priceDay || 'latest'], enabled: view === 'prices',
+    queryFn: ({ signal }) => getJson<PriceForecast>('/api/v1/iex/forecast/' + (priceDay || 'latest'), signal),
+  })
+  const scorecardQuery = useQuery({
+    queryKey: ['scorecard'], enabled: view === 'scorecard',
+    queryFn: ({ signal }) => getJson<Scorecard>('/api/v1/iex/scorecard?days=90', signal),
+  })
   const label = view === 'not-found' ? 'Page not found' : LABELS[view]
   useEffect(() => {
     window.document.title = `${label} | Forecast Lab`
@@ -87,6 +103,7 @@ function Workspace({ view }: { view: Page | 'not-found' }) {
   const error = forecast.error
   const document = !error && forecast.data && (!live || forecast.data.id !== expiredId) ? forecast.data : undefined
   const user = session.data?.user
+  const section = view === 'not-found' ? 'weather' : SECTION[view]
   const modeTabs = <Tabs value={mode} onValueChange={value => filter('mode', value === 'experimental_live' ? 'live' : undefined)} className="mode-tabs">
     <TabsList><TabsTab value="historical_replay"><Icon.Database size={13} />Historical</TabsTab><TabsTab value="experimental_live"><Icon.Signal size={13} />Live</TabsTab></TabsList>
   </Tabs>
@@ -104,6 +121,10 @@ function Workspace({ view }: { view: Page | 'not-found' }) {
           <span className="station-tile" style={{ background: STATION_TINTS[i % STATION_TINTS.length] }}>{s.name[0]}</span><span>{s.name}</span><small>{s.icao}</small>
         </Link>)}
       </div>}
+      <div className="nav-group"><span className="nav-label">Power prices</span>
+        {PRICE_NAV.map(item => <Link key={item.id} to={PAGE_PATHS[item.id]} aria-current={view === item.id ? 'page' : undefined}>
+          <item.icon /><span>{item.label}</span></Link>)}
+      </div>
       <div className="nav-group"><span className="nav-label">Developer</span>
         <Link to="/api-keys" aria-current={view === 'access' && hash !== '#playground' ? 'page' : undefined}><Icon.Key /><span>API keys</span></Link>
         <Link to="/api-keys#playground" aria-current={view === 'access' && hash === '#playground' ? 'page' : undefined}><Icon.Terminal /><span>Playground</span></Link>
@@ -117,16 +138,45 @@ function Workspace({ view }: { view: Page | 'not-found' }) {
     </aside>
     <div className="main-shell">
       <header className="topbar">
-        <div className="crumbs"><Icon.Cloud size={15} /><span>Weather</span><span className="crumb-sep">/</span><strong>{label}</strong></div>
+        <div className="crumbs">{section === 'power' ? <Icon.Bolt size={15} /> : <Icon.Cloud size={15} />}
+          <span>{SECTION_LABEL[section]}</span><span className="crumb-sep">/</span><strong>{label}</strong></div>
         <div className="topbar-actions">
-          <div className="segmented" role="group" aria-label="Display timezone">{(['Asia/Kolkata', 'UTC'] as Zone[]).map(z =>
-            <button key={z} aria-pressed={zone === z} onClick={() => filter('zone', z === 'UTC' ? 'UTC' : undefined)}>{z === 'UTC' ? 'UTC' : 'IST'}</button>)}</div>
+          {section === 'weather' && <div className="segmented" role="group" aria-label="Display timezone">{(['Asia/Kolkata', 'UTC'] as Zone[]).map(z =>
+            <button key={z} aria-pressed={zone === z} onClick={() => filter('zone', z === 'UTC' ? 'UTC' : undefined)}>{z === 'UTC' ? 'UTC' : 'IST'}</button>)}</div>}
           <Button className="topbar-account" size="sm" variant="outline" asChild><Link to="/api-keys"><GithubLogo /><span>{user ? '@' + user.login : 'Sign in'}</span></Link></Button>
         </div>
       </header>
       <main id="main" className={'main-content' + (view === 'runs' ? ' flush' : '')} tabIndex={-1}>
         {view === 'not-found' ? <div className="empty-state"><h1>Page not found</h1><Button variant="outline" asChild><Link to="/forecasts">Back to forecasts</Link></Button></div> :
-          view === 'access' ? <ApiAccess loginError={params.get('auth_error')} /> : catalogQuery.isError ? <State title="Could not load the experiment archive" detail="The saved dataset is unavailable." onRetry={() => catalogQuery.refetch()} /> :
+          view === 'access' ? <ApiAccess loginError={params.get('auth_error')} /> :
+          view === 'prices' || view === 'scorecard' ? <motion.div key={view}
+            initial={{ opacity: reducedMotion ? 1 : 0, y: reducedMotion ? 0 : VIEW_MOTION.offset }}
+            animate={{ opacity: 1, y: 0 }} transition={{ duration: reducedMotion ? 0 : VIEW_MOTION.duration, ease: VIEW_MOTION.ease }}>
+            <div className="page-head">
+              <span className="page-tile"><Icon.Bolt size={18} /></span>
+              <div className="page-title"><h1>{view === 'prices' ? 'Indian Energy Exchange' : 'Track record'}</h1>
+                <span className="badge">DAM</span></div>
+              <p>{view === 'prices'
+                ? 'Day-ahead market clearing price, 96 blocks of 15 minutes, forecast before bidding opens at 10:00 IST.'
+                : 'Every forecast scored against what the market actually cleared, once the day settled.'}</p>
+              <div className="page-actions">
+                <Button size="icon" variant="outline" title="Refresh" aria-label="Refresh"
+                  disabled={priceQuery.isFetching || scorecardQuery.isFetching}
+                  onClick={() => { void (view === 'prices' ? priceQuery.refetch() : scorecardQuery.refetch()) }}>
+                  <Icon.Refresh className={priceQuery.isFetching || scorecardQuery.isFetching ? 'spin' : ''} /></Button>
+              </div>
+            </div>
+            {view === 'prices'
+              ? priceQuery.isPending ? <Loading />
+                : priceQuery.data ? <PricePanel document={priceQuery.data} />
+                : <State title="No forecast on record" detail="Nothing has been issued for this delivery day yet."
+                    code={priceQuery.error instanceof ApiError ? priceQuery.error.detail : undefined}
+                    onRetry={() => { void priceQuery.refetch() }} />
+              : scorecardQuery.isPending ? <Loading />
+                : scorecardQuery.data ? <PriceScorecard card={scorecardQuery.data} />
+                : <State title="Could not load the track record" detail="The scorecard is unavailable."
+                    onRetry={() => { void scorecardQuery.refetch() }} />}
+          </motion.div> : catalogQuery.isError ? <State title="Could not load the experiment archive" detail="The saved dataset is unavailable." onRetry={() => catalogQuery.refetch()} /> :
           !catalog || !station ? <Loading /> :
           <motion.div key={view} initial={{ opacity: reducedMotion ? 1 : 0, y: reducedMotion ? 0 : VIEW_MOTION.offset }}
             animate={{ opacity: 1, y: 0 }} transition={{ duration: reducedMotion ? 0 : VIEW_MOTION.duration, ease: VIEW_MOTION.ease }}>
