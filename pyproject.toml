@@ -62,6 +62,8 @@ weather-api = [
     "prometheus-client>=0.26.0",
 ]
 dev = [
+    "openpyxl>=3.1.5",
+    "pyarrow>=25.0.1",
     "pytest>=9.1.1",
     "ruff>=0.16.5",
 ]
