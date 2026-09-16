@@ -86,10 +86,22 @@ say. that also explains why the perfect-weather ceiling was worth nothing.
 **we get about half the ceiling.** perfect drivers are worth 6.4%, ours deliver
 3.4%. the missing half is wind, our weakest forecast at 22% error.
 
-**it does not explain the gap to the best commercial forecast**, which is 29%
-ahead of us. drivers buy 3.4% and perfect drivers buy 6.4%, so the answer is not
-hiding in the driver layer, and the ceiling is what makes that a measurement
-rather than a guess.
+**it does not explain the gap to the best commercial forecast.** run on the exact
+88 day window pravah report a 498 mae over, drivers take us from 715.9 to 671.8,
+worth 6.2% here rather than 3.4%, because drivers matter most when the grid is
+tight. but that closes only 15% of their lead, and perfect drivers close 35%. two
+thirds of the difference is neither weather nor generation nor demand.
+
+| explanation | how it was tested | verdict |
+| --- | --- | --- |
+| better weather | perfect-weather ceiling | worth 0%, p = 0.21 |
+| generation and demand | perfect-driver ceiling | worth 6.4%, a third of the gap |
+| the bid stack | not tested yet | where the rest has to be |
+
+the ceilings are the point. a negative result from a forecast you built could just
+mean your forecast is bad. a negative result from the perfect version of that
+input is a statement about the input. (their 498 is read off a public page for a
+window they chose, so treat that row as indicative, not controlled.)
 
 ### a demand forecast that ties the system operator
 
