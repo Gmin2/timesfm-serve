@@ -47,6 +47,64 @@ copy agrees on 672 of 672 DAM blocks in a sample week.
 data lives in `data/iex/`, gitignored: the IEX terms allow personal,
 non-commercial use, so raw prices stay local and only results get published.
 
+### what actually drives the price
+
+price follows what the grid has to cover: demand, minus whatever wind and solar
+turn up for free. grid-india publishes all three at the same 15 minutes the
+exchange settles on, in the daily PSP report, from nov 2024.
+
+```bash
+# demand, wind, solar at 96 blocks a day
+.venv/bin/python -m iex.drivers --from 2024-11-04
+
+# forecast them two days out, which is as close as the cutoff allows
+.venv/bin/python -m iex.driverforecast --from 2025-02-01
+```
+
+the PSP report for a day is published the morning after, so at the 09:30 cutoff
+the newest one covers D-2, not D-1. the delivery day is two days out, so D-1 and
+D both have to be forecast, and both halves come from one 192 block run.
+
+on 483 sealed days, against the frozen headline, every model declared before the
+run:
+
+| model | mae | vs headline |
+| --- | --- | --- |
+| calendar + perfect drivers, a ceiling nobody can reach | 535.9 | -6.4% |
+| calendar + drivers | 552.9 | **-3.4%** |
+| calendar + weather + drivers | 554.1 | -3.2% |
+| calendar + weather, the frozen headline | 572.4 | - |
+| copy yesterday | 668.0 | +16.7% |
+
+drivers beat the headline at p = 0.001. three things come out of it.
+
+**drivers replace weather, they do not add to it.** weather plus drivers is no
+better than drivers alone. demand, wind and solar are the channel weather uses to
+reach the price, so once you forecast them the temperature has nothing left to
+say. that also explains why the perfect-weather ceiling was worth nothing.
+
+**we get about half the ceiling.** perfect drivers are worth 6.4%, ours deliver
+3.4%. the missing half is wind, our weakest forecast at 22% error.
+
+**it does not explain the gap to the best commercial forecast**, which is 29%
+ahead of us. drivers buy 3.4% and perfect drivers buy 6.4%, so the answer is not
+hiding in the driver layer, and the ceiling is what makes that a measurement
+rather than a guess.
+
+### a demand forecast that ties the system operator
+
+grid-india publishes its own day-ahead demand error every day under IEGC 31.2(i),
+which makes a rare like-for-like benchmark. 211 days, jan to sep 2026:
+
+| forecaster | day-ahead mape |
+| --- | --- |
+| grid-india, who run the dispatch | 2.53% |
+| ours, timesfm zero-shot | 2.50% |
+
+a tie, and their figures are rounded to a tenth of a point so nobody wins. the
+interesting part is the handicap: theirs is issued with live telemetry, ours is
+issued a day further out from their own published actuals, with nothing trained.
+
 ## weather (prior work)
 
 [dashboard](https://timesfms.vercel.app) ·
