@@ -40,7 +40,7 @@ class TimesFM:
     """
 
     def __init__(self, context_days=28, log=False, symmetric=False, market="dam",
-                 cache_dir=None, use_calendar=False, use_bids=False, weather=None):
+                 cache_dir=None, use_calendar=False, use_bids=False, weather=None, drivers=None):
         self.context_blocks = min(context_days * BLOCKS, MAX_CONTEXT)
         self.context_days = min(context_days, MAX_CONTEXT // BLOCKS)
         self.log = log
@@ -49,7 +49,8 @@ class TimesFM:
         self.cache_dir = cache_dir
         self.use_calendar = use_calendar
         self.use_bids = use_bids
-        self.weather = weather
+        # Each provider returns named rows spanning context plus the delivery day.
+        self.covariates = tuple(p for p in (weather, drivers) if p is not None)
         self.quantiles = None
 
     def _covariates(self, history):
@@ -59,8 +60,8 @@ class TimesFM:
         rows, past = {}, None
         if self.use_calendar:
             rows |= future_calendar(history, self.context_days)
-        if self.weather is not None:
-            rows |= self.weather(history, self.context_days)
+        for provider in self.covariates:
+            rows |= provider(history, self.context_days)
         future = None
         if rows:
             future = np.vstack([rows[name] for name in sorted(rows)])
@@ -99,10 +100,10 @@ def main():
     import time
     from pathlib import Path
 
-    from iex.backtest import BASELINES, PERIODS, daily_losses, diebold_mariano, load, run, score
+    from iex.backtest import BASELINES, SPANS, daily_losses, diebold_mariano, load, run, score
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--period", default="development", choices=sorted(PERIODS))
+    parser.add_argument("--period", default="development", choices=sorted(SPANS))
     parser.add_argument("--limit", type=int)
     parser.add_argument("--first-day", help="start the period later, for inputs with a short history")
     parser.add_argument("--context-days", default="7,28,90,160")
@@ -112,7 +113,14 @@ def main():
     parser.add_argument("--weather", action="store_true", help="add weather forecasts issued two days ahead")
     parser.add_argument("--perfect-weather", action="store_true",
                         help="also run observed weather, a ceiling no forecaster could reach")
+    parser.add_argument("--drivers", action="store_true",
+                        help="add demand, wind and solar forecast two days ahead from the PSP report")
+    parser.add_argument("--driver-fields", default="demand,wind,solar")
+    parser.add_argument("--perfect-drivers", action="store_true",
+                        help="also run observed drivers, a ceiling no forecaster could reach")
     parser.add_argument("--baselines", action="store_true", help="include the naive baselines")
+    parser.add_argument("--only", help="run exactly these models, comma separated, and fail if one is missing")
+    parser.add_argument("--against", default="naive_yesterday", help="model the significance test compares to")
     parser.add_argument("--out", default="results/iex")
     args = parser.parse_args()
 
@@ -135,9 +143,43 @@ def main():
                 # Deliberately impossible: observed weather, to measure a ceiling only.
                 models[f"timesfm_{days}d_cal_wx_PERFECT"] = TimesFM(
                     **common, use_calendar=True, weather=Weather(actual=True))
+        if args.drivers:
+            from iex.driverforecast import Drivers
+
+            fields = tuple(args.driver_fields.split(","))
+            models[f"timesfm_{days}d_cal_drv"] = TimesFM(
+                **common, use_calendar=True, drivers=Drivers(fields))
+            if args.weather:
+                from iex.weather import Weather
+
+                models[f"timesfm_{days}d_cal_wx_drv"] = TimesFM(
+                    **common, use_calendar=True, weather=Weather(), drivers=Drivers(fields))
+            if args.perfect_drivers:
+                # Deliberately impossible: observed drivers, to measure a ceiling only.
+                models[f"timesfm_{days}d_cal_drv_PERFECT"] = TimesFM(
+                    **common, use_calendar=True, drivers=Drivers(fields, actual=True))
+
+    if args.only:
+        wanted = [name.strip() for name in args.only.split(",")]
+        unknown = [name for name in wanted if name not in models]
+        if unknown:
+            raise SystemExit(f"no such model: {unknown}; have {sorted(models)}")
+        models = {name: models[name] for name in wanted}
+
+    table = load()
+    only = None
+    providers = [p for m in models.values() for p in getattr(m, "covariates", ()) if hasattr(p, "scorable")]
+    if providers:
+        # One model short of an input shrinks the scored set for every model, so
+        # the comparison stays like for like.
+        candidates = set(table["delivery_date"].unique())
+        for provider in providers:
+            candidates &= provider.scorable(candidates)
+        only = candidates
 
     started = time.perf_counter()
-    results = run(load(), models, period=args.period, limit=args.limit, first_day=args.first_day)
+    results = run(table, models, period=args.period, limit=args.limit, first_day=args.first_day,
+                  only_days=only)
     elapsed = time.perf_counter() - started
 
     board = score(results)
@@ -146,12 +188,13 @@ def main():
     print(f"{args.period}: {days_scored} days, {len(models)} models on {device}, {elapsed / 60:.1f} min\n")
     print(board[["days", "mae", "rmse", "bias", "mae_normal", "mae_at_cap", "rmae"]].round(1).to_string())
     losses = daily_losses(results)
-    print("\nDiebold-Mariano against naive_yesterday:")
+    reference = args.against if args.against in board.index else board.index[-1]
+    print(f"\nDiebold-Mariano against {reference}:")
     for model in board.index:
-        if model == "naive_yesterday":
+        if model == reference:
             continue
-        verdict = diebold_mariano(losses, model, "naive_yesterday")
-        print(f"  {model:22} {'better' if verdict['better'] else 'worse':6}  p = {verdict['p_value']:.4f}")
+        verdict = diebold_mariano(losses, model, reference)
+        print(f"  {model:28} {'better' if verdict['better'] else 'worse':6}  p = {verdict['p_value']:.6f}")
 
     directory = Path(args.out)
     directory.mkdir(parents=True, exist_ok=True)

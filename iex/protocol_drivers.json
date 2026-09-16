@@ -1,0 +1,42 @@
+{
+  "frozen_at": "2026-09-16",
+  "note": "Written before any driver model was scored on the test period. The first protocol says no retuning after test is run, so this experiment is declared in advance instead: the models, the metric and the reading of every outcome are fixed below, and the result is reported whichever way it falls.",
+  "question": "Pravah's Pachira price forecast beats ours by 29% on the same 91 days. Our perfect-weather ceiling showed observed weather is worth 0% over forecast weather, so the gap cannot be weather. Their published papers contain no generation, demand or price model, so their Drivers panel is undocumented. Does forecasting demand, wind and solar ourselves and feeding them to the price model close the gap?",
+  "driver_data": {
+    "source": "Grid-India daily PSP report, TimeSeries sheet, 96 blocks of 15 minutes",
+    "fields": ["demand", "wind", "solar"],
+    "available_from": "2024-11-04, the first report carrying the sheet",
+    "published_at": "early on the morning after delivery, so at the 09:30 cutoff on D-1 the newest report covers D-2",
+    "integrity": "a day is dropped unless net demand equals demand minus wind minus solar to within 500 MW and no block is physically impossible",
+    "gaps": "missing or dropped days are interpolated from good days at or before the cutoff, never from later ones"
+  },
+  "driver_forecast": {
+    "model": "google/timesfm-3.0-pytorch",
+    "revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+    "training": "none, zero-shot",
+    "context_days": 90,
+    "horizon": "192 blocks, two whole days, issued once per delivery day at the cutoff",
+    "why_two_days": "the delivery day is two days past the newest PSP report, so D-1 and D both have to be forecast, and both halves come from one information set",
+    "scored_against": "copying the last day known at the cutoff"
+  },
+  "models_to_run_on_test": [
+    "naive_yesterday",
+    "timesfm_90d_cal_wx",
+    "timesfm_90d_cal_drv",
+    "timesfm_90d_cal_wx_drv",
+    "timesfm_90d_cal_drv_PERFECT"
+  ],
+  "primary_metric": "MAE over the delivery days all five models can score",
+  "significance": "Diebold-Mariano with HAC variance against timesfm_90d_cal_wx, the frozen headline",
+  "outcomes_declared_in_advance": {
+    "drivers_help": "timesfm_90d_cal_wx_drv beats timesfm_90d_cal_wx at p < 0.05. Report the size, and how much of the 29% gap to Pachira it closes.",
+    "drivers_do_not_help": "no significant improvement. Report it as a negative result with the perfect-driver ceiling next to it, because a ceiling near zero would mean driver information is not what separates the two forecasts.",
+    "ceiling_is_high_but_our_forecast_misses_it": "timesfm_90d_cal_drv_PERFECT beats the headline clearly while timesfm_90d_cal_wx_drv does not. Then the driver layer is worth having and the limit is our own driver forecast, not the idea, and the wind forecast is the place to look first."
+  },
+  "rules": [
+    "the test period is run once with exactly the models listed above",
+    "the PERFECT run uses observed drivers no forecaster could have had, is labelled a ceiling everywhere, and is never quoted as a result",
+    "no model, covariate or context length is changed after test numbers are seen",
+    "if the result is negative it is published as prominently as a positive one"
+  ]
+}

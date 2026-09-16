@@ -19,6 +19,17 @@ PERIODS = {
     "test": (pd.Timestamp("2025-04-01"), pd.Timestamp("2026-08-31")),
     "stress": (pd.Timestamp("2026-09-01"), pd.Timestamp("2026-09-15")),
 }
+# Windows cut out of the periods above to line up with a number someone else has
+# published. They deliberately overlap, so they are kept apart from the periods
+# whose whole point is that they do not.
+REPORT_WINDOWS = {
+    # The window Pravah's Pachira page reports a 483 Rs/MWh average over, so our
+    # models can be scored on exactly the same days.
+    "pachira_window": (pd.Timestamp("2026-08-19"), pd.Timestamp("2026-09-15")),
+    # The three-month window Pachira reports a 498 Rs/MWh average over.
+    "pachira_quarter": (pd.Timestamp("2026-06-17"), pd.Timestamp("2026-09-15")),
+}
+SPANS = PERIODS | REPORT_WINDOWS
 
 
 class LeakageError(AssertionError):
@@ -70,17 +81,22 @@ def climatology(history, days=28):
 
 
 def run(table, forecasters, period="development", markets=("dam",), cap=10_000.0, limit=None,
-        first_day=None):
+        first_day=None, only_days=None):
     """Replay every delivery day in a period, one forecast per day per model.
 
     `first_day` starts later than the period normally would, for comparisons whose
-    inputs do not reach back far enough. Every model is scored on the same days.
+    inputs do not reach back far enough. `only_days` narrows further, to the days
+    every model in the comparison can serve. Both exist so that one model missing
+    an input shrinks the scored set for all of them rather than just for itself.
     """
-    first, last = PERIODS[period]
+    first, last = SPANS[period]
     if first_day is not None:
         first = max(first, pd.Timestamp(first_day))
     table = table[table["market"].isin(markets)]
     days = sorted(d for d in table["delivery_date"].unique() if first <= pd.Timestamp(d) <= last)
+    if only_days is not None:
+        allowed = {pd.Timestamp(d) for d in only_days}
+        days = [d for d in days if pd.Timestamp(d) in allowed]
     if limit:
         days = days[:limit]
     truth = table[table["market"] == "dam"].pivot_table(index="delivery_date", columns="block", values="price")
