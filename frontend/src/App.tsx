@@ -139,7 +139,8 @@ function Workspace({ view }: { view: Page | 'not-found' }) {
     </aside>
     <div className="main-shell">
       <header className="topbar">
-        <div className="crumbs">{section === 'power' ? <Icon.Bolt size={15} /> : <Icon.Cloud size={15} />}
+        <div className="crumbs">{section === 'power' ? <Icon.Bolt size={15} />
+          : section === 'developer' ? <Icon.Key size={15} /> : <Icon.Cloud size={15} />}
           <span>{SECTION_LABEL[section]}</span><span className="crumb-sep">/</span><strong>{label}</strong></div>
         <div className="topbar-actions">
           {section === 'weather' && <div className="segmented" role="group" aria-label="Display timezone">{(['Asia/Kolkata', 'UTC'] as Zone[]).map(z =>

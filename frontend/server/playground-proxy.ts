@@ -1,7 +1,12 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Plugin } from 'vite'
 
-const READ_PATH = /^\/v1\/weather\/(?:stations(?:\/(?:42410099999|43128599999|43279099999)\/(?:latest|status))?|replays)$/
+const READ_PATH = new RegExp('^(?:' + [
+  // weather: the station list, one station's latest or status, the replay catalog
+  '\\/v1\\/weather\\/(?:stations(?:\\/(?:42410099999|43128599999|43279099999)\\/(?:latest|status))?|replays)',
+  // power prices: the latest issued day, one dated day, the scorecard, the model list
+  '\\/v1\\/iex\\/(?:forecast\\/(?:latest|\\d{4}-\\d{2}-\\d{2})|scorecard|models)',
+].join('|') + ')$')
 const RESPONSE_HEADERS = ['content-type', 'x-request-id', 'x-ratelimit-limit', 'x-ratelimit-remaining', 'x-ratelimit-reset', 'retry-after']
 const MAX_RESPONSE_BYTES = 1024 * 1024
 

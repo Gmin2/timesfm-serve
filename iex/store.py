@@ -132,3 +132,12 @@ def settled_results(connection, before, model):
         frame["model"] = model
         frames.append(frame)
     return pd.concat(frames, ignore_index=True)
+
+
+def models(connection):
+    """Every model with forecasts on record, newest activity first."""
+    rows = connection.execute(
+        "select model, count(*), min(delivery_date), max(delivery_date), max(revision)"
+        " from iex_forecasts group by model order by max(delivery_date) desc").fetchall()
+    return [{"name": r[0], "delivery_days": r[1], "first_delivery_date": r[2],
+             "last_delivery_date": r[3], "revision": r[4]} for r in rows]

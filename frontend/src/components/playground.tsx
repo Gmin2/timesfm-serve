@@ -2,22 +2,33 @@ import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { CopyButton } from '@/components/copy-button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTab } from '@/components/ui/tabs'
 import * as Icon from './icons'
 import { requestExample } from '@/lib/account'
 import { downloadJson, getJson } from '@/lib/weather'
 
-const ENDPOINTS = [{ id: 'stations', label: 'List stations' }, { id: 'latest', label: 'Latest forecast' },
-  { id: 'status', label: 'Station status' }, { id: 'replays', label: 'Replay catalog' }] as const
+// grouped so the two applications are distinguishable in one picker
+const ENDPOINTS = [
+  { id: 'iex-latest', group: 'Power prices', label: 'Latest day-ahead forecast', path: () => '/v1/iex/forecast/latest' },
+  { id: 'iex-day', group: 'Power prices', label: 'Forecast for one day', path: (day: string) => '/v1/iex/forecast/' + day },
+  { id: 'iex-scorecard', group: 'Power prices', label: 'Track record', path: () => '/v1/iex/scorecard' },
+  { id: 'iex-models', group: 'Power prices', label: 'Models on record', path: () => '/v1/iex/models' },
+  { id: 'stations', group: 'Weather', label: 'List stations', path: () => '/v1/weather/stations' },
+  { id: 'latest', group: 'Weather', label: 'Latest forecast', path: (s: string) => `/v1/weather/stations/${s}/latest` },
+  { id: 'status', group: 'Weather', label: 'Station status', path: (s: string) => `/v1/weather/stations/${s}/status` },
+  { id: 'replays', group: 'Weather', label: 'Replay catalog', path: () => '/v1/weather/replays' },
+] as const
+const GROUPS = ['Power prices', 'Weather'] as const
 const STATIONS = [{ id: '42410099999', name: 'Guwahati' }, { id: '43128599999', name: 'Hyderabad' }, { id: '43279099999', name: 'Chennai' }]
 const HEADERS = ['content-type', 'x-request-id', 'x-ratelimit-limit', 'x-ratelimit-remaining', 'x-ratelimit-reset', 'retry-after']
 type Result = { status: number; statusText: string; elapsed: number; bytes: number; text: string; body: unknown; headers: [string, string][]; path: string }
 
 export function Playground() {
   const connection = useQuery({ queryKey: ['playground-connection'], queryFn: ({ signal }) => getJson<{ origin: string }>('/api/playground/connection', signal) })
-  const [endpoint, setEndpoint] = useState<string>('stations')
+  const [endpoint, setEndpoint] = useState<string>('iex-latest')
   const [station, setStation] = useState('42410099999')
+  const [day, setDay] = useState('')
   const [key, setKey] = useState('')
   const [visible, setVisible] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -26,8 +37,13 @@ export function Playground() {
   const [tab, setTab] = useState('body')
   const [language, setLanguage] = useState<'curl' | 'python'>('curl')
   const active = useRef<AbortController | null>(null)
+  const chosen = ENDPOINTS.find(item => item.id === endpoint) ?? ENDPOINTS[0]
   const stationEndpoint = endpoint === 'latest' || endpoint === 'status'
-  const path = stationEndpoint ? `/v1/weather/stations/${station}/${endpoint}` : `/v1/weather/${endpoint}`
+  const dayEndpoint = endpoint === 'iex-day'
+  // a dated forecast needs a day; until one is typed, show the latest instead
+  const path = dayEndpoint
+    ? (/^\d{4}-\d{2}-\d{2}$/.test(day) ? chosen.path(day) : '/v1/iex/forecast/latest')
+    : chosen.path(station)
   const validKey = /^tfm_[A-Za-z0-9_-]{32}$/.test(key.trim())
   const example = requestExample(language, connection.data?.origin || '', path)
   useEffect(() => () => { active.current?.abort(); active.current = null }, [])
@@ -72,8 +88,14 @@ export function Playground() {
         <h3>Request</h3>
         <label htmlFor="playground-endpoint">Endpoint</label>
         <Select value={endpoint} onValueChange={setEndpoint} disabled={busy}><SelectTrigger id="playground-endpoint" aria-label="Endpoint"><SelectValue /></SelectTrigger><SelectContent>
-          {ENDPOINTS.map(item => <SelectItem key={item.id} value={item.id}>{item.label}</SelectItem>)}
+          {GROUPS.map(group => <SelectGroup key={group}><SelectLabel>{group}</SelectLabel>
+            {ENDPOINTS.filter(item => item.group === group).map(item =>
+              <SelectItem key={item.id} value={item.id}>{item.label}</SelectItem>)}
+          </SelectGroup>)}
         </SelectContent></Select>
+        {dayEndpoint && <><label htmlFor="playground-day">Delivery day</label>
+          <input id="playground-day" className="bare playground-day" type="date" value={day}
+            onChange={event => setDay(event.target.value)} disabled={busy} /></>}
         {stationEndpoint && <><label htmlFor="playground-station">Station</label><Select value={station} onValueChange={setStation} disabled={busy}><SelectTrigger id="playground-station" aria-label="Station"><SelectValue /></SelectTrigger><SelectContent>
           {STATIONS.map(item => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}
         </SelectContent></Select></>}
@@ -91,7 +113,7 @@ export function Playground() {
         <div className="playground-request-line"><span>GET</span><code>{result?.path || path}</code></div>
         <div className="playground-response-toolbar"><Tabs value={tab} onValueChange={value => setTab(value as string)}><TabsList variant="underline" indicatorClassName="bg-foreground! h-0.5!"><TabsTab value="body">Response</TabsTab><TabsTab value="headers">Headers</TabsTab></TabsList></Tabs>
           {result && <div><CopyButton value={tab === 'headers' ? result.headers.map(([key, value]) => key + ': ' + value).join('\n') : result.text} label="Copy response" />
-            <Button size="icon" variant="ghost" title="Download response" aria-label="Download response" onClick={() => downloadJson(result.body, 'weather-response.json')}><Icon.Download /></Button>
+            <Button size="icon" variant="ghost" title="Download response" aria-label="Download response" onClick={() => downloadJson(result.body, (endpoint.startsWith('iex-') ? 'iex' : 'weather') + '-response.json')}><Icon.Download /></Button>
             <Button size="icon" variant="ghost" title="Clear response" aria-label="Clear response" onClick={() => setResult(null)}><Icon.Close /></Button></div>}</div>
         {busy ? <div className="playground-empty" role="status"><Icon.Refresh size={20} className="spin" /><span>Waiting for the API...</span></div> : error ?
           <div className="playground-empty" role="status"><Icon.Warning size={20} /><span>{error}</span></div> : !result ?
@@ -109,6 +131,9 @@ export function Playground() {
         <button aria-pressed={language === 'python'} onClick={() => setLanguage('python')}><Icon.FileJson size={13} />Python</button>
         <CopyButton value={example} label="Copy request code" /></div>
       <pre className="request-code"><code>{example}</code></pre></div></section>}
-    <dl className="api-contract"><div><dt>Authentication</dt><dd><code>x-api-key</code></dd></div><div><dt>Temperature</dt><dd>Celsius</dd></div><div><dt>Freshness</dt><dd>503 when unavailable or stale</dd></div></dl>
+    <dl className="api-contract"><div><dt>Authentication</dt><dd><code>x-api-key</code></dd></div>
+      <div><dt>Prices</dt><dd>Rupees per MWh, 96 blocks</dd></div>
+      <div><dt>Temperature</dt><dd>Celsius</dd></div>
+      <div><dt>Freshness</dt><dd>503 when unavailable or stale</dd></div></dl>
   </section>
 }
