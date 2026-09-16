@@ -1,4 +1,4 @@
-FROM cgr.dev/chainguard/python@sha256:aa89119db7f7fb4a6628ac82e2c38404cc64cd56ccd858d2c78646776b3fffef AS build
+FROM cgr.dev/chainguard/python@sha256:51274932070a8fb2fd984e708986da133e52996de20a36a7a30e77986aade140 AS build
 USER root
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 WORKDIR /app
@@ -6,7 +6,7 @@ COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --only-group weather-api --no-install-project --python /usr/bin/python
 
-FROM cgr.dev/chainguard/python@sha256:115532a106aff6e820cd637809edd0c9239f2269d46fb9937cac703cc4d101e5
+FROM cgr.dev/chainguard/python@sha256:5a673ff2d9917725286c8ca258977b476638f74f1556290cb316ec037ee6e199
 WORKDIR /app
 COPY --from=build /app/.venv /app/.venv
 COPY timesfm_serve ./timesfm_serve
