@@ -47,12 +47,179 @@ copy agrees on 672 of 672 DAM blocks in a sample week.
 data lives in `data/iex/`, gitignored: the IEX terms allow personal,
 non-commercial use, so raw prices stay local and only results get published.
 
+### what actually drives the price
+
+price follows what the grid has to cover: demand, minus whatever wind and solar
+turn up for free. grid-india publishes all three at the same 15 minutes the
+exchange settles on, in the daily PSP report, from nov 2024.
+
+```bash
+# demand, wind, solar at 96 blocks a day
+.venv/bin/python -m iex.drivers --from 2024-11-04
+
+# forecast them two days out, which is as close as the cutoff allows
+.venv/bin/python -m iex.driverforecast --from 2025-02-01
+```
+
+the PSP report for a day is published the morning after, so at the 09:30 cutoff
+the newest one covers D-2, not D-1. the delivery day is two days out, so D-1 and
+D both have to be forecast, and both halves come from one 192 block run.
+
+on 483 sealed days, against the frozen headline, every model declared before the
+run:
+
+| model | mae | vs headline |
+| --- | --- | --- |
+| calendar + perfect drivers, a ceiling nobody can reach | 535.9 | -6.4% |
+| calendar + drivers, wind from wind-site wind speed | 548.6 | **-4.2%** |
+| calendar + drivers | 552.9 | -3.4% |
+| calendar + weather + drivers | 554.1 | -3.2% |
+| calendar + weather, the frozen headline | 572.4 | - |
+| copy yesterday | 668.0 | +16.7% |
+
+drivers beat the headline at p = 0.001. three things come out of it.
+
+**drivers replace weather, they do not add to it.** weather plus drivers is no
+better than drivers alone. demand, wind and solar are the channel weather uses to
+reach the price, so once you forecast them the temperature has nothing left to
+say. that also explains why the perfect-weather ceiling was worth nothing.
+
+**we got about half the ceiling, then went after the other half.** the gap was
+wind, at 22% error and barely better than copying yesterday. the cause was not the
+model, it was where we were measuring: the weather covariates sample eight demand
+centres, and we were giving east india 11% weight for wind, where wind generation
+is zero.
+
+weighting instead by grid-indias own regional wind generation over 678 days, and
+cubing wind speed per site because turbine power goes as v cubed, wind speed at
+the real wind sites correlates 0.956 with national wind generation against 0.370
+for the demand cities.
+
+```bash
+# wind speed at seven wind sites, weighted by where the generation actually is
+.venv/bin/python -m iex.weather --group wind --from 2024-11-01
+.venv/bin/python -m iex.driverforecast --from 2025-02-01 --weather
+```
+
+| wind forecast, two days ahead | mae | vs persistence |
+| --- | --- | --- |
+| from its own history | 2633.6 | 10.5% better |
+| with wind-site wind speed | **1665.2** | **43.4% better** |
+
+demand, solar and net demand come out bit identical, which is the control that the
+comparison is like for like.
+
+that 36.8% better wind forecast is worth **0.78%** on the price, p = 0.015, and it
+closes 25% of the remaining distance to the ceiling. the ratio is about 47 to 1,
+because wind is 12 GW in a 200 GW system. the driver channel is now nearly spent:
+12.7 mae of headroom left, and that is the impossible version.
+
+**it does not explain the gap to the best commercial forecast.** run on the exact
+88 day window pravah report a 498 mae over, drivers take us from 715.9 to 671.8,
+worth 6.2% here rather than 3.4%, because drivers matter most when the grid is
+tight. but that closes only 15% of their lead, and perfect drivers close 35%. two
+thirds of the difference is neither weather nor generation nor demand.
+
+| explanation | how it was tested | verdict |
+| --- | --- | --- |
+| better weather | perfect-weather ceiling | worth 0%, p = 0.21 |
+| generation and demand | perfect-driver ceiling | worth 6.4%, a third of the gap |
+| a better wind forecast | 37% better wind, measured | worth 0.78%, p = 0.015 |
+| the bid stack | not tested yet | where the rest has to be |
+
+the ceilings are the point. a negative result from a forecast you built could just
+mean your forecast is bad. a negative result from the perfect version of that
+input is a statement about the input. (their 498 is read off a public page for a
+window they chose, so treat that row as indicative, not controlled.)
+
+### the api
+
+both applications sit behind one FastAPI gateway, one database and one cluster.
+
+```
+/v1/iex/forecast/latest      /v1/weather/stations
+/v1/iex/forecast/{date}      /v1/weather/replays
+/v1/iex/scorecard            /v1/weather/stations/{id}/latest
+/v1/iex/models               /health/ready
+```
+
+shared api keys, rate limiting and health probes. the forecasting code on each
+side never imports the other; they meet in `timesfm_serve/api.py` and nowhere
+else. the price half is read-only and deliberately light: `iex.api` pulls in
+fastapi and psycopg and no numpy or pandas, because it reads stored rows and
+never runs a model.
+
+```bash
+docker compose up -d db
+.venv/bin/python -m iex.publish            # issue tomorrow, store it
+.venv/bin/python -m iex.settle             # score the days that have cleared
+uvicorn timesfm_serve.api:app --port 8000  # serve both halves
+```
+
+in the cluster those two become CronJobs: `iex-forecast` at 09:30 IST on a cpu
+node with the model, `iex-settle` in the evening without it.
+
+### a demand forecast that ties the system operator
+
+grid-india publishes its own day-ahead demand error every day under IEGC 31.2(i),
+which makes a rare like-for-like benchmark. 211 days, jan to sep 2026:
+
+| forecaster | day-ahead mape |
+| --- | --- |
+| grid-india, who run the dispatch | 2.53% |
+| ours, timesfm zero-shot | 2.50% |
+
+a tie, and their figures are rounded to a tenth of a point so nobody wins. the
+interesting part is the handicap: theirs is issued with live telemetry, ours is
+issued a day further out from their own published actuals, with nothing trained.
+
+### served, and kept honest
+
+the forecast is published through the same api as the weather service. one app,
+one database, one cluster, two applications.
+
+```
+/v1/iex/forecast/latest      /v1/weather/stations
+/v1/iex/forecast/{date}      /v1/weather/replays
+/v1/iex/scorecard            /health/ready
+```
+
+a forecast is written at 09:30 IST the day before delivery and **never
+updated**. re-issuing a day is refused, not merged, so the record cannot be
+quietly improved once the answer is known. scores land in a separate table after
+the day settles, and only when all 96 blocks have cleared.
+
+89 days on record so far, MAE 663.8. the backtest independently says 671.8 for
+the slightly weaker variant over the same window, so the live scorecard and the
+offline evaluation agree.
+
+the p10-p90 band is corrected against how far past days actually fell from it,
+fitted only on days that had already settled:
+
+| band | holds |
+| --- | --- |
+| as the model publishes it | 72.2% |
+| after the correction | 78.7% |
+| what it claims | 80% |
+
+forecasts written after the fact are marked. they use the same information
+cutoff and leak nothing, but they were never standing predictions, so the
+scorecard reports them separately from days issued live and a backfill can never
+pad the record.
+
+no exchange prices are served, only our own forecasts and our own error. the IEX
+terms are personal and non-commercial.
+
 ## weather (prior work)
 
 [dashboard](https://timesfms.vercel.app) ·
-[api docs](https://88novucbtj.execute-api.us-east-1.amazonaws.com/docs) ·
 [deployment](deploy/README.md) ·
 [infrastructure](infra/README.md)
+
+the AWS stack is brought up deliberately, verified, and torn down again, so there
+is no standing api url to link. the last run is recorded in
+[`results/iex/aws_pilot/`](results/iex/aws_pilot/): the live docs page, the raw
+responses it served, the image digest and its scan.
 
 ![system design: dashboard and API Gateway in front of a private load balancer, FastAPI and the ingestor on standard Kubernetes nodes, a TimesFM worker on a single GPU node, PostgreSQL, S3, Secrets Manager and CloudWatch](assets/system-design.png)
 
@@ -96,13 +263,16 @@ gpu, cuda on AWS or mps on a mac:
 
 | path | what |
 | --- | --- |
-| `iex/` | power price forecasting |
+| `iex/` | power price forecasting, and its half of the API |
 | `timesfm_serve/`, `scripts/weather_*` | the weather platform and its experiments |
-| `infra/`, `deploy/` | AWS and Kubernetes for the weather service |
+| `timesfm_serve/api.py` | the gateway both are served behind |
+| `infra/`, `deploy/` | AWS and Kubernetes |
 | `tests/iex/`, `tests/` | tests for each |
 
-the two applications share the repo and the python environment, nothing else.
-neither imports from the other.
+one app, one database, one cluster, two applications. `/v1/weather` and `/v1/iex`
+share authentication, api keys, rate limiting and health probes, and nothing else.
+the forecasting code on each side never imports the other; they meet in
+`timesfm_serve/api.py` and nowhere else, which is the only place sharing pays.
 
 ## tests
 
@@ -111,7 +281,8 @@ docker compose exec db createdb -U tfm tfm_test
 DATABASE_URL=postgresql://tfm:tfm@localhost:15432/tfm_test uv run --no-sync pytest -q
 ```
 
-sql and concurrency tests need real postgres. the IEX tests do not.
+sql and concurrency tests need real postgres, and so do the serving tests for
+both applications. the IEX forecasting and backtest tests do not.
 
 ## limits
 

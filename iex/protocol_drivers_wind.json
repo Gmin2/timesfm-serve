@@ -1,0 +1,43 @@
+{
+  "frozen_at": "2026-09-16",
+  "note": "Second pre-registration, written after the wind forecast improved but before any price model using it was scored on the test period. The first driver experiment is already scored and its numbers are fixed; this run does not change them.",
+  "question": "The driver experiment showed a perfect-driver ceiling of 535.9 MAE against our forecast drivers at 552.9, and named wind as the likely reason for the gap: 22.1% error at the lead that matters, only 10.5% better than persistence. Wind speed at the actual wind sites, cubed, now cuts that to 13.9% and 43.4% better than persistence. Does a better wind forecast reach the price?",
+  "what_changed": {
+    "before": "wind forecast from its own history alone, no covariates",
+    "after": "wind forecast with the cube of ECMWF wind speed at 100m over seven wind sites as a future covariate",
+    "site_weights": "regional shares measured from 678 days of Grid-India's own regional wind generation (WR 46.9%, SR 44.7%, NR 8.4%, east zero), split within a region by state installed capacity",
+    "why_cubed": "turbine power goes as the cube of wind speed; cubing is done per site before weighting because the mean of cubes is not the cube of the mean across a spread-out fleet",
+    "why_not_the_demand_cities": "the existing weather covariates sample eight demand centres, which is right for temperature and wrong for wind. Cubed speed at wind sites correlates 0.956 with national wind generation; the demand cities manage 0.370",
+    "timing": "same _previous_day2 rule as the price model, so every value was issued two days before it is valid and could not have been unavailable at the cutoff",
+    "unchanged": "demand, solar and net demand get no covariates and are bit-identical to the first run, which is the control that the comparison is like for like"
+  },
+  "driver_forecast_result": {
+    "wind_mae_before": 2633.6,
+    "wind_mae_after": 1665.2,
+    "wind_nmae_before_pct": 22.1,
+    "wind_nmae_after_pct": 13.9,
+    "days": 573,
+    "note": "scored against wind actuals, not against price, so iterating here was legitimate and did not touch the sealed period"
+  },
+  "models_to_run_on_test": [
+    "naive_yesterday",
+    "timesfm_90d_cal_wx",
+    "timesfm_90d_cal_drv",
+    "timesfm_90d_cal_drvwx",
+    "timesfm_90d_cal_drv_PERFECT"
+  ],
+  "primary_metric": "MAE over the delivery days all five models can score",
+  "significance": "Diebold-Mariano with HAC variance against timesfm_90d_cal_drv, the previous driver model, because the question is whether better wind adds anything on top of drivers rather than whether drivers beat the headline again",
+  "prediction_declared_in_advance": "timesfm_90d_cal_drvwx lands between 540 and 553 MAE. Below 540 would mean wind was worth more than the first ceiling implied. Above 553 would mean a 37% better wind forecast buys nothing at the price, which would be the more interesting result.",
+  "outcomes_declared_in_advance": {
+    "wind_reaches_the_price": "drvwx beats drv at p < 0.05. Report the size and how much of the remaining distance to the perfect-driver ceiling it covers.",
+    "wind_does_not_reach_the_price": "no significant improvement. Report it as a negative result. It would mean price is insensitive to wind error in this range, and the next lever is elsewhere, most likely the bid stack.",
+    "it_overshoots_the_ceiling": "drvwx beats the 535.9 perfect-driver ceiling from the first experiment. That would mean the two runs are not comparable and something is wrong; investigate before reporting anything."
+  },
+  "rules": [
+    "the test period is run once with exactly the models listed above",
+    "the PERFECT run is a ceiling, labelled as one everywhere, never quoted as a result",
+    "no covariate, site list or context length changes after test numbers are seen",
+    "a negative result is published as prominently as a positive one"
+  ]
+}

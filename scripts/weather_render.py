@@ -112,16 +112,18 @@ def validate(config, example=False):
             raise ValueError("GitHub egress requires explicit public IPv4 ranges from GitHub metadata")
 
 
-def pod(config, workload, command=None):
+def pod(config, workload, command=None, artifacts=None, resources=None, node="standard"):
     infrastructure, images = config["infrastructure"], config["images"]
     migrate = workload == "migrate"
-    artifacts = "worker" if workload == "worker" else "replays" if workload == "api" else "none"
+    if artifacts is None:
+        artifacts = "worker" if workload == "worker" else "replays" if workload == "api" else "none"
     secret = infrastructure["admin_secret_arn"] if migrate else infrastructure["runtime_secrets"][workload]
     main = {
         "name": workload, "image": images["bootstrap" if migrate else workload], "imagePullPolicy": "IfNotPresent",
         "securityContext": copy.deepcopy(SECURITY), "envFrom": [{"configMapRef": {"name": "weather-runtime"}}],
         "volumeMounts": [{"name": "credentials", "mountPath": "/run/weather", "readOnly": True}, {"name": "tmp", "mountPath": "/tmp"}],
-        "resources": {"requests": {"cpu": "100m", "memory": "128Mi"}, "limits": {"cpu": "1", "memory": "512Mi"}},
+        "resources": resources or {"requests": {"cpu": "100m", "memory": "128Mi"},
+                                   "limits": {"cpu": "1", "memory": "512Mi"}},
     }
     if command:
         main["command"] = command
@@ -142,7 +144,7 @@ def pod(config, workload, command=None):
         main["volumeMounts"].append({"name": "assets", "mountPath": "/assets", "readOnly": True})
     return {
         "serviceAccountName": f"weather-{workload}", "automountServiceAccountToken": False,
-        "nodeSelector": {"workload": "gpu" if workload == "worker" else "standard", "kubernetes.io/arch": "amd64"},
+        "nodeSelector": {"workload": "gpu" if workload == "worker" else node, "kubernetes.io/arch": "amd64"},
         "securityContext": {"runAsNonRoot": True, "runAsUser": 10001, "runAsGroup": 10001, "fsGroup": 10001, "seccompProfile": {"type": "RuntimeDefault"}},
         "terminationGracePeriodSeconds": 110 if workload == "worker" else 45,
         "initContainers": [init], "containers": [main],
@@ -260,6 +262,17 @@ def render(config, enable_worker=False, enable_live=False, example=False):
     # and it runs on a standard node so the GPU is never held open for it.
     scoring = pod(config, "ingest", ["python", "-m", "scripts.weather_score"])
     scoring["restartPolicy"] = "Never"
+    # The price forecast is one model call a day, 96 blocks, and TimesFM does it in
+    # about three seconds on a CPU. It needs the model weights but no GPU, so it
+    # borrows the worker's artifacts and stays on a standard node.
+    forecasting = pod(config, "ingest", ["python", "-m", "iex.publish"], artifacts="worker",
+                      resources={"requests": {"cpu": "500m", "memory": "2Gi"},
+                                 "limits": {"cpu": "2", "memory": "6Gi"}})
+    forecasting["restartPolicy"] = "Never"
+    # Settling reads the day that just cleared and scores what we already published.
+    # No model, no network beyond the exchange, and it can never rewrite a forecast.
+    settling = pod(config, "ingest", ["python", "-m", "iex.settle"])
+    settling["restartPolicy"] = "Never"
     service = resource("Service", "weather-api", {"type": "NodePort", "externalTrafficPolicy": "Cluster", "selector": {"app": "weather-api"}, "ports": [{"name": "http", "port": 80, "targetPort": "http", "nodePort": 30080}]})
     service["metadata"]["labels"] = {"app": "weather-api"}
     deployments.extend([
@@ -280,6 +293,26 @@ def render(config, enable_worker=False, enable_live=False, example=False):
                 "template": {"metadata": {"labels": {"app": "weather-score"}, "annotations": {
                     "eks.amazonaws.com/skip-containers": "ingest",
                 }}, "spec": scoring}}},
+        }, "batch/v1"),
+        # 09:30 IST is 04:00 UTC, half an hour before IEX opens bidding for the next
+        # delivery day. Forbid overlap: a second run would be refused by the store
+        # anyway, because a day is only ever issued once.
+        resource("CronJob", "iex-forecast", {
+            "schedule": "0 4 * * *", "timeZone": "Etc/UTC", "suspend": not enable_live, "concurrencyPolicy": "Forbid", "startingDeadlineSeconds": 600,
+            "successfulJobsHistoryLimit": 3, "failedJobsHistoryLimit": 5,
+            "jobTemplate": {"spec": {"backoffLimit": 2, "activeDeadlineSeconds": 1800, "ttlSecondsAfterFinished": 172800,
+                "template": {"metadata": {"labels": {"app": "iex-forecast"}, "annotations": {
+                    "eks.amazonaws.com/skip-containers": "ingest",
+                }}, "spec": forecasting}}},
+        }, "batch/v1"),
+        # Well after the delivery day has closed and the exchange has published it.
+        resource("CronJob", "iex-settle", {
+            "schedule": "30 20 * * *", "timeZone": "Etc/UTC", "suspend": not enable_live, "concurrencyPolicy": "Forbid", "startingDeadlineSeconds": 600,
+            "successfulJobsHistoryLimit": 3, "failedJobsHistoryLimit": 5,
+            "jobTemplate": {"spec": {"backoffLimit": 2, "activeDeadlineSeconds": 900, "ttlSecondsAfterFinished": 172800,
+                "template": {"metadata": {"labels": {"app": "iex-settle"}, "annotations": {
+                    "eks.amazonaws.com/skip-containers": "ingest",
+                }}, "spec": settling}}},
         }, "batch/v1"),
     ])
     if autoscaling := config.get("autoscaling"):
