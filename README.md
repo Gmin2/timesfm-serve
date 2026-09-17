@@ -132,6 +132,33 @@ mean your forecast is bad. a negative result from the perfect version of that
 input is a statement about the input. (their 498 is read off a public page for a
 window they chose, so treat that row as indicative, not controlled.)
 
+### the api
+
+both applications sit behind one FastAPI gateway, one database and one cluster.
+
+```
+/v1/iex/forecast/latest      /v1/weather/stations
+/v1/iex/forecast/{date}      /v1/weather/replays
+/v1/iex/scorecard            /v1/weather/stations/{id}/latest
+/v1/iex/models               /health/ready
+```
+
+shared api keys, rate limiting and health probes. the forecasting code on each
+side never imports the other; they meet in `timesfm_serve/api.py` and nowhere
+else. the price half is read-only and deliberately light: `iex.api` pulls in
+fastapi and psycopg and no numpy or pandas, because it reads stored rows and
+never runs a model.
+
+```bash
+docker compose up -d db
+.venv/bin/python -m iex.publish            # issue tomorrow, store it
+.venv/bin/python -m iex.settle             # score the days that have cleared
+uvicorn timesfm_serve.api:app --port 8000  # serve both halves
+```
+
+in the cluster those two become CronJobs: `iex-forecast` at 09:30 IST on a cpu
+node with the model, `iex-settle` in the evening without it.
+
 ### a demand forecast that ties the system operator
 
 grid-india publishes its own day-ahead demand error every day under IEGC 31.2(i),
@@ -186,9 +213,13 @@ terms are personal and non-commercial.
 ## weather (prior work)
 
 [dashboard](https://timesfms.vercel.app) ·
-[api docs](https://88novucbtj.execute-api.us-east-1.amazonaws.com/docs) ·
 [deployment](deploy/README.md) ·
 [infrastructure](infra/README.md)
+
+the AWS stack is brought up deliberately, verified, and torn down again, so there
+is no standing api url to link. the last run is recorded in
+[`results/iex/aws_pilot/`](results/iex/aws_pilot/): the live docs page, the raw
+responses it served, the image digest and its scan.
 
 ![system design: dashboard and API Gateway in front of a private load balancer, FastAPI and the ingestor on standard Kubernetes nodes, a TimesFM worker on a single GPU node, PostgreSQL, S3, Secrets Manager and CloudWatch](assets/system-design.png)
 
