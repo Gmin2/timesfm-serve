@@ -2,8 +2,19 @@ import { Buffer } from 'node:buffer'
 import process from 'node:process'
 
 const DEFAULT_API_ORIGIN = 'https://88novucbtj.execute-api.us-east-1.amazonaws.com'
-const WEATHER_PATH = /^\/v1\/weather\/stations(?:\/(?:42410099999|43128599999|43279099999)\/(?:latest|status))?$/
-const PLAYGROUND_PATH = /^\/v1\/weather\/(?:stations(?:\/(?:42410099999|43128599999|43279099999)\/(?:latest|status))?|replays)$/
+const STATIONS = '42410099999|43128599999|43279099999'
+// Read-only price routes. The dashboard and the playground both need them.
+const IEX_PATH = /^\/v1\/iex\/(?:forecast\/(?:latest|\d{4}-\d{2}-\d{2})|scorecard|models)$/
+const WEATHER_PATH = new RegExp(`^/v1/weather/stations(?:/(?:${STATIONS})/(?:latest|status))?$`)
+const PLAYGROUND_PATH = new RegExp(`^/v1/weather/(?:stations(?:/(?:${STATIONS})/(?:latest|status))?|replays)$`)
+// The only query any of these accepts, so everything else stays rejected.
+const SCORECARD_DAYS = /^\?days=(?:[1-9]\d{0,2})$/
+
+function allowed(route: string, search: string): boolean {
+  if (!WEATHER_PATH.test(route) && !PLAYGROUND_PATH.test(route) && !IEX_PATH.test(route)) return false
+  if (!search) return true
+  return route === '/v1/iex/scorecard' && SCORECARD_DAYS.test(search) && Number(search.slice(6)) <= 365
+}
 const RESPONSE_HEADERS = ['content-type', 'x-request-id', 'x-ratelimit-limit', 'x-ratelimit-remaining', 'x-ratelimit-reset', 'retry-after']
 const PRIVATE_HEADERS = { 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer', 'X-Content-Type-Options': 'nosniff' }
 
@@ -104,18 +115,19 @@ async function gateway(request: Request): Promise<Response> {
     const playground = origin(process.env.WEATHER_PLAYGROUND_ORIGIN || api)
     if (path === '/playground/connection' && !url.search) return json(200, { origin: playground })
     const route = path.slice('/playground'.length)
-    if (!PLAYGROUND_PATH.test(route) || url.search) return json(404, { detail: 'route_not_found' })
+    if (!allowed(route, url.search)) return json(404, { detail: 'route_not_found' })
     const key = request.headers.get('x-api-key')
     if (!key || !/^tfm_[A-Za-z0-9_-]{32}$/.test(key)) return json(401, { detail: 'invalid_api_key' })
-    return forward(request, new URL(route, playground), false, key)
+    return forward(request, new URL(route + url.search, playground), false, key)
   }
 
   // Never use the operator's replay-capable key for a public dashboard.
   const dashboardKey = process.env.WEATHER_DASHBOARD_API_KEY
   if (path === '/connection' && !url.search) return json(200, { configured: !!dashboardKey, origin: api })
-  if (!WEATHER_PATH.test(path) || url.search) return json(404, { detail: 'route_not_found' })
+  if (!WEATHER_PATH.test(path) && !IEX_PATH.test(path)) return json(404, { detail: 'route_not_found' })
+  if (!allowed(path, url.search)) return json(404, { detail: 'route_not_found' })
   if (!dashboardKey) return json(503, { detail: 'api_not_configured' })
-  return forward(request, new URL(path, api), false, dashboardKey)
+  return forward(request, new URL(path + url.search, api), false, dashboardKey)
 }
 
 export default {
