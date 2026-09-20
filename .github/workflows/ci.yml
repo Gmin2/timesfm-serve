@@ -108,3 +108,19 @@ jobs:
         run: docker build -f deploy/Dockerfile.${{ matrix.component }} -t weather-security:${{ matrix.component }} .
       - name: Produce SBOM and reject vulnerable images
         run: PATH="/tmp/weather-security-tools:$PATH" bash scripts/weather_image_scan.sh weather-security:${{ matrix.component }} /tmp/weather-security-reports
+      # The scan writes its findings to a file, so without this a failure says only
+      # "exit code 1" and the reason has to be rediscovered by scanning locally.
+      - name: Print what the scan rejected
+        if: failure()
+        run: |
+          PATH="/tmp/weather-security-tools:$PATH" trivy convert --format table \
+            /tmp/weather-security-reports/vulnerabilities.json || \
+            cat /tmp/weather-security-reports/vulnerabilities.json
+      - name: Keep the scan reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: security-reports-${{ matrix.component }}
+          path: /tmp/weather-security-reports/
+          retention-days: 14
+          if-no-files-found: warn
